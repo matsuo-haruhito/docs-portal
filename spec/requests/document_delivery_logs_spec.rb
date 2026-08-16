@@ -26,6 +26,10 @@ RSpec.describe "Document delivery logs", type: :request do
     I18n.t("labels.document_delivery_logs.delivery_type.#{delivery_type}", default: delivery_type.to_s)
   end
 
+  def selected_filter_value(name)
+    parsed_html.at_css("select[name='#{name}'] option[selected]")&.[]("value")
+  end
+
   def action_targets
     parsed_html.css("a[href], form[action]").map do |node|
       node["href"] || node["action"]
@@ -208,8 +212,9 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).not_to include(own_sent.to_addresses)
     expect(page_text).not_to include(own_failed.to_addresses)
     expect(page_text).not_to include(other_failed.to_addresses)
-    expect(action_targets).to include(document_delivery_logs_path(status: :draft, delivery_type: :portal_link))
-    expect(action_targets).to include(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
+    expect(selected_filter_value("delivery_type")).to eq("portal_link")
+    expect(parsed_html.at_css("select[name='status'] option[value='draft']")).to be_present
+    expect(parsed_html.at_css("select[name='status'] option[value='failed']")).to be_present
 
     get document_delivery_logs_path, params: { status: :failed, delivery_type: :zip_attachment }
     expect(response).to have_http_status(:ok)
@@ -217,7 +222,8 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).not_to include(own_draft.to_addresses)
     expect(page_text).not_to include(own_sent.to_addresses)
     expect(page_text).not_to include(other_failed.to_addresses)
-    expect(action_targets).to include(document_delivery_logs_path(status: :failed))
+    expect(selected_filter_value("status")).to eq("failed")
+    expect(selected_filter_value("delivery_type")).to eq("zip_attachment")
 
     sign_in_as(internal_user)
 
@@ -284,9 +290,10 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).not_to include(wrong_status_log.to_addresses)
     expect(page_text).not_to include(wrong_type_log.to_addresses)
     expect(page_text).not_to include(other_sender_log.to_addresses)
-    expect(page_text).to include("表示範囲: 1件中1件を表示しています。")
-    expect(action_targets).to include(document_delivery_logs_path(q: "Date needle", created_from: "2026-01-10", created_to: "2026-01-20", status: :failed))
-    expect(action_targets).to include(document_delivery_logs_path(q: "Date needle", created_from: "2026-01-10", created_to: "2026-01-20", status: :draft, delivery_type: :portal_link))
+    expect(page_text).to include("1–1 / 1件")
+    expect(selected_filter_value("status")).to eq("failed")
+    expect(selected_filter_value("delivery_type")).to eq("portal_link")
+    expect(parsed_html.at_css("select[name='status'] option[value='draft']")).to be_present
     expect(href_for("検索をクリア")).to eq(document_delivery_logs_path(status: :failed, delivery_type: :portal_link, created_from: "2026-01-10", created_to: "2026-01-20"))
     expect(href_for("作成日をクリア")).to eq(document_delivery_logs_path(q: "Date needle", status: :failed, delivery_type: :portal_link))
     expect(href_for_row_containing(matching_log.to_addresses, localized_status_label(:failed))).to include("created_from=2026-01-10", "created_to=2026-01-20")
@@ -375,9 +382,10 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).to include(matching_log.to_addresses)
     expect(page_text).not_to include(non_matching_log.to_addresses)
     expect(page_text).not_to include(wrong_status_log.to_addresses)
-    expect(action_targets).to include(document_delivery_logs_path(q: "dlv1", status: :draft, delivery_type: :portal_link))
-    expect(action_targets).to include(document_delivery_logs_path(q: "dlv1", status: :failed))
-    expect(action_targets).to include(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
+    expect(selected_filter_value("status")).to eq("failed")
+    expect(selected_filter_value("delivery_type")).to eq("portal_link")
+    expect(parsed_html.at_css("select[name='status'] option[value='draft']")).to be_present
+    expect(href_for("検索をクリア")).to eq(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
   end
 
   it "keeps external delivery log search limited to the current sender" do

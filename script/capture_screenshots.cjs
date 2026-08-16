@@ -348,32 +348,32 @@ async function captureDetailAndEdit(page, route) {
 
     const href = await anyLink.getAttribute("href");
     if (!href) return;
+    const memberPath = new URL(href, BASE_URL).pathname.replace(/\/edit$/, "");
 
     // Show page
     if (route.actions.includes("show")) {
-      await navigateAndCapture(page, `${BASE_URL}${href}`, `${prefix}_show`);
+      await navigateAndCapture(page, `${BASE_URL}${memberPath}`, `${prefix}_show`);
     }
 
     // Edit page
     if (route.actions.includes("edit")) {
-      await navigateAndCapture(page, `${BASE_URL}${href}/edit`, `${prefix}_edit`);
+      await navigateAndCapture(page, `${BASE_URL}${memberPath}/edit`, `${prefix}_edit`);
     }
     return;
   }
 
   const href = await detailLink.getAttribute("href");
   if (!href) return;
+  const memberPath = new URL(href, BASE_URL).pathname.replace(/\/edit$/, "");
 
   // Show page
   if (route.actions.includes("show")) {
-    await navigateAndCapture(page, `${BASE_URL}${href}`, `${prefix}_show`);
+    await navigateAndCapture(page, `${BASE_URL}${memberPath}`, `${prefix}_show`);
   }
 
   // Edit page
   if (route.actions.includes("edit")) {
-    // Try to find edit link or construct edit URL
-    const editHref = href.endsWith("/edit") ? href : `${href}/edit`;
-    await navigateAndCapture(page, `${BASE_URL}${editHref}`, `${prefix}_edit`);
+    await navigateAndCapture(page, `${BASE_URL}${memberPath}/edit`, `${prefix}_edit`);
   }
 }
 

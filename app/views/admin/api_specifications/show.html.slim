@@ -116,7 +116,7 @@ section.card
       - if @api_specification_read_only_maintenance
         p.muted メンテナンス中のため build 再要求は停止しています。API仕様 viewer と生成済み HTML の確認は継続できます。
       - else
-        = button_to "API仕様ページの build を再実行", retry_build_admin_api_specification_path, method: :post
+        = button_to "API仕様ページの build を再実行", retry_build_admin_api_specification_path, method: :post, class: "button"
 
 section.card
   h2 主要ページとsource

@@ -27,7 +27,7 @@ RSpec.describe "Admin document permissions pagination", type: :request do
     expect(parsed_html.at_css("#document-permissions-assignments-panel").text).to include("権限ページ確認文書 25")
     expect(parsed_html.at_css("#document-permissions-overview-panel")).to be_nil
 
-    previous_link = parsed_html.at_css('nav.pagination a[href*="page=1"]')
+    previous_link = parsed_html.at_css('.list-footer__pagination a[href*="page=1"]')
     expect(previous_link).to be_present
     expect(Rack::Utils.parse_query(URI.parse(previous_link["href"]).query)).to include(
       "view" => "assignments",

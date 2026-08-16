@@ -3,7 +3,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1.5rem;
+  padding: calc(0.5rem - 3px) 1.5rem 0.5rem;
+  border-top: 3px solid var(--ui-brand);
   background: var(--ui-surface);
   border-bottom: 1px solid var(--ui-border);
   position: sticky;
@@ -18,10 +19,22 @@
 }
 
 .user-nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   font-weight: 700;
   font-size: 1rem;
   color: var(--ui-text);
   text-decoration: none;
+}
+
+.user-nav__brand::before {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  background: var(--ui-brand);
+  content: "";
+  flex: 0 0 auto;
 }
 
 .user-nav__brand:hover {
@@ -67,6 +80,19 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.user-nav__end .nav-dropdown__menu,
+.nav-dropdown--end .nav-dropdown__menu {
+  right: 0;
+  left: auto;
+  max-width: calc(100vw - 16px);
+}
+
+.user-nav__end .nav-dropdown__menu::before,
+.nav-dropdown--end .nav-dropdown__menu::before {
+  right: 20px;
+  left: auto;
 }
 
 .nav-dropdown__user-info {

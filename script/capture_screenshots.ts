@@ -364,7 +364,10 @@ async function findFirstRecordPath(page: Page, resource: ResourceNode): Promise<
   const count = await locator.count()
   for (let i = 0; i < count && i < 5; i += 1) {
     const href = await locator.nth(i).getAttribute("href")
-    const cleaned = href?.replace(/\/(edit|download|preview)$/, "") ?? null
+    if (!href) continue
+
+    const pathname = new URL(href, BASE_URL).pathname
+    const cleaned = pathname.replace(/\/(edit|download|preview)$/, "")
     if (cleaned) return cleaned
   }
   return null

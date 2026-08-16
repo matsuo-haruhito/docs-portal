@@ -111,7 +111,7 @@ RSpec.describe "Admin webhook delivery search", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Webhook送信履歴検索")
-    expect(page_text).to include("表示範囲: 1件中1-1件")
+    expect(page_text).to include("1–1 / 1件")
     expect(page_text).to include("Target Hook")
     expect(page_text).to include("Q&A回答")
     expect(page_text).to include("失敗")
@@ -205,8 +205,8 @@ RSpec.describe "Admin webhook delivery search", type: :request do
     get admin_webhook_deliveries_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 101件中1-100件")
-    expect(page_text).to include("100件ずつ、1/2ページ")
+    expect(page_text).to include("1–100 / 101件")
+    expect(page_text).to include("/ 2ページ")
     expect(page_text).to include("failure-100")
     expect(page_text).to include("failure-1")
     expect(page_text).not_to include("failure-0")
@@ -216,8 +216,8 @@ RSpec.describe "Admin webhook delivery search", type: :request do
     get admin_webhook_deliveries_path(page: 2)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 101件中101-101件")
-    expect(page_text).to include("100件ずつ、2/2ページ")
+    expect(page_text).to include("101–101 / 101件")
+    expect(page_text).to include("/ 2ページ")
     expect(page_text).to include("failure-0")
     expect(page_text).not_to include("failure-1")
     expect(action_targets).to include(admin_webhook_deliveries_path(page: 1))
@@ -268,7 +268,7 @@ RSpec.describe "Admin webhook delivery search", type: :request do
     get admin_webhook_deliveries_path(page_params)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 101件中101-101件")
+    expect(page_text).to include("101–101 / 101件")
     expect(page_text).to include("needle failure 0")
     expect(page_text).not_to include("needle outside endpoint")
     expect(action_targets).to include(

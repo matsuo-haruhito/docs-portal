@@ -52,7 +52,7 @@ RSpec.describe "Related gem wiring source" do
         expect(projects_index).to include("i.bi.bi-trash")
         expect(projects_index).to include("aria: { label: edit_project_cue }, title: edit_project_cue")
         expect(projects_index).to include("aria: { label: delete_project_cue }, title: delete_project_cue")
-        expect(projects_helper).to include('table_preferences_column(:code, label: "案件コード", default_width: 180, overflow: :ellipsis, pinned: true)')
+        expect(projects_helper).to include('table_preferences_column(:code, label: "案件コード", default_width: 150, overflow: :ellipsis, pinned: true)')
         expect(projects_helper).to include('table_preferences_column(:description, label: "説明", default_visible: false, overflow: :ellipsis)')
         expect(projects_helper).to include('table_preferences_column(:actions, label: "操作", default_width: 100, pinned: true)')
 

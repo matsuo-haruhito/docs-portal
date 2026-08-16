@@ -18,7 +18,7 @@ RSpec.describe "Document bookmark recent empty state", type: :request do
     }
 
     recent_section = Nokogiri::HTML(response.body).at_css("#recent-documents")
-    clear_link = recent_section.css("a").find { _1.text.squish == "最近見た条件をクリア" }
+    clear_link = recent_section.css("a").find { _1.text.squish == "条件をクリア" }
 
     expect(response).to have_http_status(:ok)
     expect(clear_link).to be_present

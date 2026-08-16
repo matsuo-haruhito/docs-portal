@@ -474,7 +474,45 @@ PhaseごとにPC screenshot / HTML snapshotを残し、global selectorやtoken�
 
 ---
 
-## 15. 禁止事項・不変条件
+## 15. 第2波 — 入力幅・List Footer・フォーム階層
+
+第1波で整えたShell、Neutral surface、RTP、FilterToolbar、StatusBadge、SSR navigationを維持し、次の順で仕上げる。
+
+### Phase 5 — 共通Visual基盤
+
+28. `FilterToolbarComponent::FieldComponent`へkeyword、remote、enum、date、short、wideの用途variantを追加する
+29. 一覧Filter内の`width: 100%`をfield wrapper内へ限定し、検索・クリアbuttonをcontent widthへ揃える
+30. `ListFooterComponent`を追加し、表示範囲、page navigation、page jump、総ページ数、export slotを共通化する
+31. 既存pagination hashと画面固有page parameterをComponent入力へ正規化し、CSV scopeを変更しない
+32. 右端ユーザーメニューをright aligned + viewport clampとし、Escape・外側click・focus returnを維持する
+33. 編集・新規画面へstandard / wideの用途別form containerを追加する
+34. Primary / Secondary / Utility / Dangerの用途を再確認し、列設定・metadata・技術詳細をUtilityへ統一する
+
+### Phase 6 — 代表画面
+
+35. Webhook送信履歴を標準FilterToolbarへ移し、remote combobox、enum、HTTP、error query、date rangeを内容別幅で配置する
+36. Webhookの常時Helpをlabel / placeholder / tooltip / 閉じたDisclosureへ整理する
+37. WebhookのRTP `table_key`、selected restore、filter warning、詳細へのreturn context、100件paginationを維持したままList Footerへ移す
+38. Webhookの一覧Metaを`開始–終了 / 総件数`へ簡潔化する
+
+### Phase 7 — 一覧横展開
+
+39. Companies、Users、Projects、Documents、Memberships、Document permissionsへFilter field variantとList Footerを適用する
+40. 監査ログ、外部送付履歴、既読確認、生成ファイルevent/runは既存のpagination・CSV・retry scopeをadapterで維持してfooterだけ共通化する
+41. Status、Type、Date、Datetime、Count、HTTP、Actionsへ内容基準のRTP `default_width`を設定し、title / name / notesはflexibleのまま残す
+42. 生成ファイルevent/runの技術Helpと重複状態filterを整理し、現在条件に一致する失敗最大100件だけを対象にする契約を維持する
+
+### Phase 8 — Form / Integration / Brand polish
+
+43. Webhook、Git、外部フォルダ同期、Microsoft Graphの編集画面を用途別form containerへ収める
+44. Integration画面を「接続状態 → 入力 → 保存 → 初めて設定する場合」の順へ整理し、技術手順をDisclosureへ移す
+45. Admin DashboardのCard-in-Cardを解消し、異常値だけsemantic accentを残す
+46. Login、User Navbar、Admin Header、Sidebar active railへ限定的なBrand Orangeを維持する
+47. screen scenarioの業務説明を更新し、`screen_guide.md`は生成処理だけで更新する
+
+---
+
+## 16. 禁止事項・不変条件
 
 - 認可ロジックを変更しない
 - domain model / DB schemaを変更しない
@@ -489,7 +527,7 @@ PhaseごとにPC screenshot / HTML snapshotを残し、global selectorやtoken�
 
 ---
 
-## 16. 完了条件
+## 17. 完了条件
 
 - PC Adminで不要なhamburgerが表示されない
 - Admin main全体が巨大な白Cardにならない

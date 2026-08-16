@@ -16,21 +16,26 @@
     .admin-create-panel__body
       = render "form", project: @project
 
-.admin-filter-toolbar
-  = form_with url: admin_projects_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
-    .admin-filter-toolbar__fields
-      = form.rfk_search_field :q,
-        value: @project_filter_params["q"],
-        placeholder: "コード・案件名・説明",
-        wrapper: false,
-        html: { maxlength: 100, class: "admin-filter-toolbar__search" }
+= form_with url: admin_projects_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
+  = render FilterToolbarComponent.new(label: "案件マスタの検索条件") do |toolbar|
+    - toolbar.with_field(size: :query) do
+      label
+        | コード・案件名・説明
+        = form.rfk_search_field :q,
+          value: @project_filter_params["q"],
+          placeholder: "コード・案件名・説明",
+          wrapper: false,
+          html: { maxlength: 100, class: "admin-filter-toolbar__search" }
+    - toolbar.with_field(size: :enum) do
       = form.rfk_select :active,
         collection: [["有効", "true"], ["無効", "false"]],
         selected: (%w[true false].include?(selected_active_filter) ? selected_active_filter : nil),
         include_blank: "すべて",
-        wrapper: false,
+        wrapper: true,
+        label: "状態",
         allow_clear: true,
-        placeholder: "状態"
+        placeholder: "すべて"
+    - toolbar.with_field(size: :remote) do
       = form.rfk_combobox :company_id,
         collection: company_filter_options,
         selected: admin_project_company_filter_selected_option(@selected_project_company, selected_company_filter),
@@ -41,18 +46,18 @@
         search_field: "text",
         min_length: 1,
         max_options: Admin::ProjectsController::COMPANY_SEARCH_LIMIT,
-        wrapper: false,
+        wrapper: true,
+        label: "会社",
         placeholder: "会社名・ドメインで検索",
         allow_clear: true
-    .admin-filter-toolbar__actions
+    - toolbar.with_action do
       = form.submit "検索", class: "button"
-      - if active_filter_labels.any?
-        = link_to "クリア", admin_projects_path, class: "button secondary"
-
-- if active_filter_labels.any?
-  .admin-filter-chips
+    - if active_filter_labels.any?
+      - toolbar.with_action do
+        = link_to "条件をクリア", admin_projects_path, class: "button secondary"
     - active_filter_labels.each do |label|
-      span.admin-filter-chip = label
+      - toolbar.with_active_filter do
+        = label
 
 .admin-list-meta
   span.admin-list-meta__count = "#{@projects_filtered_count}件"
@@ -60,7 +65,8 @@
     = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件一覧の表示設定")
 
 - if @projects.any?
-  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "案件一覧" } }) do
+    caption.table-caption 案件一覧
     thead
       tr
         th data-rails-table-preferences-column-key="code" 案件コード
@@ -94,14 +100,7 @@
               i.bi.bi-trash aria-hidden="true"
               span.visually-hidden 削除
 
-  - if @projects_pagination[:total_pages] > 1
-    nav.pagination aria-label="案件一覧ページ"
-      .admin-pagination
-        - if @projects_pagination[:prev_page]
-          = link_to "前へ", admin_projects_path(@project_page_params.merge(page: @projects_pagination[:prev_page])), class: "button secondary"
-        span.muted = "#{@projects_pagination[:page]} / #{@projects_pagination[:total_pages]}"
-        - if @projects_pagination[:next_page]
-          = link_to "次へ", admin_projects_path(@project_page_params.merge(page: @projects_pagination[:next_page])), class: "button secondary"
+  = render ListFooterComponent.new(pagination: @projects_pagination, url: admin_projects_path, params: @project_page_params, label: "案件一覧ページ")
 - elsif @projects_total_count.to_i.zero?
   = render EmptyStateComponent.new(heading: "案件が未登録です", description: "「新規登録」でコードと案件名を入力してください。")
 - else

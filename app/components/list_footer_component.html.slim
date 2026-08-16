@@ -1,0 +1,35 @@
+footer.list-footer
+  .list-footer__main
+    span.list-footer__summary = range_label
+    - if paginated?
+      nav.list-footer__pagination aria-label=@label
+        - if current_page > 1
+          = link_to page_path(current_page - 1), class: "button utility list-footer__page-link", title: previous_page_cue, aria: { label: previous_page_cue } do
+            i.bi.bi-chevron-left aria-hidden="true"
+            span.visually-hidden 前へ
+        - previous_page = nil
+        - page_numbers.each do |page|
+          - if previous_page && page > previous_page + 1
+            span.list-footer__ellipsis aria-hidden="true" …
+          - if page == current_page
+            span.list-footer__page-link.is-current aria-current="page" = page
+          - else
+            = link_to page, page_path(page), class: "button utility list-footer__page-link", aria: { label: "#{page}ページ目へ移動" }
+          - previous_page = page
+        - if current_page < total_pages
+          = link_to page_path(current_page + 1), class: "button utility list-footer__page-link", title: next_page_cue, aria: { label: next_page_cue } do
+            i.bi.bi-chevron-right aria-hidden="true"
+            span.visually-hidden 次へ
+      = form_with url: form_url, method: :get, local: true, class: "list-footer__jump" do |form|
+        - hidden_params.each do |key, value|
+          = hidden_field_tag key, value
+        = form.rfk_search_field @page_param,
+          value: current_page,
+          wrapper: false,
+          html: { class: "list-footer__page-input", inputmode: "numeric", pattern: "[0-9]*", aria: { label: "移動先ページ" } }
+        span.list-footer__page-total = "/ #{total_pages}ページ"
+        = form.submit "移動", class: "button secondary"
+  - if exports.any?
+    .list-footer__exports
+      - exports.each do |export|
+        = export

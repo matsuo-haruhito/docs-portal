@@ -27,6 +27,6 @@ RSpec.describe "Admin documents active filter summary", type: :request do
       "保管期限: 保管期限切れ",
       "廃棄候補: 廃棄候補なし"
     )
-    expect(parsed_html.at_css('.admin-filter-toolbar__actions a[href="/admin/documents"]')&.text&.squish).to eq("クリア")
+    expect(parsed_html.at_css('.admin-filter-toolbar__actions a[href="/admin/documents"]')&.text&.squish).to eq("条件をクリア")
   end
 end

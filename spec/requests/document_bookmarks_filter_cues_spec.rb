@@ -47,7 +47,7 @@ RSpec.describe "Document bookmark filter cues", type: :request do
 
     get document_bookmarks_path, params: { view: "read_later", project_code: "missing", bookmark_q: "manual", recent_q: "guide" }
 
-    reset_link = page.css("#read-later-bookmarks a").find { _1.text.squish == "保存済み条件を解除" }
+    reset_link = page.css("#read-later-bookmarks a").find { _1.text.squish == "条件をクリア" }
     expect(reset_link).to be_present
     expect(reset_link["href"]).to include("view=read_later", "recent_q=guide")
     expect(reset_link["href"]).not_to include("project_code", "bookmark_q")

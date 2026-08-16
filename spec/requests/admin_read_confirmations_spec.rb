@@ -54,7 +54,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(page_text).to include("既読確認内訳")
     expect(page_text).to include("Usage Project")
     expect(page_text).to include("この画面は既読確認だけの内訳です。閲覧・ダウンロードの集計は文書利用状況で確認してください。")
-    expect(page_text).to include("表示中: 2件 / 条件に一致した既読確認を新しい順に最新200件まで表示")
+    expect(page_text).to include("1–2 / 2件")
     expect(page_text).to include("Manual")
     expect(page_text).to include("Policy")
     expect(page_text).to include("Reader One / reader@example.com")
@@ -115,7 +115,7 @@ RSpec.describe "Admin read confirmations", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("文書URL識別子: manual / 文書名: Manual")
-    expect(page_text).to include("表示中: 1件")
+    expect(page_text).to include("1–1 / 1件")
     expect(page_text).to include("Manual")
     expect(page_text).to include("Reader One")
     expect(page_text).not_to include("部分一致で複数の文書が対象です。")
@@ -142,7 +142,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(page_text).to include("Manual / manual")
     expect(page_text).to include("Manual Appendix / manual-appendix")
     expect(page_text).to include("Policy Manual / policy-manual")
-    expect(page_text).to include("表示中: 3件")
+    expect(page_text).to include("1–3 / 3件")
     expect(read_confirmation_rows).to contain_exactly(
       a_string_including("Manual", "Reader One"),
       a_string_including("Manual Appendix", "Appendix Reader"),
@@ -205,7 +205,7 @@ RSpec.describe "Admin read confirmations", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("会社: Client A")
-    expect(page_text).to include("表示中: 1件")
+    expect(page_text).to include("1–1 / 1件")
     expect(read_confirmation_rows).to contain_exactly(a_string_including("Manual", "Reader One / reader@example.com", "Client A"))
     expect(read_confirmation_rows.join).not_to include("Policy")
     expect(read_confirmation_rows.join).not_to include("Reader Two")
@@ -232,7 +232,7 @@ RSpec.describe "Admin read confirmations", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("確認者: Reader One / reader@example.com / 会社: Client A")
-    expect(page_text).to include("表示中: 1件")
+    expect(page_text).to include("1–1 / 1件")
     expect(read_confirmation_rows).to contain_exactly(a_string_including("Manual", "Reader One / reader@example.com"))
     expect(read_confirmation_rows.join).not_to include("Policy")
     expect(read_confirmation_rows.join).not_to include("Reader Two")
@@ -265,7 +265,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(page_text).to include("文書URL識別子: manual / 文書名: Manual")
     expect(page_text).to include("会社: Client A")
     expect(page_text).to include("確認者: Reader Same Company / same-company@example.com / 会社: Client A")
-    expect(page_text).to include("表示中: 1件")
+    expect(page_text).to include("1–1 / 1件")
     expect(read_confirmation_rows).to contain_exactly(a_string_including("Manual", "Reader Same Company / same-company@example.com", "Client A"))
     expect(read_confirmation_rows.join).not_to include("Reader One")
     expect(read_confirmation_rows.join).not_to include("Reader Other Company")
@@ -285,7 +285,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("文書URL識別子: manual / 文書名: Manual")
     expect(page_text).to include("確認者: Reader Two / reader-two@example.com")
-    expect(page_text).to include("表示中: 0件")
+    expect(page_text).to include("0 / 0件")
     expect(page_text).to include("選択した条件に一致する既読確認はありません。")
     expect(read_confirmation_rows).to be_empty
   end
@@ -302,7 +302,7 @@ RSpec.describe "Admin read confirmations", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("指定した会社はこの案件の既読確認候補に見つかりません。")
-    expect(page_text).to include("表示中: 0件")
+    expect(page_text).to include("0 / 0件")
     expect(read_confirmation_rows).to be_empty
     expect(company_filter_options).not_to include("Outside Client")
     expect(user_filter_options).not_to include(a_string_including("Outside Reader / outside@example.com"))
@@ -319,7 +319,7 @@ RSpec.describe "Admin read confirmations", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("指定した確認者はこの案件の既読確認候補に見つかりません。")
-    expect(page_text).to include("表示中: 0件")
+    expect(page_text).to include("0 / 0件")
     expect(read_confirmation_rows).to be_empty
     expect(user_filter_options).not_to include(a_string_including("Outside Reader / outside@example.com"))
   end
@@ -339,7 +339,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("既読確認日時の期間: 2026-05-01 から 2026-05-03 まで")
     expect(page_text).to include("文書利用状況の閲覧・ダウンロード集計期間とは別の条件です")
-    expect(page_text).to include("表示中: 2件")
+    expect(page_text).to include("1–2 / 2件")
     expect(read_confirmation_rows.join).to include("Manual Start")
     expect(read_confirmation_rows.join).to include("Manual End")
     expect(read_confirmation_rows.join).not_to include("Manual Before")
@@ -387,7 +387,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("指定した文書はこの案件に見つかりません。")
     expect(page_text).to include("既読確認はありません")
-    expect(page_text).to include("表示中: 0件")
+    expect(page_text).to include("0 / 0件")
     expect(page_text).to include("指定した文書URL識別子に一致する文書がないため、既読確認は表示されません。")
     expect(page_text).not_to include("部分一致で複数の文書が対象です。")
     expect(page_text).not_to include("Reader One / reader@example.com")
@@ -494,7 +494,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     get admin_read_confirmations_path(project_id: project.id)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 200件")
+    expect(page_text).to include("1–200 / 201件")
     expect(read_confirmation_rows.size).to eq(200)
     expect(page_text).to include("Limited Manual 200")
     expect(page_text).to include("Limited Manual 1")
@@ -516,9 +516,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     page_two_rows = read_confirmation_rows.join
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 5件")
-    expect(page_text).to include("表示範囲: 201-205件目")
-    expect(page_text).to include("Page 2 / 2")
+    expect(page_text).to include("201–205 / 205件")
     expect(read_confirmation_rows.size).to eq(5)
     expect(page_two_rows).to include("Paged Manual 4")
     expect(page_two_rows).to include("Paged Manual 0")
@@ -530,8 +528,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     oversized_page_rows = read_confirmation_rows.join
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 201-205件目")
-    expect(page_text).to include("Page 2 / 2")
+    expect(page_text).to include("201–205 / 205件")
     expect(read_confirmation_rows.size).to eq(5)
     expect(oversized_page_rows).to include("Paged Manual 4")
     expect(oversized_page_rows).to include("Paged Manual 0")
@@ -567,7 +564,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     get admin_read_confirmations_path(project_id: project.id, from: "2026-05-01", to: "2026-05-01")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 200件")
+    expect(page_text).to include("1–200 / 201件")
     expect(read_confirmation_rows.size).to eq(200)
     expect(page_text).to include("Period Manual 200")
     expect(page_text).to include("Period Manual 1")

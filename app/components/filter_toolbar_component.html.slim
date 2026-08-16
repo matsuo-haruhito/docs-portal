@@ -1,0 +1,15 @@
+section.filter-toolbar.admin-filter-toolbar aria-label=@label
+  .filter-toolbar__fields.admin-filter-toolbar__fields
+    - fields.each do |field|
+      = field
+    - if actions.any?
+      .filter-toolbar__actions.admin-filter-toolbar__actions
+        - actions.each do |action|
+          = action
+  - if details?
+    .filter-toolbar__details
+      = details
+  - if active_filters.any?
+    ul.filter-toolbar__active-filters.admin-filter-chips aria-label="適用中の検索条件"
+      - active_filters.each do |active_filter|
+        li.filter-toolbar__active-filter.admin-filter-chip = active_filter

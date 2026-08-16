@@ -14,6 +14,11 @@
 - table_columns = generated_file_event_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - query_max_length = Admin::GeneratedFileEventsController::QUERY_MAX_LENGTH
+- page_offset = (@page - 1) * @per_page
+- page_start = @total_count.zero? ? 0 : page_offset + 1
+- page_end = page_offset + @generated_file_events.size
+- pagination = { page: @page, total_pages: @total_pages, total_count: @total_count, from: page_start, to: page_end }
+- pagination_params = request.query_parameters.merge(per_page: @per_page)
 
 .space-y-6
   .flex.items-start.justify-between.gap-4
@@ -55,56 +60,62 @@
         - @filter_warnings.each do |warning|
           li = warning
 
-  = form_with url: admin_generated_file_events_path, method: :get, local: true, class: "rounded-lg border bg-white p-4" do |form|
-    div class="grid grid-cols-1 gap-3 md:grid-cols-4"
-      div
-        = form.label :q, "イベントID / パス / エラー", class: "block text-sm font-semibold"
-        = form.search_field :q, value: @filters[:q], maxlength: query_max_length, class: "mt-1 w-full rounded border px-2 py-1"
-        p.mt-1.text-xs.text-gray-500 最大100文字。イベントID、パス、エラーの短い断片で探します。パス内の \\ は / として検索します。
-      div
-        = form.label :status, "状態", class: "block text-sm font-semibold"
+  = form_with url: admin_generated_file_events_path, method: :get, local: true do |form|
+    = render FilterToolbarComponent.new(label: "生成ファイルイベントの検索条件") do |toolbar|
+      - toolbar.with_field(size: :query) do
+        label
+          | イベントID / パス / エラー
+          = form.rfk_search_field :q,
+            value: @filters[:q],
+            wrapper: false,
+            html: { maxlength: query_max_length, aria: { label: "イベントID、パス、エラーで検索" } }
+      - toolbar.with_field(size: :enum) do
         = form.rfk_select :status,
           collection: GeneratedFileEvent.statuses.keys.map { [generated_file_event_status_label(_1), _1] },
           selected: @filters[:status].presence,
           include_blank: "すべて",
-          wrapper: false,
+          wrapper: true,
+          label: "状態",
           allow_clear: true,
           placeholder: "すべて"
-      div
-        = form.label :operation, "操作種別", class: "block text-sm font-semibold"
+      - toolbar.with_field(size: :enum) do
         = form.rfk_select :operation,
           collection: %w[create update delete].map { [generated_file_operation_label(_1), _1] },
           selected: @filters[:operation].presence,
           include_blank: "すべて",
-          wrapper: false,
+          wrapper: true,
+          label: "操作種別",
           allow_clear: true,
           placeholder: "すべて"
-      div
-        = form.label :event_source, "イベント発生元", class: "block text-sm font-semibold"
-        = form.text_field :event_source, value: @filters[:event_source], class: "mt-1 w-full rounded border px-2 py-1"
-        p.mt-1.text-xs.text-gray-500 保存値と完全一致する発生元だけに絞り込みます。短い断片で探す場合は「イベントID / パス / エラー」を使ってください。
-      div
-        = form.label :path, "パスを含む", class: "block text-sm font-semibold"
-        = form.text_field :path, value: @filters[:path], maxlength: query_max_length, class: "mt-1 w-full rounded border px-2 py-1"
-        p.mt-1.text-xs.text-gray-500 最大100文字。Windowsの区切り文字 \\ は / として検索します。
-      div
-        = form.label :scheduled_from, "実行予定日(開始)", class: "block text-sm font-semibold"
-        = form.text_field :scheduled_from, value: @filters[:scheduled_from], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1"
-        p.mt-1.text-xs.text-gray-500 日付だけ指定すると、その日の00:00以降を含みます。
-      div
-        = form.label :scheduled_to, "実行予定日(終了)", class: "block text-sm font-semibold"
-        = form.text_field :scheduled_to, value: @filters[:scheduled_to], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1"
-        p.mt-1.text-xs.text-gray-500 日付だけ指定すると、その日の23:59までを含みます。
-      .flex.items-end.gap-2
-        = form.submit "絞り込み", class: "rounded bg-blue-600 px-3 py-2 text-sm text-white"
-        - if has_active_filters
-          = link_to "絞り込みを解除", admin_generated_file_events_path, class: "rounded border px-3 py-2 text-sm"
-
-  = render "admin/shared/pagination",
-    total_count: @total_count,
-    page: @page,
-    total_pages: @total_pages,
-    path: ->(target_page) { admin_generated_file_events_path(request.query_parameters.merge(page: target_page, per_page: @per_page)) }
+      - toolbar.with_field(size: :short) do
+        label
+          | イベント発生元
+          = form.text_field :event_source, value: @filters[:event_source]
+      - toolbar.with_field(size: :wide) do
+        label
+          | パスを含む
+          = form.text_field :path, value: @filters[:path], maxlength: query_max_length
+      - toolbar.with_field(size: :date) do
+        label
+          | 実行予定日(開始)
+          = form.text_field :scheduled_from, value: @filters[:scheduled_from], placeholder: "YYYY-MM-DD"
+      - toolbar.with_field(size: :date) do
+        label
+          | 実行予定日(終了)
+          = form.text_field :scheduled_to, value: @filters[:scheduled_to], placeholder: "YYYY-MM-DD"
+      - toolbar.with_action do
+        = form.submit "絞り込み", class: "button"
+      - if has_active_filters
+        - toolbar.with_action do
+          = link_to "絞り込みを解除", admin_generated_file_events_path, class: "button secondary"
+      - toolbar.with_details do
+        = render GuidanceDisclosureComponent.new(title: "検索条件の補足") do
+          ul
+            li 最大100文字。イベントID、パス、エラーの短い断片で探します。パス内の \\ は / として検索します。
+            li 保存値と完全一致する発生元だけに絞り込みます。短い断片で探す場合は「イベントID / パス / エラー」を使ってください。
+            li 最大100文字。Windowsの区切り文字 \\ は / として検索します。
+            li 日付だけ指定すると、その日の00:00以降を含みます。
+            li 日付だけ指定すると、その日の23:59までを含みます。
 
   - if @generated_file_events.any? && filter_summary_items.any?
     .generated-file-event-filter-summary.rounded-lg.border.border-blue-100.bg-blue-50.p-4.text-sm.text-blue-950
@@ -167,3 +178,5 @@
                   p 生成ファイルイベントはまだありません。
                   p.text-sm 生成対象のファイル変更イベントが蓄積されると、ここに debounce / coalesce 後のイベントが表示されます。イベント 0 件は、生成処理が成功していることやエラーがないことを示すものではありません。
                   p.actions.mt-3 = link_to "生成ファイル実行履歴を確認する", admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm"
+
+  = render ListFooterComponent.new(pagination: pagination, url: admin_generated_file_events_path, params: pagination_params, label: "生成ファイルイベント一覧")

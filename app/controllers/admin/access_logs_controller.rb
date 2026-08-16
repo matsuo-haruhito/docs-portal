@@ -46,10 +46,10 @@ class Admin::AccessLogsController < Admin::BaseController
         @selected_project = access_log_selected_record(@projects, @filters[:project_id])
         @selected_company = access_log_selected_record(@companies, @filters[:company_id])
         @selected_user = access_log_selected_record(@users, @filters[:user_id])
+        @access_logs_total_count = bounded_access_logs_count
+        @page = 1 if @page > access_logs_total_pages
         @access_logs = paginated_access_logs
-        @has_previous_page = @page > 1
-        @has_next_page = @page < ACCESS_LOGS_MAX_PAGE && @access_logs.size > ACCESS_LOGS_PER_PAGE
-        @access_logs = @access_logs.first(ACCESS_LOGS_PER_PAGE)
+        @access_logs_pagination = access_logs_pagination
         @reached_display_limit = @access_logs.size >= ACCESS_LOGS_PER_PAGE
         @pagination_params = pagination_params
       end
@@ -101,7 +101,27 @@ class Admin::AccessLogsController < Admin::BaseController
       .includes(:user, :company, :project, :document, :document_version)
       .order(accessed_at: :desc, id: :desc)
       .offset((@page - 1) * ACCESS_LOGS_PER_PAGE)
-      .limit(ACCESS_LOGS_PER_PAGE + 1)
+      .limit(ACCESS_LOGS_PER_PAGE)
+  end
+
+  def bounded_access_logs_count
+    filtered_access_logs.limit(ACCESS_LOGS_MAX_ROWS).count
+  end
+
+  def access_logs_total_pages
+    [(@access_logs_total_count.to_f / ACCESS_LOGS_PER_PAGE).ceil, 1].max
+  end
+
+  def access_logs_pagination
+    offset = (@page - 1) * ACCESS_LOGS_PER_PAGE
+
+    {
+      page: @page,
+      total_pages: access_logs_total_pages,
+      total_count: @access_logs_total_count,
+      from: @access_logs.any? ? offset + 1 : 0,
+      to: @access_logs.any? ? offset + @access_logs.size : 0
+    }
   end
 
   def csv_access_logs

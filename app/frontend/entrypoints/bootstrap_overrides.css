@@ -30,8 +30,7 @@ button {
   text-decoration: none;
 }
 
-.button,
-button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)) {
+.button {
   --bs-btn-color: #fff;
   --bs-btn-bg: var(--bs-primary);
   --bs-btn-border-color: var(--bs-primary);
@@ -67,50 +66,56 @@ button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-set
 }
 
 .button:hover,
-button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)):hover,
-.button:focus-visible,
-button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)):focus-visible {
+.button:focus-visible {
   border-color: var(--bs-btn-hover-border-color);
   background: var(--bs-btn-hover-bg);
   color: var(--bs-btn-hover-color);
 }
 
-.button:focus-visible,
-button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)):focus-visible {
+.button:focus-visible {
   outline: 0;
   box-shadow: 0 0 0 0.25rem rgba(var(--bs-btn-focus-shadow-rgb), 0.5);
 }
 
-.button:active,
-button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)):active {
+.button:active {
   border-color: var(--bs-btn-active-border-color);
   background: var(--bs-btn-active-bg);
   color: var(--bs-btn-active-color);
 }
 
 .button:disabled,
-button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)):disabled,
 .button[aria-disabled="true"] {
   pointer-events: none;
   opacity: 0.65;
 }
 
-.button.secondary,
-button.secondary {
-  --bs-btn-color: #fff;
-  --bs-btn-bg: var(--bs-secondary);
-  --bs-btn-border-color: var(--bs-secondary);
-  --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: #5c636a;
-  --bs-btn-hover-border-color: #565e64;
-  --bs-btn-focus-shadow-rgb: 130, 138, 145;
-  --bs-btn-active-color: #fff;
-  --bs-btn-active-bg: #565e64;
-  --bs-btn-active-border-color: #51585e;
+.button.secondary {
+  --bs-btn-color: var(--ui-text-subtle);
+  --bs-btn-bg: var(--ui-surface);
+  --bs-btn-border-color: var(--ui-border-strong);
+  --bs-btn-hover-color: var(--ui-text);
+  --bs-btn-hover-bg: var(--ui-surface-muted);
+  --bs-btn-hover-border-color: var(--ui-text-subtle);
+  --bs-btn-focus-shadow-rgb: 100, 116, 139;
+  --bs-btn-active-color: var(--ui-text);
+  --bs-btn-active-bg: var(--ui-surface-muted);
+  --bs-btn-active-border-color: var(--ui-text-subtle);
 }
 
-.button.danger,
-button.danger:not(:where(.nav-link, .dropdown-item)) {
+.button.utility {
+  --bs-btn-color: var(--ui-text-subtle);
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-color: var(--ui-text);
+  --bs-btn-hover-bg: var(--ui-surface-muted);
+  --bs-btn-hover-border-color: var(--ui-border);
+  --bs-btn-focus-shadow-rgb: 100, 116, 139;
+  --bs-btn-active-color: var(--ui-text);
+  --bs-btn-active-bg: var(--ui-surface-muted);
+  --bs-btn-active-border-color: var(--ui-border-strong);
+}
+
+.button.danger {
   --bs-btn-color: var(--ui-danger-text);
   --bs-btn-bg: var(--ui-surface);
   --bs-btn-border-color: var(--ui-danger-border);

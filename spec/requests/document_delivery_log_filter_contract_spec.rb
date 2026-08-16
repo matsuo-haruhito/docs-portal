@@ -16,6 +16,10 @@ RSpec.describe "Document delivery log filter contract", type: :request do
     parsed_html.text.gsub(/[[:space:]]+/, " ").strip
   end
 
+  def selected_filter_value(name)
+    parsed_html.at_css("select[name='#{name}'] option[selected]")&.[]("value")
+  end
+
   def action_targets
     parsed_html.css("a[href], form[action]").map do |node|
       node["href"] || node["action"]
@@ -90,9 +94,10 @@ RSpec.describe "Document delivery log filter contract", type: :request do
     expect(page_text).not_to include(other_sender_log.to_addresses)
     expect(page_text).not_to include(wrong_type_log.to_addresses)
     expect(page_text).not_to include(wrong_status_log.to_addresses)
-    expect(page_text).to include("表示範囲: 1件中1件を表示しています。")
-    expect(action_targets).to include(document_delivery_logs_path(q: "Combined target", status: :draft, delivery_type: :portal_link))
-    expect(action_targets).to include(document_delivery_logs_path(q: "Combined target", status: :failed))
+    expect(page_text).to include("1–1 / 1件")
+    expect(selected_filter_value("status")).to eq("failed")
+    expect(selected_filter_value("delivery_type")).to eq("portal_link")
+    expect(parsed_html.at_css("select[name='status'] option[value='draft']")).to be_present
   end
 
   it "limits the rendered list to the latest 50 rows while preserving the total count summary" do
@@ -105,8 +110,9 @@ RSpec.describe "Document delivery log filter contract", type: :request do
     get document_delivery_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 51件中50件を表示しています。")
-    expect(page_text).to include("さらに絞り込む場合は検索・状態・方式フィルタを使ってください。")
+    expect(page_text).to include("1–50 / 51件")
+    expect(parsed_html.at_css("select[name='status']")).to be_present
+    expect(parsed_html.at_css("select[name='delivery_type']")).to be_present
     expect(parsed_html.css("tbody tr").size).to eq(50)
     expect(page_text).to include("limit-50@example.com")
     expect(page_text).not_to include("limit-00@example.com")

@@ -72,7 +72,7 @@ RSpec.describe "Admin bounded project selects", type: :request do
     expect(project_select_values).to include(selected_project.id.to_s)
     expect(selected_project_option["value"]).to eq(selected_project.id.to_s)
     expect(page_text).to include("Zzz Selected Project")
-    expect(page_text).to include("表示中: 0件")
+    expect(page_text).to include("0 / 0件")
   end
 
   it "keeps invalid project_id CSV requests from exporting cross-project data" do

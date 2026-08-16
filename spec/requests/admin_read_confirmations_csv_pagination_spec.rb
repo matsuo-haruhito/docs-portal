@@ -56,7 +56,7 @@ RSpec.describe "Admin read confirmations CSV pagination", type: :request do
     get admin_read_confirmations_path(filter_params)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 201-201件目 / 条件一致 201件 / Page 2 / 2")
+    expect(page_text).to include("201–201 / 201件")
     expect(page_text).to include("CSV出力にも同じ絞り込み条件と現在のページ範囲を反映します。")
     expect(read_confirmation_rows).to contain_exactly(a_string_including("Paged Manual 0", "CSV Page Reader / csv-page-reader@example.com", "Client A", "paged-manual-0"))
 

@@ -36,7 +36,7 @@ RSpec.describe "Admin read confirmation document query", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("文書名またはURL識別子")
     expect(page_text).to include("文書URL識別子: Safety / 一致文書: 2件")
-    expect(page_text).to include("表示中: 2件")
+    expect(page_text).to include("1–2 / 2件")
     expect(read_confirmation_rows.join).to include("Safety Manual")
     expect(read_confirmation_rows.join).to include("Safety Appendix")
     expect(read_confirmation_rows.join).not_to include("Policy")

@@ -1,11 +1,3 @@
 {
-  "suspectedDuplicates": [
-    {
-      "sha256": "cc5e01dd9d69abcdfd0596a70934da338b8dfe88ece9acc4544244fdf0fe04d0",
-      "outputNames": [
-        "admin-external-folder-sync-sources-edit",
-        "admin-external-folder-sync-sources-show"
-      ]
-    }
-  ]
+  "suspectedDuplicates": []
 }

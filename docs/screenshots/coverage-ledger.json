@@ -2,7 +2,7 @@
   {
     "scenarioId": "dashboard.show.external.desktop",
     "outputName": "dashboard-external",
-    "userStory": "外部利用者がアクセス可能な案件と文書を確認する",
+    "userStory": "外部利用者がアクセス可能な案件・文書と保存済み情報を確認する",
     "httpMethod": "GET",
     "stateKind": "default",
     "status": "deferred",
@@ -30,7 +30,7 @@
   {
     "scenarioId": "admin-dashboard.index.admin.desktop",
     "outputName": "admin-dashboard",
-    "userStory": "管理者が管理画面トップで全体状況を確認する",
+    "userStory": "管理者が管理画面トップで要対応事項と主要データへの導線を確認する",
     "httpMethod": "GET",
     "stateKind": "default",
     "status": "captured"
@@ -92,9 +92,41 @@
     "status": "captured"
   },
   {
+    "scenarioId": "admin-project-memberships.index.admin.desktop",
+    "outputName": "admin-project-memberships-index",
+    "userStory": "管理者が案件と利用者の所属・権限を検索して管理する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-webhook-deliveries.index.admin.desktop",
+    "outputName": "admin-webhook-deliveries-index",
+    "userStory": "管理者がWebhookの送信履歴を条件指定して対象の詳細を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-generated-file-events.index.admin.desktop",
+    "outputName": "admin-generated-file-events-index",
+    "userStory": "管理者がファイル変更イベントを検索し、生成処理への投入状況を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-generated-file-runs.index.admin.desktop",
+    "outputName": "admin-generated-file-runs-index",
+    "userStory": "管理者が生成Jobの実行履歴を検索し、失敗対象と処理結果を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
     "scenarioId": "admin-access-logs.index.admin.desktop",
     "outputName": "admin-access-logs-index",
-    "userStory": "管理者がポータルへのアクセス履歴を監査する",
+    "userStory": "管理者がポータルへのアクセス履歴を条件指定して監査する",
     "httpMethod": "GET",
     "stateKind": "default",
     "status": "captured"
@@ -102,7 +134,7 @@
   {
     "scenarioId": "admin-diagnostics.index.admin.desktop",
     "outputName": "admin-diagnostics-index",
-    "userStory": "管理者がシステム構成と要対応事項を診断する",
+    "userStory": "管理者が要対応事項、運用失敗、設定、文書ファイル、Storageをread-onlyで確認する",
     "httpMethod": "GET",
     "stateKind": "default",
     "status": "captured"
@@ -151,14 +183,6 @@
     "scenarioId": "admin-projects.edit.admin.desktop",
     "outputName": "admin-projects-edit",
     "userStory": "管理者がprojectsの編集画面で業務情報を確認する",
-    "httpMethod": "GET",
-    "stateKind": "default",
-    "status": "captured"
-  },
-  {
-    "scenarioId": "admin-project-memberships.index.admin.desktop",
-    "outputName": "admin-project-memberships-index",
-    "userStory": "管理者がproject_membershipsの一覧画面で業務情報を確認する",
     "httpMethod": "GET",
     "stateKind": "default",
     "status": "captured"
@@ -220,25 +244,9 @@
     "status": "captured"
   },
   {
-    "scenarioId": "admin-generated-file-events.index.admin.desktop",
-    "outputName": "admin-generated-file-events-index",
-    "userStory": "管理者がgenerated_file_eventsの一覧画面で業務情報を確認する",
-    "httpMethod": "GET",
-    "stateKind": "default",
-    "status": "captured"
-  },
-  {
     "scenarioId": "admin-generated-file-events.show.admin.desktop",
     "outputName": "admin-generated-file-events-show",
     "userStory": "管理者がgenerated_file_eventsの詳細画面で業務情報を確認する",
-    "httpMethod": "GET",
-    "stateKind": "default",
-    "status": "captured"
-  },
-  {
-    "scenarioId": "admin-generated-file-runs.index.admin.desktop",
-    "outputName": "admin-generated-file-runs-index",
-    "userStory": "管理者がgenerated_file_runsの一覧画面で業務情報を確認する",
     "httpMethod": "GET",
     "stateKind": "default",
     "status": "captured"
@@ -375,14 +383,6 @@
     "scenarioId": "admin-webhook-endpoints.edit.admin.desktop",
     "outputName": "admin-webhook-endpoints-edit",
     "userStory": "管理者がwebhook_endpointsの編集画面で業務情報を確認する",
-    "httpMethod": "GET",
-    "stateKind": "default",
-    "status": "captured"
-  },
-  {
-    "scenarioId": "admin-webhook-deliveries.index.admin.desktop",
-    "outputName": "admin-webhook-deliveries-index",
-    "userStory": "管理者がwebhook_deliveriesの一覧画面で業務情報を確認する",
     "httpMethod": "GET",
     "stateKind": "default",
     "status": "captured"

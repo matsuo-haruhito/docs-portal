@@ -31,15 +31,15 @@ module Admin::AccessLogsHelper
 
   def access_log_table_columns
     [
-      table_preferences_column(:accessed_at, label: "日時", default_width: 170, pinned: true, sortable: true),
-      table_preferences_column(:action_type, label: "操作", default_width: 120),
-      table_preferences_column(:target, label: "対象", default_width: 220, overflow: :ellipsis),
-      table_preferences_column(:user, label: "ユーザー", default_width: 220, overflow: :ellipsis),
-      table_preferences_column(:company, label: "会社", default_width: 180, overflow: :ellipsis),
-      table_preferences_column(:project, label: "案件", default_width: 180, overflow: :ellipsis),
-      table_preferences_column(:document, label: "文書", default_width: 220, overflow: :ellipsis),
-      table_preferences_column(:document_version, label: "版", default_width: 180, overflow: :ellipsis),
-      table_preferences_column(:ip_address, label: "IPアドレス", default_width: 150)
+      table_preferences_column(:accessed_at, label: "日時", default_width: 130, pinned: true, sortable: true),
+      table_preferences_column(:action_type, label: "操作", default_width: 100),
+      table_preferences_column(:target, label: "対象", overflow: :ellipsis),
+      table_preferences_column(:user, label: "ユーザー", overflow: :ellipsis),
+      table_preferences_column(:company, label: "会社", overflow: :ellipsis),
+      table_preferences_column(:project, label: "案件", overflow: :ellipsis),
+      table_preferences_column(:document, label: "文書", overflow: :ellipsis),
+      table_preferences_column(:document_version, label: "版", default_width: 80, overflow: :ellipsis),
+      table_preferences_column(:ip_address, label: "IPアドレス", default_width: 135)
     ]
   end
 

@@ -12,7 +12,7 @@ RSpec.describe "Admin webhook delivery empty state", type: :request do
   end
 
   def result_card
-    parsed_html.css(".card").find { |card| card.at_css("h2")&.text&.squish == "検索結果" }
+    parsed_html.at_css(".empty-state")
   end
 
   def result_endpoint_links

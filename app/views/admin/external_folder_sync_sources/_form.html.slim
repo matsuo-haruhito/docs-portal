@@ -1,36 +1,31 @@
 = render "shared/error_messages", record: external_folder_sync_source
 
 - return_to = local_assigns[:return_to].presence
-
-.card
-  p.eyebrow プロバイダ対応の入口
-  h2 外部フォルダを取り込む
-  p.muted
-    | この画面では、Google Drive の同期設定に加えて、SharePoint / OneDrive の共有URLから Microsoft Graph 経由でフォルダ metadata を保存できます。
-  h3 Google Drive から始める
-  ol
-    li 対象案件と Google Drive フォルダ URL を入力する
-    li 接続方式は通常「OAuthユーザー方式」を選ぶ
-    li 保存後、詳細画面で Google OAuth を接続する
-    li 同期プレビューで対象ファイルと警告を確認する
-    li 問題がなければ初回同期する
-  h3 SharePoint / OneDrive を準備する
-  ol
-    li 対象案件で有効な Microsoft Graph 接続を先に登録する
-    li 共有URLを入力し、接続方式で「Microsoft Graph接続」を選ぶ
-    li 保存時に Drive ID / folder item ID / folder path / site ID を自動解決する
-    li 差分同期と変更通知はこの画面ではまだ実行できません
-  p.muted
-    | 公式画面のスクリーンショットは変わりやすいため、この画面では必要な作業だけを案内します。外部サービス側の画面では、表示された権限内容を確認して許可してください。
-  p.actions
-    = link_to "Microsoft Graph接続を確認", admin_microsoft_graph_connections_path, class: "button secondary"
-
 - sync_direction_value = external_folder_sync_source.sync_direction.presence || "external_to_portal"
 - conflict_policy_value = external_folder_sync_source.conflict_policy.presence || "manual"
 
 = form_with model: [:admin, external_folder_sync_source] do |form|
   - if return_to.present?
     = hidden_field_tag :return_to, return_to
+
+  fieldset.integration-form-state
+    legend 同期状態
+    .form-grid
+      = form.rfk_select :provider,
+        collection: enum_options_for("external_folder_sync_sources.provider", ExternalFolderSyncSource.providers.keys),
+        selected: form.object.provider,
+        wrapper: true,
+        label: "同期元プロバイダ"
+      = form.rfk_select :auth_type,
+        collection: enum_options_for("external_folder_sync_sources.auth_type", ExternalFolderSyncSource.auth_types.keys),
+        selected: form.object.auth_type,
+        wrapper: true,
+        label: "接続方式"
+      = form.rfk_select :enabled,
+        collection: [["有効", true], ["無効", false]],
+        selected: form.object.enabled,
+        wrapper: true,
+        label: "同期状態"
 
   .form-grid
     = form.rfk_combobox :project_id,
@@ -49,53 +44,62 @@
     label
       | 同期設定名
       = form.text_field :name, placeholder: "外部フォルダ同期"
-    = form.rfk_select :provider,
-      collection: enum_options_for("external_folder_sync_sources.provider", ExternalFolderSyncSource.providers.keys),
-      selected: form.object.provider,
-      wrapper: true,
-      label: "同期元プロバイダ"
-    span.muted Google Drive は同期実行まで、SharePoint / OneDrive は metadata 保存までこの画面で扱います。
     label
       | 外部フォルダURL
       = form.text_field :folder_url, placeholder: "https://drive.google.com/drive/folders/... または SharePoint / OneDrive の共有URL"
-      span.muted Google Drive はフォルダID、SharePoint / OneDrive は共有URLから Microsoft Graph metadata を解決します。
-    = form.rfk_select :auth_type,
-      collection: enum_options_for("external_folder_sync_sources.auth_type", ExternalFolderSyncSource.auth_types.keys),
-      selected: form.object.auth_type,
-      wrapper: true,
-      label: "接続方式"
-    span.muted Google Drive は「OAuthユーザー方式」または「サービスアカウント方式」、SharePoint / OneDrive は「Microsoft Graph接続」を選んでください。
     label
       | 表示用フォルダパス
       = form.text_field :external_folder_path, placeholder: "Google Drive は任意。SharePoint / OneDrive は保存時に自動入力されます。"
-    = form.rfk_select :enabled,
-      collection: [["有効", true], ["無効", false]],
-      selected: form.object.enabled,
-      wrapper: true,
-      label: "同期状態"
 
-  details.card
-    summary 詳細設定（管理者向け）
-    .form-grid
-      label
-        | 同期方向
-        = form.hidden_field :sync_direction, value: sync_direction_value
-        span = external_folder_sync_source_sync_direction_label(sync_direction_value)
-        span.muted この画面では、外部フォルダからドキュメントポータルへ取り込む片方向同期だけを扱います。
-      label
-        | 競合方針
-        = form.hidden_field :conflict_policy, value: conflict_policy_value
-        span = external_folder_sync_source_conflict_policy_label(conflict_policy_value)
-        span.muted この画面では、自動で競合解決せず、同期プレビューで確認してから取り込む前提です。
-    label.full-width
-      | サービスアカウントJSON
-      = form.text_area :auth_config, value: nil, rows: 10, placeholder: external_folder_sync_source.persisted? ? "サービスアカウントJSON変更時のみ入力。OAuthユーザー方式や Microsoft Graph接続 の場合は空で保存してください。" : "サービスアカウント方式を使う場合のみ貼り付け。OAuthユーザー方式や Microsoft Graph接続 の場合は空で保存してください。"
-    p.muted サービスアカウント方式は Google Drive でのみ利用します。SharePoint / OneDrive の認証情報は Microsoft Graph 接続側で管理します。
+  details.card.action-disclosure
+    summary.action-disclosure__summary 詳細設定（管理者向け）
+    .action-disclosure__body
+      .form-grid
+        label
+          | 同期方向
+          = form.hidden_field :sync_direction, value: sync_direction_value
+          span = external_folder_sync_source_sync_direction_label(sync_direction_value)
+          span.muted この画面では、外部フォルダからドキュメントポータルへ取り込む片方向同期だけを扱います。
+        label
+          | 競合方針
+          = form.hidden_field :conflict_policy, value: conflict_policy_value
+          span = external_folder_sync_source_conflict_policy_label(conflict_policy_value)
+          span.muted この画面では、自動で競合解決せず、同期プレビューで確認してから取り込む前提です。
+      label.full-width
+        | サービスアカウントJSON
+        = form.text_area :auth_config, value: nil, rows: 10, placeholder: external_folder_sync_source.persisted? ? "サービスアカウントJSON変更時のみ入力。OAuthユーザー方式や Microsoft Graph接続 の場合は空で保存してください。" : "サービスアカウント方式を使う場合のみ貼り付け。OAuthユーザー方式や Microsoft Graph接続 の場合は空で保存してください。"
+      p.muted サービスアカウント方式は Google Drive でのみ利用します。SharePoint / OneDrive の認証情報は Microsoft Graph 接続側で管理します。
 
-  p.muted Google Drive は同期プレビューと同期実行まで利用できます。SharePoint / OneDrive は共有URLからの metadata 保存まで利用でき、差分同期本体と変更通知はこの画面ではまだ実行できません。
-  p.actions
+  .actions.integration-form-actions
     = form.submit "設定を保存", class: "button"
     - if external_folder_sync_source.persisted?
       = link_to "詳細へ戻る", admin_external_folder_sync_source_path(external_folder_sync_source, return_to: return_to), class: "button secondary"
     - else
       = back_link_to "一覧へ戻る", return_to || admin_external_folder_sync_sources_path
+
+  = render GuidanceDisclosureComponent.new(title: "プロバイダ別の設定手順を確認", icon: "bi-cloud-arrow-down") do
+    h2 外部フォルダを取り込む
+    p.muted
+      | この画面では、Google Drive の同期設定に加えて、SharePoint / OneDrive の共有URLから Microsoft Graph 経由でフォルダ metadata を保存できます。
+    h3 Google Drive から始める
+    ol
+      li 対象案件と Google Drive フォルダ URL を入力する
+      li 接続方式は通常「OAuthユーザー方式」を選ぶ
+      li 保存後、詳細画面で Google OAuth を接続する
+      li 同期プレビューで対象ファイルと警告を確認する
+      li 問題がなければ初回同期する
+    h3 SharePoint / OneDrive を準備する
+    ol
+      li 対象案件で有効な Microsoft Graph 接続を先に登録する
+      li 共有URLを入力し、接続方式で「Microsoft Graph接続」を選ぶ
+      li 保存時に Drive ID / folder item ID / folder path / site ID を自動解決する
+      li 差分同期と変更通知はこの画面ではまだ実行できません
+    p.muted
+      | 公式画面のスクリーンショットは変わりやすいため、この画面では必要な作業だけを案内します。外部サービス側の画面では、表示された権限内容を確認して許可してください。
+    ul
+      li Google Drive は同期実行まで、SharePoint / OneDrive は metadata 保存までこの画面で扱います。
+      li Google Drive はフォルダID、SharePoint / OneDrive は共有URLから Microsoft Graph metadata を解決します。
+      li Google Drive は「OAuthユーザー方式」または「サービスアカウント方式」、SharePoint / OneDrive は「Microsoft Graph接続」を選んでください。
+      li Google Drive は同期プレビューと同期実行まで利用できます。SharePoint / OneDrive は共有URLからの metadata 保存まで利用でき、差分同期本体と変更通知はこの画面ではまだ実行できません。
+    p.actions
+      = link_to "Microsoft Graph接続を確認", admin_microsoft_graph_connections_path, class: "button secondary"

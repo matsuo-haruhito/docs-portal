@@ -36,7 +36,7 @@ RSpec.describe "Admin documents index", type: :request do
 
   def toolbar_clear_filter_targets
     parsed_html.css(".admin-filter-toolbar__actions a[href]").select do |node|
-      node.text.squish == "クリア"
+      node.text.squish == "条件をクリア"
     end.map { |node| node["href"] }
   end
 

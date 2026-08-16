@@ -116,8 +116,17 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(generated_file_run_row(middle.public_id)).to be_present
       expect(generated_file_run_row(newest.public_id)).to be_nil
       expect(generated_file_run_row(oldest.public_id)).to be_nil
-      expect(page_text).to include("全 3 件 / 2 / 3 ページ")
-      expect(link_texts).to include("前へ", "次へ")
+      expect(page_text).to include("2–2 / 3件")
+      expect(parsed_html.at_css('a[aria-label*="1ページ目へ戻る"]')).to be_present
+      expect(parsed_html.at_css('a[aria-label*="3ページ目へ進む"]')).to be_present
+
+      get admin_generated_file_runs_path(page: 999, per_page: 2)
+
+      expect(response).to have_http_status(:ok)
+      expect(generated_file_run_row(oldest.public_id)).to be_present
+      expect(generated_file_run_row(newest.public_id)).to be_nil
+      expect(generated_file_run_row(middle.public_id)).to be_nil
+      expect(page_text).to include("3–3 / 3件")
     end
 
     it "bounds per_page to the supported range for oversized, zero, and nonnumeric values" do
@@ -129,7 +138,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path(per_page: 500)
 
       expect(response).to have_http_status(:ok)
-      expect(page_text).to include("全 101 件 / 1 / 2 ページ")
+      expect(page_text).to include("1–100 / 101件")
       expect(generated_file_run_row(runs[0].public_id)).to be_present
       expect(generated_file_run_row(runs[99].public_id)).to be_present
       expect(generated_file_run_row(runs[100].public_id)).to be_nil
@@ -137,14 +146,14 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path(page: 2, per_page: 0)
 
       expect(response).to have_http_status(:ok)
-      expect(page_text).to include("全 101 件 / 2 / 101 ページ")
+      expect(page_text).to include("2–2 / 101件")
       expect(generated_file_run_row(runs[1].public_id)).to be_present
       expect(generated_file_run_row(runs[0].public_id)).to be_nil
 
       get admin_generated_file_runs_path(page: 2, per_page: "invalid")
 
       expect(response).to have_http_status(:ok)
-      expect(page_text).to include("全 101 件 / 2 / 101 ページ")
+      expect(page_text).to include("2–2 / 101件")
       expect(generated_file_run_row(runs[1].public_id)).to be_present
       expect(generated_file_run_row(runs[0].public_id)).to be_nil
     end
@@ -176,7 +185,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path(filters)
 
       expect(response).to have_http_status(:ok)
-      next_link = parsed_html.css("a[href]").find { |link| link.text.squish == "次へ" }
+      next_link = parsed_html.at_css('a[aria-label*="2ページ目へ進む"]')
       expect(next_link).to be_present
       expect(query_params_for(next_link["href"])).to include(
         "status" => "failed",
@@ -335,7 +344,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(generated_file_run_row(newer_match.public_id)).to be_nil
       expect(generated_file_run_row(unmatched_suffix.public_id)).to be_nil
       expect(generated_file_run_row(unmatched_status.public_id)).to be_nil
-      expect(page_text).to include("全 2 件 / 2 / 2 ページ")
+      expect(page_text).to include("2–2 / 2件")
     end
 
     it "does not apply q when normalization leaves it blank" do

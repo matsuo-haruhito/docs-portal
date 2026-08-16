@@ -10,6 +10,7 @@
 - clear_filter_params = @view == "overview" ? { view: "overview" } : {}
 - pagination = @document_permission_pagination
 - displayed_range = pagination[:total_count].zero? ? "0件" : "#{pagination[:from]}〜#{pagination[:to]}件"
+- pagination_label = @view == "overview" ? "文書別権限概要" : "文書権限一覧"
 
 .heading-with-help
   h1 文書権限
@@ -29,10 +30,10 @@
     .admin-create-panel__body
       = render "form", document_permission: @document_permission
 
-.admin-filter-toolbar
-  = form_with url: admin_document_permissions_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
-    = form.hidden_field :view, value: @view
-    .admin-filter-toolbar__fields
+= form_with url: admin_document_permissions_path, method: :get, local: true do |form|
+  = form.hidden_field :view, value: @view
+  = render FilterToolbarComponent.new(label: "文書権限の検索条件") do |toolbar|
+    - toolbar.with_field(size: :remote) do
       = form.rfk_combobox :project_id,
         collection: [],
         selected: document_permission_filter_project_selected_option(@selected_project),
@@ -43,48 +44,55 @@
         search_field: "text",
         min_length: 1,
         max_options: Admin::DocumentPermissionsController::PROJECT_SEARCH_LIMIT,
-        wrapper: false,
+        wrapper: true,
+        label: "案件",
         placeholder: "案件コード・案件名で検索",
         allow_clear: true
-      = form.rfk_search_field :q,
-        value: @filters[:q],
-        placeholder: "文書名・URL識別子",
-        wrapper: false,
-        html: { maxlength: 100, class: "admin-filter-toolbar__search" }
+    - toolbar.with_field(size: :query) do
+      label
+        | 文書名・URL識別子
+        = form.rfk_search_field :q,
+          value: @filters[:q],
+          placeholder: "文書名・URL識別子",
+          wrapper: false,
+          html: { maxlength: 100 }
+    - toolbar.with_field(size: :enum) do
       = form.rfk_select :access_level,
         collection: document_permission_filter_access_level_options,
         selected: @filters[:access_level].presence,
         include_blank: "すべて",
-        wrapper: false,
+        wrapper: true,
+        label: "権限",
         allow_clear: true,
-        placeholder: "権限"
+        placeholder: "すべて"
+    - toolbar.with_field(size: :enum) do
       = form.rfk_select :target_type,
         collection: document_permission_filter_target_type_options,
         selected: @filters[:target_type].presence,
         include_blank: "すべて",
-        wrapper: false,
+        wrapper: true,
+        label: "付与先",
         allow_clear: true,
-        placeholder: "付与先"
-    .admin-filter-toolbar__actions
+        placeholder: "すべて"
+    - toolbar.with_action do
       = form.submit "検索", class: "button"
-      = link_to admin_document_permissions_path(csv_filter_params), class: "button secondary" do
-        i.bi.bi-filetype-csv.me-1 aria-hidden="true"
-        | CSV出力
-      - if filters_active
+    - if filters_active
+      - toolbar.with_action do
         = link_to admin_document_permissions_path(clear_filter_params), class: "button secondary" do
           i.bi.bi-x-lg.me-1 aria-hidden="true"
           | 条件をクリア
-
-- if filters_active
-  .admin-filter-chips
     - if @selected_project.present?
-      span.admin-filter-chip = "案件: #{document_permission_filter_project_label(@selected_project)}"
+      - toolbar.with_active_filter do
+        = "案件: #{document_permission_filter_project_label(@selected_project)}"
     - if @filters[:q].present?
-      span.admin-filter-chip = "文書: #{@filters[:q]}"
+      - toolbar.with_active_filter do
+        = "文書: #{@filters[:q]}"
     - if @filters[:access_level].present?
-      span.admin-filter-chip = "権限: #{document_permission_access_level_label(@filters[:access_level])}"
+      - toolbar.with_active_filter do
+        = "権限: #{document_permission_access_level_label(@filters[:access_level])}"
     - if @filters[:target_type].present?
-      span.admin-filter-chip = "付与先: #{document_permission_target_type_label(@filters[:target_type])}"
+      - toolbar.with_active_filter do
+        = "付与先: #{document_permission_target_type_label(@filters[:target_type])}"
 
 .admin-list-meta
   span.admin-list-meta__count
@@ -183,11 +191,8 @@
     - else
       = render EmptyStateComponent.new(heading: "文書権限が未登録です", description: "上の「新規登録」で文書と会社またはユーザーを指定して登録してください。")
 
-- if pagination[:total_pages] > 1
-  nav.pagination aria-label="#{@view == 'overview' ? '文書別権限概要' : '文書権限一覧'}ページ"
-    p.actions
-      - if pagination[:prev_page]
-        = link_to "前へ", admin_document_permissions_path(@document_permission_page_params.merge(page: pagination[:prev_page])), class: "button secondary"
-      span.muted = "#{pagination[:page]} / #{pagination[:total_pages]}ページ"
-      - if pagination[:next_page]
-        = link_to "次へ", admin_document_permissions_path(@document_permission_page_params.merge(page: pagination[:next_page])), class: "button secondary"
+= render ListFooterComponent.new(pagination: pagination, url: admin_document_permissions_path, params: @document_permission_page_params, label: pagination_label) do |footer|
+  - footer.with_export do
+    = link_to admin_document_permissions_path(csv_filter_params), class: "button secondary" do
+      i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+      | CSV出力

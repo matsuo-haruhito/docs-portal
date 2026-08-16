@@ -3,219 +3,176 @@
 - table_columns = access_log_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - has_active_filters = @filters.to_h.values.any?(&:present?)
-- has_date_filters = @filters[:from].present? || @filters[:to].present?
 - advanced_filters_active = @filters.values_at(:ai_context_mode, :ai_context_scope, :company_id, :user_id, :q, :document_q, :from, :to).any?(&:present?)
 - active_filter_summaries = access_log_active_filter_summaries(@filters, projects: @projects, companies: @companies, users: @users)
-- reached_display_limit = @reached_display_limit
 - query_max_length = Admin::AccessLogsController::ACCESS_LOG_QUERY_MAX_LENGTH
 - filter_search_limit = Admin::AccessLogsController::FILTER_SEARCH_LIMIT
 - page_size = Admin::AccessLogsController::ACCESS_LOGS_PER_PAGE
 - export_limit = Admin::AccessLogsController::ACCESS_LOGS_EXPORT_LIMIT
+- display_limit = Admin::AccessLogsController::ACCESS_LOGS_MAX_ROWS
 - ai_context_filters_enabled = @filters[:target_type].to_s == "ai_context"
 - ai_context_filter_inactive = !ai_context_filters_enabled
 - ai_context_filter_state_id = "ai-context-filter-state"
 - ai_context_filter_usage_note_id = "ai-context-filter-usage-note"
 - ai_context_filter_description = "#{ai_context_filter_state_id} #{ai_context_filter_usage_note_id}"
 - current_page_export_params = @pagination_params.merge(page: @page, csv_scope: Admin::AccessLogsController::CSV_SCOPE_CURRENT_PAGE)
-- previous_page = @page - 1
-- next_page = @page + 1
-- previous_page_label = "監査ログ一覧の#{previous_page}ページ目へ（現在の検索条件を保持）"
-- next_page_label = "監査ログ一覧の#{next_page}ページ目へ（現在の検索条件を保持）"
+- list_range = @access_logs.any? ? "#{@access_logs_pagination[:from]}–#{@access_logs_pagination[:to]} / #{@access_logs_pagination[:total_count]}件" : "#{@access_logs_pagination[:total_count]}件"
 
 h1 監査ログ
 
-section.card
-  = form_with url: admin_access_logs_path, method: :get, local: true do |form|
-    .admin-filter-toolbar__form
-      .admin-filter-toolbar__fields
-        = form.rfk_select :action_type,
-          collection: enum_options_for("access_logs.action_type", AccessLog.action_types.keys),
-          selected: @filters[:action_type].presence,
-          include_blank: "すべて",
-          wrapper: true,
-          label: "操作",
-          allow_clear: true,
-          placeholder: "すべて"
-        = form.rfk_select :target_type,
-          collection: access_log_target_type_filter_options,
-          selected: @filters[:target_type].presence,
-          include_blank: "すべて",
-          wrapper: true,
-          label: "対象種別",
-          allow_clear: true,
-          placeholder: "すべて"
-        = form.rfk_combobox :project_id,
-          collection: [],
-          selected: access_log_project_selected_option(@selected_project),
-          url: project_search_admin_access_logs_path(format: :json),
-          selected_url: selected_project_admin_access_logs_path(format: :json),
-          value_field: "value",
-          label_field: "text",
-          search_field: "text",
-          min_length: 1,
-          max_options: filter_search_limit,
-          wrapper: true,
-          label: "案件",
-          placeholder: "案件コード・案件名で検索",
-          allow_clear: true
-    details.filter-details open=(advanced_filters_active ? true : nil)
-      summary 高度条件
-      .form-grid.form-grid--compact
-        div.ai-context-filter-guidance role="group" aria-labelledby="ai-context-filter-guidance-title" data-testid="ai-context-filter-guidance"
-          p.muted id="ai-context-filter-guidance-title"
-            strong AI context export 用の追加条件
-          - if ai_context_filters_enabled
-            p.muted id=ai_context_filter_state_id
-              span.badge 対象種別: AI context export
-              |  AI出力モード・範囲は今回の検索条件として有効です。
-          - else
-            p.muted id=ai_context_filter_state_id
-              span.badge 対象外
-              |  対象種別が AI context export ではないため、AI出力モード・範囲は今回の有効な条件から外れます。
-          p.muted id=ai_context_filter_usage_note_id 対象種別で AI context export を選んだ場合だけ、AI出力モード・範囲が有効です。
-          div.ai-context-filter-control data-testid="ai-context-mode-filter-control" aria-disabled=ai_context_filter_inactive.to_s style=(ai_context_filter_inactive ? "opacity:0.65;" : nil)
-            = form.rfk_select :ai_context_mode,
-              collection: access_log_ai_context_mode_filter_options,
-              selected: @filters[:ai_context_mode],
-              include_blank: "すべて",
+= form_with url: admin_access_logs_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
+  = render FilterToolbarComponent.new(label: "監査ログの検索条件") do |toolbar|
+    - toolbar.with_field(size: :enum) do
+      = form.rfk_select :action_type,
+        collection: enum_options_for("access_logs.action_type", AccessLog.action_types.keys),
+        selected: @filters[:action_type].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "操作",
+        allow_clear: true,
+        placeholder: "すべて"
+    - toolbar.with_field(size: :enum) do
+      = form.rfk_select :target_type,
+        collection: access_log_target_type_filter_options,
+        selected: @filters[:target_type].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "対象種別",
+        allow_clear: true,
+        placeholder: "すべて"
+    - toolbar.with_field(size: :remote) do
+      = form.rfk_combobox :project_id,
+        collection: [],
+        selected: access_log_project_selected_option(@selected_project),
+        url: project_search_admin_access_logs_path(format: :json),
+        selected_url: selected_project_admin_access_logs_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: filter_search_limit,
+        wrapper: true,
+        label: "案件",
+        placeholder: "案件コード・案件名で検索",
+        allow_clear: true
+    - toolbar.with_action do
+      = form.submit "検索", class: "button"
+    - if has_active_filters
+      - toolbar.with_action do
+        = link_to "条件をクリア", admin_access_logs_path, class: "button secondary"
+    - active_filter_summaries.each do |summary|
+      - toolbar.with_active_filter do
+        = summary
+    - toolbar.with_details do
+      details.filter-details open=(advanced_filters_active ? true : nil)
+        summary 高度条件
+        .filter-toolbar__fields
+          .filter-toolbar__field.filter-toolbar__field--wide.ai-context-filter-guidance role="group" aria-labelledby="ai-context-filter-guidance-title" data-testid="ai-context-filter-guidance"
+            p.muted id="ai-context-filter-guidance-title"
+              strong AI context export 用の追加条件
+            - if ai_context_filters_enabled
+              p.muted id=ai_context_filter_state_id
+                span.badge 対象種別: AI context export
+                |  AI出力モード・範囲は今回の検索条件として有効です。
+            - else
+              p.muted id=ai_context_filter_state_id
+                span.badge 対象外
+                |  対象種別が AI context export ではないため、AI出力モード・範囲は今回の有効な条件から外れます。
+            p.muted id=ai_context_filter_usage_note_id 対象種別で AI context export を選んだ場合だけ、AI出力モード・範囲が有効です。
+            p.muted AI出力モード・範囲は page / file / zip / webhook など他の対象種別では条件から外れます。CSV export や有効な条件にも残りません。
+            .filter-toolbar__fields
+              .filter-toolbar__field.filter-toolbar__field--enum.ai-context-filter-control data-testid="ai-context-mode-filter-control" aria-disabled=ai_context_filter_inactive.to_s style=(ai_context_filter_inactive ? "opacity:0.65;" : nil)
+                = form.rfk_select :ai_context_mode,
+                  collection: access_log_ai_context_mode_filter_options,
+                  selected: @filters[:ai_context_mode],
+                  include_blank: "すべて",
+                  wrapper: true,
+                  label: "AI出力モード",
+                  allow_clear: true,
+                  placeholder: "すべて",
+                  html: { aria: { describedby: ai_context_filter_description, disabled: ai_context_filter_inactive.to_s }, data: { testid: "ai-context-mode-filter" } }
+              .filter-toolbar__field.filter-toolbar__field--enum.ai-context-filter-control data-testid="ai-context-scope-filter-control" aria-disabled=ai_context_filter_inactive.to_s style=(ai_context_filter_inactive ? "opacity:0.65;" : nil)
+                = form.rfk_select :ai_context_scope,
+                  collection: access_log_ai_context_scope_filter_options,
+                  selected: @filters[:ai_context_scope],
+                  include_blank: "すべて",
+                  wrapper: true,
+                  label: "AI出力範囲",
+                  allow_clear: true,
+                  placeholder: "すべて",
+                  html: { aria: { describedby: ai_context_filter_description, disabled: ai_context_filter_inactive.to_s }, data: { testid: "ai-context-scope-filter" } }
+          .filter-toolbar__field.filter-toolbar__field--remote
+            = form.rfk_combobox :company_id,
+              collection: [],
+              selected: access_log_company_selected_option(@selected_company),
+              url: company_search_admin_access_logs_path(format: :json),
+              selected_url: selected_company_admin_access_logs_path(format: :json),
+              value_field: "value",
+              label_field: "text",
+              search_field: "text",
+              min_length: 1,
+              max_options: filter_search_limit,
               wrapper: true,
-              label: "AI出力モード",
-              allow_clear: true,
-              placeholder: "すべて",
-              html: { aria: { describedby: ai_context_filter_description, disabled: ai_context_filter_inactive.to_s }, data: { testid: "ai-context-mode-filter" } }
-          div.ai-context-filter-control data-testid="ai-context-scope-filter-control" aria-disabled=ai_context_filter_inactive.to_s style=(ai_context_filter_inactive ? "opacity:0.65;" : nil)
-            = form.rfk_select :ai_context_scope,
-              collection: access_log_ai_context_scope_filter_options,
-              selected: @filters[:ai_context_scope],
-              include_blank: "すべて",
+              label: "会社",
+              placeholder: "会社名・ドメインで検索",
+              allow_clear: true
+          .filter-toolbar__field.filter-toolbar__field--remote
+            = form.rfk_combobox :user_id,
+              collection: [],
+              selected: access_log_user_selected_option(@selected_user),
+              url: user_search_admin_access_logs_path(format: :json),
+              selected_url: selected_user_admin_access_logs_path(format: :json),
+              value_field: "value",
+              label_field: "text",
+              search_field: "text",
+              min_length: 1,
+              max_options: filter_search_limit,
               wrapper: true,
-              label: "AI出力範囲",
-              allow_clear: true,
-              placeholder: "すべて",
-              html: { aria: { describedby: ai_context_filter_description, disabled: ai_context_filter_inactive.to_s }, data: { testid: "ai-context-scope-filter" } }
-          p.muted AI出力モード・範囲は page / file / zip / webhook など他の対象種別では条件から外れます。CSV export や有効な条件にも残りません。
-        = form.rfk_combobox :company_id,
-          collection: [],
-          selected: access_log_company_selected_option(@selected_company),
-          url: company_search_admin_access_logs_path(format: :json),
-          selected_url: selected_company_admin_access_logs_path(format: :json),
-          value_field: "value",
-          label_field: "text",
-          search_field: "text",
-          min_length: 1,
-          max_options: filter_search_limit,
-          wrapper: true,
-          label: "会社",
-          placeholder: "会社名・ドメインで検索",
-          allow_clear: true
-        = form.rfk_combobox :user_id,
-          collection: [],
-          selected: access_log_user_selected_option(@selected_user),
-          url: user_search_admin_access_logs_path(format: :json),
-          selected_url: selected_user_admin_access_logs_path(format: :json),
-          value_field: "value",
-          label_field: "text",
-          search_field: "text",
-          min_length: 1,
-          max_options: filter_search_limit,
-          wrapper: true,
-          label: "ユーザー",
-          placeholder: "ユーザー名・メールアドレスで検索",
-          allow_clear: true
-        div
-          = form.label :q, "対象名・IPアドレス"
-          = form.rfk_search_field :q,
-            value: @filters[:q],
-            placeholder: "ZIP名・ファイル名・AI context export の記録・IP",
-            wrapper: false,
-            html: { maxlength: query_max_length }
-          p.muted = "対象名やIPアドレスの断片で検索できます。最大#{query_max_length}文字。"
-        div
-          = form.label :document_q, "文書名・URL識別子"
-          = form.rfk_search_field :document_q,
-            value: @filters[:document_q],
-            wrapper: false,
-            html: { maxlength: query_max_length }
-          p.muted = "文書名やURL識別子の断片で検索できます。最大#{query_max_length}文字。"
-        div
-          = form.label :from, "開始日"
-          = form.date_field :from, value: @filters[:from]
-        div
-          = form.label :to, "終了日"
-          = form.date_field :to, value: @filters[:to]
-        div
-          p.muted 開始日はその日の0:00以降、終了日はその日の23:59までを含みます。片方だけでも指定できます。
+              label: "ユーザー",
+              placeholder: "ユーザー名・メールアドレスで検索",
+              allow_clear: true
+          .filter-toolbar__field.filter-toolbar__field--query
+            = form.label :q, "対象名・IPアドレス"
+            = form.rfk_search_field :q,
+              value: @filters[:q],
+              placeholder: "ZIP名・ファイル名・AI context export の記録・IP",
+              wrapper: false,
+              html: { maxlength: query_max_length }
+          .filter-toolbar__field.filter-toolbar__field--query
+            = form.label :document_q, "文書名・URL識別子"
+            = form.rfk_search_field :document_q,
+              value: @filters[:document_q],
+              wrapper: false,
+              html: { maxlength: query_max_length }
+          .filter-toolbar__field.filter-toolbar__field--date
+            = form.label :from, "開始日"
+            = form.date_field :from, value: @filters[:from]
+          .filter-toolbar__field.filter-toolbar__field--date
+            = form.label :to, "終了日"
+            = form.date_field :to, value: @filters[:to]
+        = render GuidanceDisclosureComponent.new(title: "検索条件の補足", icon: "bi-info-circle") do
+          ul
+            li = "対象名・IPアドレス、文書名・URL識別子は最大#{query_max_length}文字です。"
+            li = "案件・会社・ユーザーは候補最大#{filter_search_limit}件で、指定済みの値は候補上限外でも復元します。"
+            li 開始日はその日の0:00以降、終了日はその日の23:59までを含みます。片方だけでも指定できます。
 
-      p.muted = "案件・会社・ユーザーは検索語最大#{query_max_length}文字、候補最大#{filter_search_limit}件です。URLで指定済みの値は候補上限外でも復元します。"
-    p.actions
-      = form.submit "検索"
-      - if has_active_filters
-        = link_to "条件をクリア", admin_access_logs_path
-    - if @ignored_date_filters.present?
-      p.muted
-        | 無効な日付条件は検索から除外しました:
-        strong = access_log_ignored_date_filter_label(@ignored_date_filters)
-        | 。有効な日付条件だけで監査ログを絞り込んでいます。
-
-  .access-log-export-actions role="region" aria-label="監査ログexportとmetadata確認"
-    = link_to admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary" do
-      i.bi.bi-filetype-csv.me-1 aria-hidden="true"
-      = "現在の条件でCSV export（最新#{export_limit}件）"
-    = render GuidanceDisclosureComponent.new(title: "export補助", icon: "bi-box-arrow-up-right") do
-      section.access-log-export-action-group aria-labelledby="access-log-csv-export-title"
-        h3 id="access-log-csv-export-title" 表示中ページCSV
-        p.muted = "表示中ページCSVは、同じ絞り込み条件とページ番号で表示中の最大#{page_size}件だけを固定列で出力します。"
-        p.actions
-          = link_to admin_access_logs_path(current_page_export_params.merge(format: :csv)), class: "button secondary" do
-            i.bi.bi-filetype-csv.me-1 aria-hidden="true"
-            = "表示中ページをCSV export（最大#{page_size}件）"
-      section.access-log-export-action-group aria-labelledby="access-log-metadata-title"
-        h3 id="access-log-metadata-title" metadata確認
-        p.muted metadata JSON は監査ログ行データではなく、条件・scope・page・summary を確認する補助出力です。
-        p.actions
-          = link_to "CSV条件metadata JSON", admin_access_logs_path(@pagination_params.merge(format: :json)), class: "button secondary"
-          = link_to "表示中ページmetadata JSON", admin_access_logs_path(current_page_export_params.merge(format: :json)), class: "button secondary"
-        p.muted = "最新条件metadataのrow_limitは#{export_limit}、表示中ページmetadataのrow_limitは#{page_size}です。"
-      p.muted = "ページ移動中でも、主導線のCSV exportは表示中ページではなく条件一致の最新#{export_limit}件が対象です。"
-
-- if @access_logs.any?
+- if @ignored_date_filters.present?
   p.muted
-    | 表示中:
-    strong = " #{@access_logs.size}件"
-    = " / 1ページ#{page_size}件"
-    - if @page > 1
-      = " / #{@page}ページ目"
-    - if active_filter_summaries.any?
-      |  / 絞り込み中
-  - if active_filter_summaries.any?
-    p.muted
-      | 有効な条件:
-      - active_filter_summaries.each do |summary|
-        = " "
-        span.badge = summary
-  - if has_date_filters
-    p.muted = "期間指定後も、条件に一致する監査ログを新しい順に1ページ#{page_size}件まで表示します。#{page_size}件を超える場合は次ページで続きの証跡を確認できます。"
-  - if reached_display_limit
-    p.muted
-      - if has_active_filters
-        = "1ページの表示上限#{page_size}件に達しています。目的の証跡が見つからない場合は、高度条件を追加してさらに絞り込んでください。"
-        - if @has_next_page
-          | 次ページで続きの証跡を確認できます。
-      - else
-        = "1ページの表示上限#{page_size}件に達しています。古い証跡は次ページで確認できます。"
-        - if @has_next_page
-          | 次ページで古い証跡を確認できます。
-  - if @has_previous_page || @has_next_page
-    nav.pagination aria-label="監査ログページ移動"
-      - if @has_previous_page
-        = link_to "前の#{page_size}件", admin_access_logs_path(@pagination_params.merge(page: previous_page)), class: "button secondary", aria: { label: previous_page_label }, title: previous_page_label
-      - if @has_next_page
-        = link_to "次の#{page_size}件", admin_access_logs_path(@pagination_params.merge(page: next_page)), class: "button secondary", aria: { label: next_page_label }, title: next_page_label
+    | 無効な日付条件は検索から除外しました:
+    strong = access_log_ignored_date_filter_label(@ignored_date_filters)
+    | 。入力値は保持し、有効な日付条件だけで監査ログを絞り込んでいます。
 
-  .card
+.admin-list-meta
+  span.admin-list-meta__count = list_range
+  = render GuidanceDisclosureComponent.new(title: "一覧表示の範囲", icon: "bi-info-circle") do
+    p = "監査ログは新しい順に1ページ#{page_size}件、最大#{display_limit.to_fs(:delimited)}件まで確認できます。"
+    p.muted CSVの出力範囲は一覧のページ範囲とは別に選択します。
+  - if @access_logs.any?
     = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "監査ログ一覧の表示設定")
 
-  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+- if @access_logs.any?
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "監査ログ一覧" } }) do
+    caption.table-caption.visually-hidden 監査ログ一覧
     thead
       tr
         th data-rails-table-preferences-column-key="accessed_at" 日時
@@ -276,12 +233,6 @@ section.card
   .access-log-empty-state
     p.muted 条件に一致する監査ログはありません。
     p.muted CSV / metadata はこの条件で0件だったことや条件・scopeの確認に使えます。監査ログ行データが存在することを示すものではありません。
-    - if active_filter_summaries.any?
-      p.muted
-        | 有効な条件:
-        - active_filter_summaries.each do |summary|
-          = " "
-          span.badge = summary
     p.muted = "絞り込み条件を見直すか、『条件をクリア』で最新#{page_size}件を確認してください。"
     p.actions
       = link_to "条件をクリア", admin_access_logs_path, class: "button secondary"
@@ -289,3 +240,26 @@ section.card
   p.muted まだ監査ログはありません。
   p.muted = "操作が記録されると、最新#{page_size}件をここで確認できます。"
   p.muted 監査ログが記録された後は、CSV export・metadata確認・表示設定で出力条件と一覧列を確認できます。
+
+= render ListFooterComponent.new(pagination: @access_logs_pagination, url: admin_access_logs_path, params: @pagination_params, label: "監査ログ一覧") do |footer|
+  - footer.with_export do
+    .access-log-export-actions role="region" aria-label="監査ログexportとmetadata確認"
+      = link_to admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary" do
+        i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+        = "現在の条件でCSV export（最新#{export_limit}件）"
+      = render GuidanceDisclosureComponent.new(title: "export補助", icon: "bi-box-arrow-up-right") do
+        section.access-log-export-action-group aria-labelledby="access-log-csv-export-title"
+          h3 id="access-log-csv-export-title" 表示中ページCSV
+          p.muted = "表示中ページCSVは、同じ絞り込み条件とページ番号で表示中の最大#{page_size}件だけを固定列で出力します。"
+          p.actions
+            = link_to admin_access_logs_path(current_page_export_params.merge(format: :csv)), class: "button secondary" do
+              i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+              = "表示中ページをCSV export（最大#{page_size}件）"
+        section.access-log-export-action-group aria-labelledby="access-log-metadata-title"
+          h3 id="access-log-metadata-title" metadata確認
+          p.muted metadata JSON は監査ログ行データではなく、条件・scope・page・summary を確認する補助出力です。
+          p.actions
+            = link_to "CSV条件metadata JSON", admin_access_logs_path(@pagination_params.merge(format: :json)), class: "button secondary"
+            = link_to "表示中ページmetadata JSON", admin_access_logs_path(current_page_export_params.merge(format: :json)), class: "button secondary"
+          p.muted = "最新条件metadataのrow_limitは#{export_limit}、表示中ページmetadataのrow_limitは#{page_size}です。"
+        p.muted = "ページ移動中でも、主導線のCSV exportは表示中ページではなく条件一致の最新#{export_limit}件が対象です。"

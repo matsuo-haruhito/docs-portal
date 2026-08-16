@@ -96,12 +96,9 @@ RSpec.describe "Admin project memberships", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(membership_rows.size).to eq(Admin::ProjectMembershipsController::DEFAULT_PAGE_SIZE)
-    expect(page_text).to include(
-      "表示中: 1-25件 / 全26件",
-      "1ページ25件",
-      "1 / 2ページ"
-    )
-    expect(disabled_pagination_labels).to include("前へ（先頭）")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–25 / 26件")
+    expect(parsed_html.at_css(".list-footer__page-total").text.squish).to eq("/ 2ページ")
+    expect(disabled_pagination_labels).to be_empty
     expect(membership_row_texts).to include(a_string_including("Membership Project 1", "PM-001", "member001@example.com"))
     expect(membership_row_texts).to include(a_string_including("Membership Project 25", "PM-025", "member025@example.com"))
     expect(membership_row_texts).not_to include(a_string_including("PM-026"))
@@ -109,7 +106,7 @@ RSpec.describe "Admin project memberships", type: :request do
     expect(parsed_html.at_css('[data-rails-table-preferences-table-key-value="admin_project_memberships"]')).to be_present
     expect(parsed_html.at_css('.table-scroll[role="region"][tabindex="0"][aria-label="案件所属一覧"]')).to be_present
     expect(parsed_html.at_css("table caption").text.squish).to eq("案件所属一覧")
-    expect(parsed_html.css("table, nav.pagination").map { _1.name }).to eq(%w[table nav])
+    expect(parsed_html.css("table, nav.list-footer__pagination").map { _1.name }).to eq(%w[table nav])
     expect(parsed_html.at_css("body").text.strip).not_to end_with(">")
     expect(parsed_html.at_css(%(a[href="#{admin_project_memberships_path(page: 2, per_page: 25)}"]))).to be_present
   end
@@ -123,8 +120,9 @@ RSpec.describe "Admin project memberships", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(membership_rows.size).to eq(5)
-    expect(page_text).to include("表示中: 1-5件 / 全5件", "1ページ25件", "1 / 1ページ", "1ページのみ")
-    expect(disabled_pagination_labels).to include("前へ（先頭）", "次へ（最終）")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–5 / 5件")
+    expect(parsed_html.at_css("nav.list-footer__pagination")).to be_nil
+    expect(disabled_pagination_labels).to be_empty
   end
 
   it "keeps project code and user email ordering on later pages" do
@@ -136,8 +134,9 @@ RSpec.describe "Admin project memberships", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(membership_rows.size).to eq(1)
-    expect(page_text).to include("表示中: 26-26件 / 全26件", "1ページ25件", "2 / 2ページ", "最終ページ")
-    expect(disabled_pagination_labels).to include("次へ（最終）")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("26–26 / 26件")
+    expect(parsed_html.at_css(".list-footer__page-link.is-current").text.squish).to eq("2")
+    expect(disabled_pagination_labels).to be_empty
     expect(membership_row_texts).to contain_exactly(a_string_including("Membership Project 26", "PM-026", "member026@example.com"))
     expect(parsed_html.at_css(%(a[href="#{admin_project_memberships_path(page: 1, per_page: 25)}"]))).to be_present
   end
@@ -151,14 +150,16 @@ RSpec.describe "Admin project memberships", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(membership_rows.size).to eq(Admin::ProjectMembershipsController::MAX_PAGE_SIZE)
-    expect(page_text).to include("表示中: 1-100件 / 全105件", "1ページ100件", "1 / 2ページ")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–100 / 105件")
+    expect(parsed_html.at_css(".list-footer__page-total").text.squish).to eq("/ 2ページ")
     expect(membership_row_texts).not_to include(a_string_including("PM-101"))
 
     get admin_project_memberships_path, params: { per_page: "invalid", page: -3 }
 
     expect(response).to have_http_status(:ok)
     expect(membership_rows.size).to eq(Admin::ProjectMembershipsController::DEFAULT_PAGE_SIZE)
-    expect(page_text).to include("表示中: 1-25件 / 全105件", "1ページ25件", "1 / 5ページ")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–25 / 105件")
+    expect(parsed_html.at_css(".list-footer__page-total").text.squish).to eq("/ 5ページ")
   end
 
   it "keeps invalid create rerenders bounded with validation errors" do
@@ -174,7 +175,8 @@ RSpec.describe "Admin project memberships", type: :request do
 
     expect(response).to have_http_status(:unprocessable_content)
     expect(membership_rows.size).to eq(3)
-    expect(page_text).to include("表示中: 1-3件 / 全5件", "1ページ3件", "新規登録", "案件所属一覧の表示設定")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–3 / 5件")
+    expect(page_text).to include("新規登録", "案件所属一覧の表示設定")
     expect(membership_row_texts).to include(a_string_including("PM-001"), a_string_including("PM-003"))
     expect(membership_row_texts).not_to include(a_string_including("PM-004"))
     expect(column_keys).to include("project", "user", "role", "actions")

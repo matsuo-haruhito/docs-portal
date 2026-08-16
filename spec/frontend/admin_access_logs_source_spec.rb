@@ -60,7 +60,7 @@ RSpec.describe "admin access logs source" do
   it "wires the access log table through rails table preferences metadata" do
     aggregate_failures do
       expect(view_source).to include("render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: \"監査ログ一覧の表示設定\")")
-      expect(view_source).to include("table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns)")
+      expect(view_source).to include("table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true")
       expect(view_source).to include('data-rails-table-preferences-column-key="accessed_at"')
       expect(view_source).to include('data-rails-table-preferences-column-key="action_type"')
       expect(view_source).to include('data-rails-table-preferences-column-key="target"')

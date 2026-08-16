@@ -5,13 +5,14 @@
 - project_search_limit = Admin::ReadConfirmationsController::PROJECT_SEARCH_LIMIT
 - filter_search_limit = Admin::ReadConfirmationsController::FILTER_SEARCH_LIMIT
 - show_read_confirmations_clear_link = @selected_project.present? || @document_slug.present? || @confirmed_from.present? || @confirmed_to.present? || @invalid_confirmed_date_labels.present? || @selected_company_id.present? || @selected_user_id.present?
+- read_confirmations_pagination = { page: @read_confirmations_page, total_pages: @read_confirmations_total_pages, total_count: @read_confirmations_total_count, from: @read_confirmations_page_start, to: @read_confirmations_page_end }
+- read_confirmations_pagination_params = @read_confirmations_csv_query.to_h.except(:format, "format")
 
 h1 既読確認内訳
 
-section.card
-  h2 絞り込み
-  = form_with url: admin_read_confirmations_path, method: :get, local: true do |form|
-    .form-grid
+= form_with url: admin_read_confirmations_path, method: :get, local: true do |form|
+  = render FilterToolbarComponent.new(label: "既読確認内訳の検索条件") do |toolbar|
+    - toolbar.with_field(size: :remote) do
       = form.rfk_combobox :project_id,
         collection: @projects.map { [read_confirmation_project_option_label(_1), _1.id] },
         selected: read_confirmation_project_selected_option(@selected_project),
@@ -27,16 +28,22 @@ section.card
         placeholder: "案件コード・案件名で検索",
         include_blank: "選択してください",
         allow_clear: true
-      div
-        = form.label :document_slug, "文書名またはURL識別子"
-        = form.search_field :document_slug, value: @document_slug, maxlength: Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH
-        p.muted 最大100文字まで。選択した案件内の文書名またはURL識別子の一部一致で探します。
-      div
-        = form.label :from, "既読確認日時（開始日）"
+    - toolbar.with_field(size: :query) do
+      label
+        | 文書名またはURL識別子
+        = form.rfk_search_field :document_slug,
+          value: @document_slug,
+          wrapper: false,
+          html: { maxlength: Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH }
+    - toolbar.with_field(size: :date) do
+      label
+        | 既読確認日時（開始日）
         = form.date_field :from, value: params[:from].to_s.strip
-      div
-        = form.label :to, "既読確認日時（終了日）"
+    - toolbar.with_field(size: :date) do
+      label
+        | 既読確認日時（終了日）
         = form.date_field :to, value: params[:to].to_s.strip
+    - toolbar.with_field(size: :remote) do
       = form.rfk_combobox :company_id,
         collection: @read_confirmation_companies.map { [_1.display_name, _1.id] },
         selected: read_confirmation_company_selected_option(@selected_company),
@@ -51,6 +58,7 @@ section.card
         label: "会社",
         placeholder: "会社名・ドメインで検索",
         allow_clear: true
+    - toolbar.with_field(size: :remote) do
       = form.rfk_combobox :user_id,
         collection: @read_confirmation_users.map { [[_1.display_name, _1.email_address, _1.company&.display_name].compact_blank.join(" / "), _1.id] },
         selected: read_confirmation_user_selected_option(@selected_user),
@@ -65,12 +73,32 @@ section.card
         label: "確認者",
         placeholder: "確認者名・メール・会社で検索",
         allow_clear: true
-    p.muted 期間は既読確認日時（confirmed_at）を対象にします。文書利用状況の閲覧・ダウンロード集計期間とは別の条件です。
-    p.muted = "案件・会社・確認者は検索語最大#{Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH}文字、候補最大#{project_search_limit}件です。URLで指定済みの値は候補上限外でも復元します。"
-    p.actions
-      = form.submit "表示"
-      - if show_read_confirmations_clear_link
-        = link_to "条件をクリア", admin_read_confirmations_path
+    - toolbar.with_action do
+      = form.submit "表示", class: "button"
+    - if show_read_confirmations_clear_link
+      - toolbar.with_action do
+        = link_to "条件をクリア", admin_read_confirmations_path, class: "button secondary"
+    - if @selected_project.present?
+      - toolbar.with_active_filter do
+        = "案件: #{read_confirmation_project_option_label(@selected_project)}"
+    - if @document_slug.present?
+      - toolbar.with_active_filter do
+        = "文書: #{@document_slug}"
+    - if params[:from].to_s.strip.present? || params[:to].to_s.strip.present?
+      - toolbar.with_active_filter do
+        = "確認日: #{params[:from].to_s.strip.presence || '指定なし'} から #{params[:to].to_s.strip.presence || '指定なし'} まで"
+    - if @selected_company.present?
+      - toolbar.with_active_filter do
+        = "会社: #{@selected_company.display_name}"
+    - if @selected_user.present?
+      - toolbar.with_active_filter do
+        = "確認者: #{@selected_user.display_name}"
+    - toolbar.with_details do
+      = render GuidanceDisclosureComponent.new(title: "検索条件の補足") do
+        ul
+          li 文書名またはURL識別子は最大100文字まで。選択した案件内の文書名またはURL識別子の一部一致で探します。
+          li 期間は既読確認日時を対象にします。文書利用状況の閲覧・ダウンロード集計期間とは別の条件です。
+          li = "案件・会社・確認者は検索語最大#{Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH}文字、候補最大#{project_search_limit}件です。URLで指定済みの値は候補上限外でも復元します。"
 
 - if @selected_project
   - usage_report_params = { project_id: @selected_project.id }
@@ -107,10 +135,10 @@ section.card
     - if @confirmed_from || @confirmed_to
       p
         | 既読確認日時の期間:
-        strong = " #{@confirmed_from&.strftime("%Y-%m-%d") || "指定なし"} から #{@confirmed_to&.strftime("%Y-%m-%d") || "指定なし"} まで"
+        strong = " #{@confirmed_from&.strftime('%Y-%m-%d') || '指定なし'} から #{@confirmed_to&.strftime('%Y-%m-%d') || '指定なし'} まで"
       p.muted この期間は既読確認日時だけに適用され、文書利用状況の閲覧・ダウンロード集計期間は変更しません。
     - if @invalid_confirmed_date_labels.present?
-      p.muted = "日付として読み取れない#{@invalid_confirmed_date_labels.join("・")}は条件から外しています。入力欄の値は確認用に残しています。"
+      p.muted = "日付として読み取れない#{@invalid_confirmed_date_labels.join('・')}は条件から外しています。入力欄の値は確認用に残しています。"
     - if @selected_company
       p
         | 会社:
@@ -125,57 +153,16 @@ section.card
         strong = " #{@selected_user.company&.display_name || '-'}"
     - elsif @selected_user_id.present?
       p.muted 指定した確認者はこの案件の既読確認候補に見つかりません。
-    p
-      = link_to "文書利用状況へ戻る", admin_document_usage_reports_path(usage_report_params), data: { turbo_frame: "_top" }
-      |  /
-      = link_to admin_read_confirmations_path(@read_confirmations_csv_query), data: { turbo_frame: "_top" } do
-        i.bi.bi-filetype-csv.me-1 aria-hidden="true"
-        | CSV出力
-    p.muted
-      | 表示中:
-      strong = " #{@read_confirmations.size}件"
-      - if @read_confirmations_page == 1
-        |  / 条件に一致した既読確認を新しい順に最新200件まで表示
-      - else
-        |  / 条件に一致した既読確認を新しい順に1ページ200件まで表示
-    p.muted
-      | 表示範囲:
-      strong = " #{@read_confirmations_page_start}-#{@read_confirmations_page_end}件目"
-      |  / 条件一致
-      strong = " #{@read_confirmations_total_count}件"
-      |  / Page #{@read_confirmations_page} / #{@read_confirmations_total_pages}
-    - if @read_confirmations_total_pages > 1
-      p.actions
-        - if @read_confirmations_previous_page_query
-          - previous_read_confirmations_page = @read_confirmations_page - 1
-          - previous_read_confirmations_page_cue = "既読確認内訳の#{previous_read_confirmations_page}ページ目へ戻る（#{@read_confirmations_total_pages}ページ中、1ページ200件）"
-          = link_to "前へ",
-            admin_read_confirmations_path(@read_confirmations_previous_page_query),
-            class: "button secondary",
-            title: previous_read_confirmations_page_cue,
-            aria: { label: previous_read_confirmations_page_cue }
-        - else
-          span.button.secondary aria-disabled="true"
-            | 前へ
-        - if @read_confirmations_next_page_query
-          - next_read_confirmations_page = @read_confirmations_page + 1
-          - next_read_confirmations_page_cue = "既読確認内訳の#{next_read_confirmations_page}ページ目へ進む（#{@read_confirmations_total_pages}ページ中、1ページ200件）"
-          = link_to "次へ",
-            admin_read_confirmations_path(@read_confirmations_next_page_query),
-            class: "button secondary",
-            title: next_read_confirmations_page_cue,
-            aria: { label: next_read_confirmations_page_cue }
-        - else
-          span.button.secondary aria-disabled="true"
-            | 次へ
+    p = link_to "文書利用状況へ戻る", admin_document_usage_reports_path(usage_report_params), data: { turbo_frame: "_top" }
     p.muted CSV出力にも同じ絞り込み条件と現在のページ範囲を反映します。表示設定はCSVの列や条件には影響しません。
 
   - if @read_confirmations.any?
-    section.card
-      h2 表示設定
+    .admin-list-meta
+      span.admin-list-meta__count = "#{@read_confirmations_page_start}–#{@read_confirmations_page_end} / #{@read_confirmations_total_count}件"
       = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "既読確認内訳の表示設定")
 
-    = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+    = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "既読確認内訳" } }) do
+      caption.table-caption.visually-hidden 既読確認内訳
       thead
         tr
           th data-rails-table-preferences-column-key="confirmed_at" 確認日時
@@ -208,6 +195,12 @@ section.card
         p.muted CSV出力は現在の絞り込み条件とページ範囲を反映します。この状態で出力すると、ヘッダーのみの空のCSVになります。
         p.actions
           = link_to "案件だけ残して条件を解除", admin_read_confirmations_path(project_id: @selected_project.id), class: "button secondary"
+
+  = render ListFooterComponent.new(pagination: read_confirmations_pagination, url: admin_read_confirmations_path, params: read_confirmations_pagination_params, label: "既読確認内訳") do |footer|
+    - footer.with_export do
+      = link_to admin_read_confirmations_path(@read_confirmations_csv_query), class: "button secondary", data: { turbo_frame: "_top" } do
+        i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+        | CSV出力
 - else
   section.card
     h2 案件を選択してください

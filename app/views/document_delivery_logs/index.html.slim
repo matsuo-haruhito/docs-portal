@@ -20,22 +20,14 @@
 - current_delivery_logs_path = document_delivery_logs_path(current_page_params)
 - current_delivery_logs_csv_path = document_delivery_logs_path(current_filter_params.merge(format: :csv))
 - has_active_filters = @query.present? || @status_filter.present? || @delivery_type_filter.present? || current_created_from.present? || current_created_to.present? || current_sent_from.present? || current_sent_to.present?
-- active_filter_summary_items = []
-- active_filter_summary_items << "検索語: #{current_query}" if current_query.present?
-- if current_created_from.present? || current_created_to.present?
-  - active_filter_summary_items << "作成日: #{current_created_from.presence || "指定なし"} から #{current_created_to.presence || "指定なし"} まで"
-- if current_sent_from.present? || current_sent_to.present?
-  - active_filter_summary_items << "送信日時: #{current_sent_from.presence || "指定なし"} から #{current_sent_to.presence || "指定なし"} まで"
-- active_filter_summary_items << "状態: #{status_labels.fetch(@status_filter)}" if @status_filter.present?
-- active_filter_summary_items << "方式: #{delivery_type_labels.fetch(@delivery_type_filter)}" if @delivery_type_filter.present?
 - delivery_logs_total_count = @delivery_logs_total_count.to_i
 - delivery_logs_limit = @delivery_logs_limit.to_i
 - delivery_logs_page = @delivery_logs_page.to_i
 - delivery_logs_total_pages = @delivery_logs_total_pages.to_i
 - delivery_logs_offset = @delivery_logs_offset.to_i
-- delivery_logs_display_count = @delivery_logs.size
-- delivery_logs_visible_start = delivery_logs_offset + 1
-- delivery_logs_visible_end = delivery_logs_offset + delivery_logs_display_count
+- delivery_logs_visible_start = delivery_logs_total_count.zero? ? 0 : delivery_logs_offset + 1
+- delivery_logs_visible_end = delivery_logs_offset + @delivery_logs.size
+- delivery_logs_pagination = { page: delivery_logs_page, total_pages: delivery_logs_total_pages, total_count: delivery_logs_total_count, from: delivery_logs_visible_start, to: delivery_logs_visible_end }
 - table_key = :document_delivery_logs
 - table_columns = document_delivery_log_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
@@ -48,78 +40,93 @@ p.muted
   | #{status_labels.fetch("draft")} #{summary_status_counts.fetch("draft", 0)}件 / #{status_labels.fetch("sent")} #{summary_status_counts.fetch("sent", 0)}件 / #{status_labels.fetch("failed")} #{summary_status_counts.fetch("failed", 0)}件
 
 = form_with url: document_delivery_logs_path, method: :get, local: true do |form|
-  - if @status_filter.present?
-    = hidden_field_tag :status, @status_filter
-  - if @delivery_type_filter.present?
-    = hidden_field_tag :delivery_type, @delivery_type_filter
-  p.actions
-    = form.search_field :q, value: @query, placeholder: "案件名・案件コード・宛先/CC/BCC・件名・失敗理由で検索", maxlength: DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH, aria: { label: "送付履歴を検索" }
-    span.muted 作成日
-    = form.date_field :created_from, value: current_created_from, aria: { label: "作成日（開始）" }
-    span.muted から
-    = form.date_field :created_to, value: current_created_to, aria: { label: "作成日（終了）" }
-    span.muted まで
-    span.muted 送信日時
-    = form.date_field :sent_from, value: current_sent_from, aria: { label: "送信日時（開始）" }
-    span.muted から
-    = form.date_field :sent_to, value: current_sent_to, aria: { label: "送信日時（終了）" }
-    span.muted まで
-    = form.submit "検索", class: "button"
+  = render FilterToolbarComponent.new(label: "送付履歴の検索条件") do |toolbar|
+    - toolbar.with_field(size: :query) do
+      label
+        | キーワード
+        = form.rfk_search_field :q,
+          value: @query,
+          placeholder: "案件名・案件コード・宛先/CC/BCC・件名・失敗理由で検索",
+          wrapper: false,
+          html: { maxlength: DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH, aria: { label: "送付履歴を検索" } }
+    - toolbar.with_field(size: :enum) do
+      = form.rfk_select :status,
+        collection: status_labels.map { |status, label| ["#{label} (#{status_filter_counts.fetch(status, 0)})", status] },
+        selected: @status_filter.presence,
+        include_blank: "すべて (#{status_total_count})",
+        wrapper: true,
+        label: "状態",
+        allow_clear: true,
+        placeholder: "すべて"
+    - toolbar.with_field(size: :enum) do
+      = form.rfk_select :delivery_type,
+        collection: delivery_type_labels.map { |delivery_type, label| ["#{label} (#{delivery_type_counts.fetch(delivery_type, 0)})", delivery_type] },
+        selected: @delivery_type_filter.presence,
+        include_blank: "すべて (#{delivery_type_total_count})",
+        wrapper: true,
+        label: "方式",
+        allow_clear: true,
+        placeholder: "すべて"
+    - toolbar.with_field(size: :date) do
+      label
+        | 作成日（開始）
+        = form.date_field :created_from, value: current_created_from, aria: { label: "作成日（開始）" }
+    - toolbar.with_field(size: :date) do
+      label
+        | 作成日（終了）
+        = form.date_field :created_to, value: current_created_to, aria: { label: "作成日（終了）" }
+    - toolbar.with_field(size: :date) do
+      label
+        | 送信日時（開始）
+        = form.date_field :sent_from, value: current_sent_from, aria: { label: "送信日時（開始）" }
+    - toolbar.with_field(size: :date) do
+      label
+        | 送信日時（終了）
+        = form.date_field :sent_to, value: current_sent_to, aria: { label: "送信日時（終了）" }
+    - toolbar.with_action do
+      = form.submit "検索", class: "button"
     - if @query.present?
-      = link_to "検索をクリア", document_delivery_logs_path({ status: @status_filter.presence, delivery_type: @delivery_type_filter.presence }.merge(current_date_filter_params).compact), class: "button secondary"
+      - toolbar.with_action do
+        = link_to "検索をクリア", document_delivery_logs_path({ status: @status_filter.presence, delivery_type: @delivery_type_filter.presence }.merge(current_date_filter_params).compact), class: "button secondary"
     - if current_created_date_filter_params.any?
-      = link_to "作成日をクリア", document_delivery_logs_path({ q: current_query, status: @status_filter.presence, delivery_type: @delivery_type_filter.presence }.merge(current_sent_date_filter_params).compact), class: "button secondary"
+      - toolbar.with_action do
+        = link_to "作成日をクリア", document_delivery_logs_path({ q: current_query, status: @status_filter.presence, delivery_type: @delivery_type_filter.presence }.merge(current_sent_date_filter_params).compact), class: "button secondary"
     - if current_sent_date_filter_params.any?
-      = link_to "送信日時をクリア", document_delivery_logs_path({ q: current_query, status: @status_filter.presence, delivery_type: @delivery_type_filter.presence }.merge(current_created_date_filter_params).compact), class: "button secondary"
-p.muted = "検索語は最大#{DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH}文字です。案件名・案件コード・宛先/CC/BCC・件名・失敗理由の断片で探せます。"
-p.muted 作成日は履歴を作成した日、送信日時は送付済みとして記録された日です。日付範囲は日単位で、開始日はその日の始まりから、終了日はその日の終わりまで含みます。
-p.muted 送信日時を指定すると、送信日時が未記録の下書きは対象外です。
+      - toolbar.with_action do
+        = link_to "送信日時をクリア", document_delivery_logs_path({ q: current_query, status: @status_filter.presence, delivery_type: @delivery_type_filter.presence }.merge(current_created_date_filter_params).compact), class: "button secondary"
+    - if current_query.present?
+      - toolbar.with_active_filter do
+        = "現在の絞り込み条件: 検索語: #{current_query}"
+    - if current_created_from.present? || current_created_to.present?
+      - toolbar.with_active_filter do
+        = "作成日: #{current_created_from.presence || '指定なし'} から #{current_created_to.presence || '指定なし'} まで"
+    - if current_sent_from.present? || current_sent_to.present?
+      - toolbar.with_active_filter do
+        = "送信日時: #{current_sent_from.presence || '指定なし'} から #{current_sent_to.presence || '指定なし'} まで"
+    - if @status_filter.present?
+      - toolbar.with_active_filter do
+        = "状態: #{status_labels.fetch(@status_filter)}"
+    - if @delivery_type_filter.present?
+      - toolbar.with_active_filter do
+        = "方式: #{delivery_type_labels.fetch(@delivery_type_filter)}"
+    - toolbar.with_details do
+      = render GuidanceDisclosureComponent.new(title: "検索条件の補足") do
+        ul
+          li = "検索語は最大#{DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH}文字です。案件名・案件コード・宛先/CC/BCC・件名・失敗理由の断片で探せます。"
+          li 作成日は履歴を作成した日、送信日時は送付済みとして記録された日です。日付範囲は日単位で、開始日はその日の始まりから、終了日はその日の終わりまで含みます。
+          li 送信日時を指定すると、送信日時が未記録の下書きは対象外です。
+
 - if @created_date_filter_invalid
   p.muted 作成日は YYYY-MM-DD 形式で指定してください。無効な日付は絞り込みに使いません。
 - if @sent_date_filter_invalid
   p.muted 送信日時は YYYY-MM-DD 形式で指定してください。無効な日付は絞り込みに使いません。
 
-p.actions
-  = link_to current_delivery_logs_csv_path, class: "button secondary" do
-    i.bi.bi-filetype-csv.me-1 aria-hidden="true"
-    | CSV出力
-  span.muted = "現在の絞り込み条件に一致する最新#{delivery_logs_limit}件を固定列で出力します。表示設定はCSV列に影響しません。"
-
-p.actions
-  span.muted 状態:
-  = link_to "すべて (#{status_total_count})", document_delivery_logs_path(current_query_and_date_params.merge(delivery_type: @delivery_type_filter.presence).compact), class: @status_filter.blank? ? "button" : "button secondary"
-  - status_labels.each do |status, label|
-    = link_to "#{label} (#{status_filter_counts.fetch(status, 0)})", document_delivery_logs_path(current_query_and_date_params.merge(status:, delivery_type: @delivery_type_filter.presence).compact), class: @status_filter == status ? "button" : "button secondary"
-
-p.actions
-  span.muted 方式:
-  = link_to "すべて (#{delivery_type_total_count})", document_delivery_logs_path(current_query_and_date_params.merge(status: @status_filter.presence).compact), class: @delivery_type_filter.blank? ? "button" : "button secondary"
-  - delivery_type_labels.each do |delivery_type, label|
-    = link_to "#{label} (#{delivery_type_counts.fetch(delivery_type, 0)})", document_delivery_logs_path(current_query_and_date_params.merge(status: @status_filter.presence, delivery_type:).compact), class: @delivery_type_filter == delivery_type ? "button" : "button secondary"
-
-- if active_filter_summary_items.any?
-  section.delivery-log-active-filters aria-label="現在の絞り込み条件"
-    p.muted = "現在の絞り込み条件: #{active_filter_summary_items.join(" / ")}"
-    - if delivery_logs_page > 1
-      p.muted 表示件数はこの条件に一致した履歴のうち、現在のページに表示している件数です。
-    - else
-      p.muted 表示件数はこの条件に一致した履歴のうち、先頭から表示している件数です。
-
 - if @delivery_logs.any?
-  - if delivery_logs_total_count <= delivery_logs_limit && delivery_logs_page == 1
-    p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。"
-  - else
-    p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。現在のページ: #{delivery_logs_visible_start}-#{delivery_logs_visible_end}件。1ページあたり最大#{delivery_logs_limit}件です。"
-    p.muted さらに絞り込む場合は検索・状態・方式フィルタを使ってください。
-  - if delivery_logs_total_pages > 1
-    nav.pagination aria-label="送付履歴一覧のページ移動" style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;margin-top:0.75rem;margin-bottom:0.75rem;"
-      - if delivery_logs_page > 1
-        = link_to "前へ", document_delivery_logs_path(current_filter_params.merge(page: delivery_logs_page - 1)), class: "button secondary", rel: "prev"
-      span.muted = "#{delivery_logs_page} / #{delivery_logs_total_pages}ページ"
-      - if delivery_logs_page < delivery_logs_total_pages
-        = link_to "次へ", document_delivery_logs_path(current_filter_params.merge(page: delivery_logs_page + 1)), class: "button secondary", rel: "next"
-  = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "送付履歴一覧の表示設定")
-  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+  .admin-list-meta
+    span.admin-list-meta__count = "#{delivery_logs_visible_start}–#{delivery_logs_visible_end} / #{delivery_logs_total_count}件"
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "送付履歴一覧の表示設定")
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "送付履歴一覧" } }) do
+    caption.table-caption.visually-hidden 送付履歴一覧
     thead
       tr
         th data={ rails_table_preferences_column_key: "created_at" } 作成日時
@@ -158,12 +165,16 @@ p.actions
             - else
               span.muted "-"
 - elsif has_active_filters
-  - if @query.present?
-    p.muted 検索条件に一致する送付履歴はありません。
-  - else
-    p.muted 条件に一致する送付履歴はありません。
-  p.muted 検索語・状態・方式・日付条件を見直すか、「すべての送付履歴を見る」で条件を解除してください。
-  p.actions
-    = link_to "すべての送付履歴を見る", document_delivery_logs_path, class: "button secondary"
+  - empty_heading = @query.present? ? "検索条件に一致する送付履歴はありません。" : "条件に一致する送付履歴はありません。"
+  = render EmptyStateComponent.new(heading: empty_heading, description: "検索語・状態・方式・日付条件を見直すか、すべての送付履歴を表示してください。") do |component|
+    - component.with_action do
+      = link_to "すべての送付履歴を見る", document_delivery_logs_path, class: "button secondary"
 - else
-  p.muted 送付履歴はありません。
+  = render EmptyStateComponent.new(heading: "送付履歴はありません。", description: "社外への文書送付を記録すると、ここに履歴が表示されます。")
+
+= render ListFooterComponent.new(pagination: delivery_logs_pagination, url: document_delivery_logs_path, params: current_filter_params, label: "送付履歴一覧") do |footer|
+  - footer.with_export do
+    = link_to current_delivery_logs_csv_path, class: "button secondary" do
+      i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+      | CSV出力
+    span.muted = "現在の絞り込み条件に一致する最新#{delivery_logs_limit}件を固定列で出力します。表示設定はCSV列に影響しません。"

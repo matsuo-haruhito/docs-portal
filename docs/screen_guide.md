@@ -11,14 +11,14 @@
 
 ### 公開側
 
-- [利用者ダッシュボード](#利用者ダッシュボード)
+- [ホーム](#ホーム)
 - [案件文書ツリー](#案件文書ツリー)
 - [ログイン](#ログイン)
 
 ### 管理画面
 
-- [管理ダッシュボード](#管理ダッシュボード)
-- [診断](#診断)
+- [管理概要](#管理概要)
+- [運用・診断](#運用診断)
 - [文書マスタ一覧](#文書マスタ一覧)
 - [案件一覧](#案件一覧)
 - [文書権限一覧](#文書権限一覧)
@@ -26,7 +26,7 @@
 - [document_catalogs 一覧](#documentcatalogs-一覧)
 - [companies 一覧](#companies-一覧)
 - [users 一覧](#users-一覧)
-- [project_memberships 一覧](#projectmemberships-一覧)
+- [案件所属一覧](#案件所属一覧)
 - [consent_terms 一覧](#consentterms-一覧)
 - [project_consent_settings 一覧](#projectconsentsettings-一覧)
 - [Git連携設定一覧](#git連携設定一覧)
@@ -41,22 +41,22 @@
 ### システム管理
 
 - [Webhook設定一覧](#webhook設定一覧)
-- [webhook_deliveries 一覧](#webhookdeliveries-一覧)
-- [アクセスログ](#アクセスログ)
+- [Webhook送信履歴](#webhook送信履歴)
+- [監査ログ](#監査ログ)
 - [access_requests 一覧](#accessrequests-一覧)
 - [document_usage_reports 一覧](#documentusagereports-一覧)
 - [read_confirmations 一覧](#readconfirmations-一覧)
 - [recurring_job_schedules 一覧](#recurringjobschedules-一覧)
-- [generated_file_events 一覧](#generatedfileevents-一覧)
-- [generated_file_runs 一覧](#generatedfileruns-一覧)
+- [生成ファイルイベント一覧](#生成ファイルイベント一覧)
+- [生成ファイル実行履歴](#生成ファイル実行履歴)
 
 ---
 
 ## 公開側
 
-### 利用者ダッシュボード
+### ホーム
 
-**用途:** 外部利用者がアクセス可能な案件と文書を確認する
+**用途:** 外部利用者がアクセス可能な案件・文書と保存済み情報を確認する
 
 #### メイン画面
 
@@ -96,9 +96,9 @@
 
 ## 管理画面
 
-### 管理ダッシュボード
+### 管理概要
 
-**用途:** 管理者が管理画面トップで全体状況を確認する
+**用途:** 管理者が管理画面トップで要対応事項と主要データへの導線を確認する
 
 #### メイン画面
 
@@ -109,9 +109,9 @@
 
 ![メイン画面](screenshots/admin-dashboard.png)
 
-### 診断
+### 運用・診断
 
-**用途:** 管理者がシステム構成と要対応事項を診断する
+**用途:** 管理者が要対応事項、運用失敗、設定、文書ファイル、Storageをread-onlyで確認する
 
 #### 一覧画面
 
@@ -229,11 +229,17 @@
 
 ![編集画面](screenshots/admin-users-edit.png)
 
-### project_memberships 一覧
+### 案件所属一覧
 
-**用途:** 管理者がproject_membershipsの一覧画面で業務情報を確認する
+**用途:** 管理者が案件と利用者の所属・権限を検索して管理する
 
 #### 一覧画面
+
+**この画面での操作:**
+
+- 案件・利用者・権限による所属の検索
+- 案件所属の登録・編集・削除
+- 複数ページ時のページ移動とページ指定
 
 ![一覧画面](screenshots/admin-project-memberships-index.png)
 
@@ -379,11 +385,18 @@
 
 ![編集画面](screenshots/admin-webhook-endpoints-edit.png)
 
-### webhook_deliveries 一覧
+### Webhook送信履歴
 
-**用途:** 管理者がwebhook_deliveriesの一覧画面で業務情報を確認する
+**用途:** 管理者がWebhookの送信履歴を条件指定して対象の詳細を確認する
 
 #### 一覧画面
+
+**この画面での操作:**
+
+- Webhook設定・イベント・状態による送信履歴の検索
+- HTTPステータス・エラー断片・作成日範囲による絞り込み
+- 検索条件を保持したページ移動と詳細確認
+- 列表示と列幅の変更
 
 ![一覧画面](screenshots/admin-webhook-deliveries-index.png)
 
@@ -391,9 +404,9 @@
 
 ![詳細画面](screenshots/admin-webhook-deliveries-show.png)
 
-### アクセスログ
+### 監査ログ
 
-**用途:** 管理者がポータルへのアクセス履歴を監査する
+**用途:** 管理者がポータルへのアクセス履歴を条件指定して監査する
 
 #### 一覧画面
 
@@ -444,11 +457,17 @@
 
 ![詳細画面](screenshots/admin-recurring-job-schedules-show.png)
 
-### generated_file_events 一覧
+### 生成ファイルイベント一覧
 
-**用途:** 管理者がgenerated_file_eventsの一覧画面で業務情報を確認する
+**用途:** 管理者がファイル変更イベントを検索し、生成処理への投入状況を確認する
 
 #### 一覧画面
+
+**この画面での操作:**
+
+- イベント識別子・path・状態・操作種別による検索
+- 実行予定日の範囲による絞り込み
+- 現在の条件に一致する失敗イベントだけの一括再投入
 
 ![一覧画面](screenshots/admin-generated-file-events-index.png)
 
@@ -456,11 +475,17 @@
 
 ![詳細画面](screenshots/admin-generated-file-events-show.png)
 
-### generated_file_runs 一覧
+### 生成ファイル実行履歴
 
-**用途:** 管理者がgenerated_file_runsの一覧画面で業務情報を確認する
+**用途:** 管理者が生成Jobの実行履歴を検索し、失敗対象と処理結果を確認する
 
 #### 一覧画面
+
+**この画面での操作:**
+
+- 実行ID・Job ID・状態・生成先による検索
+- 作成日の範囲による絞り込み
+- 現在の条件に一致する失敗履歴だけの一括再実行
 
 ![一覧画面](screenshots/admin-generated-file-runs-index.png)
 

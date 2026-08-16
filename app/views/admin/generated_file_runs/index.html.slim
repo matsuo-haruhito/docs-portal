@@ -10,6 +10,12 @@
 - table_key = :admin_generated_file_runs
 - table_columns = generated_file_run_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- query_max_length = Admin::GeneratedFileRunsController::QUERY_MAX_LENGTH
+- page_offset = (@page - 1) * @per_page
+- page_start = @total_count.zero? ? 0 : page_offset + 1
+- page_end = page_offset + @generated_file_runs.size
+- pagination = { page: @page, total_pages: @total_pages, total_count: @total_count, from: page_start, to: page_end }
+- pagination_params = request.query_parameters.merge(per_page: @per_page)
 
 .space-y-6
   .flex.items-start.justify-between.gap-4
@@ -50,54 +56,61 @@
         - @filter_warnings.each do |warning|
           li = warning
 
-  = form_with url: admin_generated_file_runs_path, method: :get, local: true, class: "rounded-lg border bg-white p-4" do |form|
-    div class="grid grid-cols-1 gap-3 md:grid-cols-4"
-      div class="md:col-span-2"
-        = form.label :q, "実行ID / パス / エラー / メタデータ断片", class: "block text-sm font-semibold"
-        = form.text_field :q, value: @filters[:q], placeholder: "gfr... / docs/source.yml / timeout / event id", maxlength: Admin::GeneratedFileRunsController::QUERY_MAX_LENGTH, class: "mt-1 w-full rounded border px-2 py-1"
-        p.mt-1.text-xs.text-gray-500
-          | 検索語は最大
-          = Admin::GeneratedFileRunsController::QUERY_MAX_LENGTH
-          | 文字です。入力パス・変更ファイル・生成パス・エラー文・補助メタデータを、ジョブ診断用の短い断片として検索します。長いメタデータJSON、raw payload、エラー全文、token-like value、private path は貼り付けず、gfr...、path の一部、短い error 断片、event public ID などで探してください。
-      div
-        = form.label :status, "状態", class: "block text-sm font-semibold"
+  = form_with url: admin_generated_file_runs_path, method: :get, local: true do |form|
+    = render FilterToolbarComponent.new(label: "生成ファイル実行履歴の検索条件") do |toolbar|
+      - toolbar.with_field(size: :query) do
+        label
+          | 実行ID / パス / エラー / メタデータ断片
+          = form.rfk_search_field :q,
+            value: @filters[:q],
+            placeholder: "gfr... / docs/source.yml / timeout / event id",
+            wrapper: false,
+            html: { maxlength: query_max_length, aria: { label: "実行ID、パス、エラー、メタデータ断片で検索" } }
+      - toolbar.with_field(size: :enum) do
         = form.rfk_select :status,
           collection: GeneratedFileRun.statuses.keys.map { [generated_file_run_status_label(_1), _1] },
           selected: @filters[:status].presence,
           include_blank: "すべて",
-          wrapper: false,
+          wrapper: true,
+          label: "状態",
           allow_clear: true,
           placeholder: "すべて"
-      div
-        = form.label :job_id, "ジョブID", class: "block text-sm font-semibold"
-        = form.text_field :job_id, value: @filters[:job_id], class: "mt-1 w-full rounded border px-2 py-1"
-      div
-        = form.label :generator, "ジェネレーター", class: "block text-sm font-semibold"
-        = form.text_field :generator, value: @filters[:generator], class: "mt-1 w-full rounded border px-2 py-1"
-      div
-        = form.label :output_writer, "出力先", class: "block text-sm font-semibold"
-        = form.text_field :output_writer, value: @filters[:output_writer], class: "mt-1 w-full rounded border px-2 py-1"
-      div
-        = form.label :event_source, "イベント発生元", class: "block text-sm font-semibold"
-        = form.text_field :event_source, value: @filters[:event_source], class: "mt-1 w-full rounded border px-2 py-1"
-      div
-        = form.label :created_from, "作成日(開始)", class: "block text-sm font-semibold"
-        = form.text_field :created_from, value: @filters[:created_from], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1"
-        p.mt-1.text-xs.text-gray-500 日付だけ指定すると、その日の00:00以降を含みます。
-      div
-        = form.label :created_to, "作成日(終了)", class: "block text-sm font-semibold"
-        = form.text_field :created_to, value: @filters[:created_to], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1"
-        p.mt-1.text-xs.text-gray-500 日付だけ指定すると、その日の23:59までを含みます。
-      .flex.items-end.gap-2
-        = form.submit "絞り込み", class: "rounded bg-blue-600 px-3 py-2 text-sm text-white"
-        - if has_active_filters
-          = link_to "絞り込みを解除", admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm"
-
-  = render "admin/shared/pagination",
-    total_count: @total_count,
-    page: @page,
-    total_pages: @total_pages,
-    path: ->(target_page) { admin_generated_file_runs_path(request.query_parameters.merge(page: target_page, per_page: @per_page)) }
+      - toolbar.with_field(size: :short) do
+        label
+          | ジョブID
+          = form.text_field :job_id, value: @filters[:job_id]
+      - toolbar.with_field(size: :short) do
+        label
+          | ジェネレーター
+          = form.text_field :generator, value: @filters[:generator]
+      - toolbar.with_field(size: :short) do
+        label
+          | 出力先
+          = form.text_field :output_writer, value: @filters[:output_writer]
+      - toolbar.with_field(size: :short) do
+        label
+          | イベント発生元
+          = form.text_field :event_source, value: @filters[:event_source]
+      - toolbar.with_field(size: :date) do
+        label
+          | 作成日(開始)
+          = form.text_field :created_from, value: @filters[:created_from], placeholder: "YYYY-MM-DD"
+      - toolbar.with_field(size: :date) do
+        label
+          | 作成日(終了)
+          = form.text_field :created_to, value: @filters[:created_to], placeholder: "YYYY-MM-DD"
+      - toolbar.with_action do
+        = form.submit "絞り込み", class: "button"
+      - if has_active_filters
+        - toolbar.with_action do
+          = link_to "絞り込みを解除", admin_generated_file_runs_path, class: "button secondary"
+      - toolbar.with_details do
+        = render GuidanceDisclosureComponent.new(title: "検索条件の補足") do
+          ul
+            li = "検索語は最大#{query_max_length}文字です。入力パス・変更ファイル・生成パス・エラー文・補助メタデータを、ジョブ診断用の短い断片として検索します。"
+            li 長いメタデータJSON、raw payload、エラー全文、token-like value、private path は貼り付けず、gfr...、path の一部、短い error 断片、event public ID などで探してください。
+            li 日付だけ指定すると、その日の00:00以降を含みます。
+            li 日付だけ指定すると、その日の23:59までを含みます。
 
   - if @generated_file_runs.any?
     .rounded-lg.border.bg-white.p-4
@@ -150,3 +163,5 @@
                   p 生成ファイル実行履歴はまだありません。
                   p.text-sm 生成対象のファイル CRUD イベントが処理されると、ここに Job 単位の履歴が表示されます。履歴 0 件は、生成処理が成功していることやエラーがないことを示すものではありません。
                   p.actions.mt-3 = link_to "生成ファイルイベント一覧を確認する", admin_generated_file_events_path, class: "rounded border px-3 py-2 text-sm"
+
+  = render ListFooterComponent.new(pagination: pagination, url: admin_generated_file_runs_path, params: pagination_params, label: "生成ファイル実行履歴一覧")

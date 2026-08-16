@@ -43,7 +43,7 @@ RSpec.describe "Document bookmark recent search project code", type: :request do
     get document_bookmarks_path, params: { view: "recent", recent_q: "not-found" }
 
     links = Nokogiri::HTML(response.body).css("#recent-documents a").map { _1.text.squish }
-    expect(links).to include("最近見た条件をクリア", "案件一覧から探す", "文書一覧から探す")
+    expect(links).to include("条件をクリア", "案件一覧から探す", "文書一覧から探す")
     expect(response.body).not_to include("Guide")
   end
 end

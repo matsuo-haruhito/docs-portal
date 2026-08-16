@@ -29,11 +29,14 @@ RSpec.describe "Admin access log remote filters", type: :request do
 
   it "renders remote combobox filters and restores selected values outside bounded candidates" do
     55.times { |index| create(:project, code: format("P%02d", index), name: "Project #{index}") }
-    55.times { |index| create(:company, domain: format("company%02d.example.com", index), name: "Company #{index}") }
-    55.times { |index| create(:user, :internal, email_address: format("user%02d@example.com", index), name: "User #{index}") }
+    55.times { |index| create(:company, domain: format("access-log-company%02d.example.com", index), name: "Company #{index}") }
+    users_company = create(:company, domain: "filter-users.example.com", name: "Filter Users Company")
+    55.times do |index|
+      create(:user, :internal, company: users_company, email_address: format("access-log-user%02d@remote-filter.example.com", index), name: "User #{index}")
+    end
     selected_project = create(:project, code: "ZZZ", name: "Zeta Project")
     selected_company = create(:company, domain: "zzz.example.com", name: "Zeta Company")
-    selected_user = create(:user, :internal, email_address: "zzz-user@example.com", name: "Zeta User")
+    selected_user = create(:user, :internal, company: users_company, email_address: "zzz-access-log-user@remote-filter.example.com", name: "Zeta User")
 
     get admin_access_logs_path(project_id: selected_project.id, company_id: selected_company.id, user_id: selected_user.id)
 
@@ -50,7 +53,7 @@ RSpec.describe "Admin access log remote filters", type: :request do
     expect(selected_filter_value("user_id")).to eq(selected_user.id.to_s)
     expect(page_text).to include("案件: ZZZ / Zeta Project")
     expect(page_text).to include("会社: Zeta Company / zzz.example.com")
-    expect(page_text).to include("ユーザー: Zeta User / zzz-user@example.com")
+    expect(page_text).to include("ユーザー: Zeta User / zzz-access-log-user@remote-filter.example.com")
   end
 
   it "returns bounded project, company, and user search options" do

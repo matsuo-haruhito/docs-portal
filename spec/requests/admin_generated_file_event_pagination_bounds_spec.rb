@@ -29,7 +29,7 @@ RSpec.describe "Admin generated file event pagination bounds", type: :request do
     expect(response.body).not_to include(newest.public_id)
     expect(response.body).not_to include(middle.public_id)
     expect(response.body).not_to include(pending.public_id)
-    expect(page_text).to include("全 3 件 / 2 / 2 ページ")
+    expect(page_text).to include("3–3 / 3件")
     expect(page_text).not_to include("検索条件に一致する生成ファイルイベントはありません。")
     expect(link_hrefs).to include(admin_generated_file_events_path(status: "failed", page: 1, per_page: 2))
   end
@@ -44,14 +44,14 @@ RSpec.describe "Admin generated file event pagination bounds", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(newest.public_id)
     expect(response.body).not_to include(older.public_id)
-    expect(page_text).to include("全 2 件 / 1 / 2 ページ")
+    expect(page_text).to include("1–1 / 2件")
 
     get admin_generated_file_events_path(page: "bad", per_page: 1)
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(newest.public_id)
     expect(response.body).not_to include(older.public_id)
-    expect(page_text).to include("全 2 件 / 1 / 2 ページ")
+    expect(page_text).to include("1–1 / 2件")
   end
 
   private

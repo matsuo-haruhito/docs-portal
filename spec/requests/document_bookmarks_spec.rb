@@ -58,7 +58,7 @@ RSpec.describe "Document bookmarks", type: :request do
     expect_server_rendered_tab_contract(active_tab_id: "favorite-tab", active_panel_id: "favorite-bookmarks")
     expect(parsed_html.at_css("#read-later-bookmarks")).to be_nil
     expect(parsed_html.at_css("#recent-documents")).to be_nil
-    expect(parsed_html.at_css("section.bookmark-filter h2.bookmark-filter__heading").text.squish).to eq("絞り込み")
+    expect(parsed_html.at_css('section.filter-toolbar[aria-label="保存済み文書の検索条件"]')).to be_present
     expect(parsed_html.css("#favorite-bookmarks .resource-list__item .badge")).to be_empty
     expect(response.body).to include("Manual")
     expect(response.body).not_to include("Checklist", "Guide", "対象: お気に入り", "よく開く文書")
@@ -84,7 +84,7 @@ RSpec.describe "Document bookmarks", type: :request do
     expect_server_rendered_tab_contract(active_tab_id: "recent-tab", active_panel_id: "recent-documents")
     expect(parsed_html.at_css("#recent-documents[role='tabpanel']")).to be_present
     expect(parsed_html.at_css("#favorite-bookmarks, #read-later-bookmarks")).to be_nil
-    expect(parsed_html.at_css("#recent-documents h3.bookmark-filter__heading").text.squish).to eq("絞り込み")
+    expect(parsed_html.at_css('#recent-documents section.filter-toolbar[aria-label="最近見た文書の検索条件"]')).to be_present
     recent_limit_tooltip = parsed_html.at_css("#recent-documents .info-tooltip[role]") || parsed_html.at_css("#recent-documents .info-tooltip")
     expect(recent_limit_tooltip).to be_present
     expect(recent_limit_tooltip["aria-label"]).to eq("最近表示された文書を最大20件表示します。")

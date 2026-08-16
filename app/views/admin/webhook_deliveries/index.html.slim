@@ -6,17 +6,15 @@
 - event_type_options = WebhookEndpoint::EVENT_TYPES.map { |event_type| [webhook_event_type_label(event_type), event_type] }
 - delivery_page_start = @webhook_deliveries_total_count.zero? ? 0 : @webhook_deliveries_offset + 1
 - delivery_page_end = @webhook_deliveries_offset + @webhook_deliveries.size
-- delivery_pagination_params = @delivery_filters.merge(page: @webhook_deliveries_page)
+- delivery_pagination = { page: @webhook_deliveries_page, total_pages: @webhook_deliveries_total_pages, total_count: @webhook_deliveries_total_count, from: delivery_page_start, to: delivery_page_end }
 
-h1 Webhook送信履歴検索
-
-p.actions
+.admin-list-header
+  h1 Webhook送信履歴検索
   = back_link_to "Webhook一覧へ戻る", admin_webhook_endpoints_path
 
-.card
-  h2 検索条件
-  = form_with url: admin_webhook_deliveries_path, method: :get, local: true do |form|
-    .form-grid
+= form_with url: admin_webhook_deliveries_path, method: :get, local: true do |form|
+  = render FilterToolbarComponent.new(label: "Webhook送信履歴の検索条件") do |toolbar|
+    - toolbar.with_field(size: :remote) do
       = form.rfk_combobox :webhook_endpoint_id,
         collection: [],
         selected: webhook_delivery_endpoint_selected_option(@selected_webhook_endpoint),
@@ -31,7 +29,7 @@ p.actions
         label: "Webhook設定",
         placeholder: "設定名・送信先URLで検索",
         allow_clear: true
-      span.muted = "設定名または送信先URLの一部で検索できます。候補は最大#{Admin::WebhookDeliveriesController::WEBHOOK_ENDPOINT_SEARCH_LIMIT}件まで表示され、選択済みの設定は候補上限外でも復元されます。"
+    - toolbar.with_field(size: :enum) do
       = form.rfk_select :event_type,
         collection: event_type_options,
         selected: @delivery_filters[:event_type].presence,
@@ -40,92 +38,85 @@ p.actions
         label: "イベント",
         allow_clear: true,
         placeholder: "すべて"
+    - toolbar.with_field(size: :enum) do
       = form.rfk_select :status,
         collection: delivery_status_options.reject { |(_label, value)| value == "all" },
         selected: @delivery_filters[:status].presence,
         include_blank: "すべて",
         wrapper: true,
-        label: "ステータス",
+        label: "状態",
         allow_clear: true,
         placeholder: "すべて"
+    - toolbar.with_field(size: :short) do
       label
         | HTTPステータス
         = number_field_tag :response_status, @delivery_filters[:response_status], min: 100, max: 599, placeholder: "例: 500"
-        span.muted HTTPステータスは100〜599の整数で絞り込みます。範囲外や数字以外は条件に使われません。
+    - toolbar.with_field(size: :wide) do
       label
         | エラー断片
         = search_field_tag :error_q, @delivery_filters[:error_q], maxlength: Admin::WebhookDeliveriesController::ERROR_QUERY_MAX_LENGTH, placeholder: "例: timeout"
-        span.muted = "保存済みエラーメッセージの断片で絞り込みます。エラー全文の表示欄ではありません。最大#{Admin::WebhookDeliveriesController::ERROR_QUERY_MAX_LENGTH}文字まで指定できます。"
+    - toolbar.with_field(size: :date) do
       label
-        | 作成日From
+        | 作成日（開始）
         = date_field_tag :created_from, @delivery_filter_inputs[:created_from]
-        span.muted Fromは指定日の00:00以降を含めて検索します。
+    - toolbar.with_field(size: :date) do
       label
-        | 作成日To
+        | 作成日（終了）
         = date_field_tag :created_to, @delivery_filter_inputs[:created_to]
-        span.muted Toは指定日の23:59までを含めて検索します。
-    - if @delivery_filter_warnings.any?
-      .filter-warnings
-        - @delivery_filter_warnings.each do |warning|
-          p.muted = warning
-    p.actions style="margin-top:16px;"
-      = submit_tag "検索", class: "button"
-      - if @delivery_filters_applied
+    - toolbar.with_action do
+      = form.submit "検索", class: "button"
+    - if @delivery_filters_applied
+      - toolbar.with_action do
         = link_to "条件をクリア", admin_webhook_deliveries_path, class: "button secondary"
+    - toolbar.with_details do
+      = render GuidanceDisclosureComponent.new(title: "検索条件の補足") do
+        ul
+          li = "設定名または送信先URLの一部で検索できます。候補は最大#{Admin::WebhookDeliveriesController::WEBHOOK_ENDPOINT_SEARCH_LIMIT}件まで表示され、選択済みの設定は候補上限外でも復元されます。"
+          li HTTPステータスは100〜599の整数で絞り込みます。範囲外や数字以外は条件に使われません。
+          li = "保存済みエラーメッセージの断片で絞り込みます。エラー全文の表示欄ではありません。最大#{Admin::WebhookDeliveriesController::ERROR_QUERY_MAX_LENGTH}文字まで指定できます。"
+          li 作成日は開始日の00:00から終了日の23:59までを含みます。
 
-.card
-  h2 検索結果
-  p.muted この一覧は履歴を探して詳細へ進むための read-only 検索です。まとめて再送は既存の Webhook 一覧で「失敗のみ」表示中の最近50件に閉じています。
+- if @delivery_filter_warnings.any?
+  .filter-warnings
+    - @delivery_filter_warnings.each do |warning|
+      p.muted = warning
 
+.admin-list-meta
+  span.admin-list-meta__count = "#{delivery_page_start}–#{delivery_page_end} / #{@webhook_deliveries_total_count}件"
   - if @webhook_deliveries.any?
-    p.muted = "表示範囲: #{@webhook_deliveries_total_count}件中#{delivery_page_start}-#{delivery_page_end}件を新しい順で表示しています（#{@webhook_deliveries_limit}件ずつ、#{@webhook_deliveries_page}/#{@webhook_deliveries_total_pages}ページ）。"
     = render ColumnSettingsComponent.new(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns, title: "Webhook送信履歴検索結果の表示設定")
-    = table_preferences_table_tag(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns) do
-      thead
+
+- if @webhook_deliveries.any?
+  = table_preferences_table_tag(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "Webhook送信履歴検索結果" } }) do
+    caption.table-caption Webhook送信履歴検索結果
+    thead
+      tr
+        th data-rails-table-preferences-column-key="created_at" 作成日時
+        th data-rails-table-preferences-column-key="endpoint" 設定
+        th data-rails-table-preferences-column-key="event_type" イベント
+        th data-rails-table-preferences-column-key="status" 状態
+        th data-rails-table-preferences-column-key="response_status" HTTP
+        th data-rails-table-preferences-column-key="error_message" エラー
+        th data-rails-table-preferences-column-key="actions" 操作
+    tbody
+      - @webhook_deliveries.each do |delivery|
+        - delivery_detail_link_cue = webhook_delivery_detail_link_cue(delivery)
         tr
-          th data-rails-table-preferences-column-key="created_at" 作成日時
-          th data-rails-table-preferences-column-key="endpoint" 設定
-          th data-rails-table-preferences-column-key="event_type" イベント
-          th data-rails-table-preferences-column-key="status" ステータス
-          th data-rails-table-preferences-column-key="response_status" HTTP
-          th data-rails-table-preferences-column-key="error_message" エラー
-          th data-rails-table-preferences-column-key="actions"
-      tbody
-        - @webhook_deliveries.each do |delivery|
-          - delivery_detail_link_cue = webhook_delivery_detail_link_cue(delivery)
-          tr
-            td data-rails-table-preferences-column-key="created_at" = l(delivery.created_at, format: :short)
-            td data-rails-table-preferences-column-key="endpoint" = delivery.webhook_endpoint.name
-            td data-rails-table-preferences-column-key="event_type" = webhook_event_type_label(delivery)
-            td data-rails-table-preferences-column-key="status"
-              span.badge = webhook_delivery_status_label(delivery)
-            td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
-            td data-rails-table-preferences-column-key="error_message" = WebhookDeliveryDiagnosticPreview.new(delivery.error_message).to_s
-            td.actions data-rails-table-preferences-column-key="actions"
-              = detail_link_to "詳細", admin_webhook_delivery_path(delivery.public_id, @delivery_return_params), title: delivery_detail_link_cue, aria: { label: delivery_detail_link_cue }
-    - if @webhook_deliveries_total_pages > 1
-      p.actions
-        - if @webhook_deliveries_page > 1
-          - previous_delivery_page = @webhook_deliveries_page - 1
-          - previous_delivery_page_cue = "Webhook送信履歴検索結果の#{previous_delivery_page}ページ目へ戻る（#{@webhook_deliveries_total_pages}ページ中）"
-          = link_to "前のページ",
-            admin_webhook_deliveries_path(delivery_pagination_params.merge(page: previous_delivery_page)),
-            class: "button secondary",
-            title: previous_delivery_page_cue,
-            aria: { label: previous_delivery_page_cue }
-        - if @webhook_deliveries_page < @webhook_deliveries_total_pages
-          - next_delivery_page = @webhook_deliveries_page + 1
-          - next_delivery_page_cue = "Webhook送信履歴検索結果の#{next_delivery_page}ページ目へ進む（#{@webhook_deliveries_total_pages}ページ中）"
-          = link_to "次のページ",
-            admin_webhook_deliveries_path(delivery_pagination_params.merge(page: next_delivery_page)),
-            class: "button secondary",
-            title: next_delivery_page_cue,
-            aria: { label: next_delivery_page_cue }
-  - elsif @delivery_filters_applied
-    p.muted 条件に一致するWebhook送信履歴はありません。Webhook設定、イベント、ステータス、HTTPステータス、エラー断片、作成日の範囲を見直してください。
-    p.actions
+          td data-rails-table-preferences-column-key="created_at" = l(delivery.created_at, format: :short)
+          td data-rails-table-preferences-column-key="endpoint" = delivery.webhook_endpoint.name
+          td data-rails-table-preferences-column-key="event_type" = webhook_event_type_label(delivery)
+          td data-rails-table-preferences-column-key="status"
+            = render StatusBadgeComponent.new(label: webhook_delivery_status_label(delivery), status: webhook_delivery_status_tone(delivery))
+          td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
+          td data-rails-table-preferences-column-key="error_message" = WebhookDeliveryDiagnosticPreview.new(delivery.error_message).to_s
+          td.actions data-rails-table-preferences-column-key="actions"
+            = detail_link_to "詳細", admin_webhook_delivery_path(delivery.public_id, @delivery_return_params), title: delivery_detail_link_cue, aria: { label: delivery_detail_link_cue }
+  = render ListFooterComponent.new(pagination: delivery_pagination, url: admin_webhook_deliveries_path, params: @delivery_filters, label: "Webhook送信履歴検索結果")
+- elsif @delivery_filters_applied
+  = render EmptyStateComponent.new(heading: "条件に一致するWebhook送信履歴はありません。", description: "Webhook設定、イベント、状態、HTTPステータス、エラー断片、作成日の範囲を見直してください。") do |component|
+    - component.with_action do
       = link_to "条件をクリア", admin_webhook_deliveries_path, class: "button secondary"
-  - else
-    = render EmptyStateComponent.new(heading: "まだWebhook送信履歴はありません。", description: "Webhook設定を登録し、通知対象イベントが発生すると送信履歴がここに表示されます。") do |component|
-      - component.with_action do
-        = back_link_to "Webhook設定へ戻る", admin_webhook_endpoints_path
+- else
+  = render EmptyStateComponent.new(heading: "まだWebhook送信履歴はありません。", description: "Webhook設定を登録し、通知対象イベントが発生すると送信履歴がここに表示されます。") do |component|
+    - component.with_action do
+      = back_link_to "Webhook設定へ戻る", admin_webhook_endpoints_path

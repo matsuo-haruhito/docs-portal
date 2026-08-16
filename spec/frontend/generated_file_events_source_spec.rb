@@ -51,18 +51,27 @@ RSpec.describe "admin generated file events source" do
     end
   end
 
-  it "defines generated file event column metadata without changing filters" do
+  it "keeps generated file event filters while using the shared index UI" do
     aggregate_failures do
       expect(helper_source).to include("def generated_file_event_table_columns")
       expect(helper_source).to include('label: "イベントID"')
       expect(helper_source).to include('label: "エラー"')
       expect(helper_source).to include('overflow: :ellipsis')
-      expect(index_source).to include("form.label :status")
-      expect(index_source).to include("form.label :operation")
-      expect(index_source).to include("form.label :event_source")
-      expect(index_source).to include("form.label :path")
-      expect(index_source).to include("form.label :scheduled_from")
-      expect(index_source).to include("form.label :scheduled_to")
+      expect(index_source).to include('render FilterToolbarComponent.new(label: "生成ファイルイベントの検索条件")')
+      expect(index_source).to include("toolbar.with_field(size: :query)")
+      expect(index_source).to include("toolbar.with_field(size: :enum)")
+      expect(index_source).to include("toolbar.with_field(size: :short)")
+      expect(index_source).to include("toolbar.with_field(size: :wide)")
+      expect(index_source).to include("toolbar.with_field(size: :date)")
+      expect(index_source).to include("form.rfk_search_field :q")
+      expect(index_source).to include("form.rfk_select :status")
+      expect(index_source).to include("form.rfk_select :operation")
+      expect(index_source).to include("form.text_field :event_source")
+      expect(index_source).to include("form.text_field :path")
+      expect(index_source).to include("form.text_field :scheduled_from")
+      expect(index_source).to include("form.text_field :scheduled_to")
+      expect(index_source).to include('render GuidanceDisclosureComponent.new(title: "検索条件の補足")')
+      expect(index_source).to include("render ListFooterComponent.new")
     end
   end
 end

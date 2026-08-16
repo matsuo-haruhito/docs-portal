@@ -19,6 +19,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
     @bulk_retry_target_count = bulk_retry_target_count
     @total_count = @filtered_generated_file_runs.count
     @total_pages = total_pages(@total_count)
+    @page = normalized_page(@page, @total_pages)
     @generated_file_runs = @filtered_generated_file_runs.offset((@page - 1) * @per_page).limit(@per_page)
   end
 
@@ -173,6 +174,10 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
   def page_param
     [params[:page].to_i, 1].max
+  end
+
+  def normalized_page(page, total_pages)
+    page.clamp(1, total_pages)
   end
 
   def per_page_param

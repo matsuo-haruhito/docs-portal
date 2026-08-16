@@ -38,8 +38,10 @@ RSpec.describe "Admin access log target search", type: :request do
     end
   end
 
-  def pagination_query(label)
-    link = parsed_html.css("nav.pagination a").find { _1.text.squish == label }
+  def pagination_query(_label)
+    link = parsed_html.css('nav[aria-label="監査ログ一覧"] a').find do |node|
+      node["aria-label"].to_s.include?("ページ目へ進む")
+    end
     return {} unless link
 
     Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)

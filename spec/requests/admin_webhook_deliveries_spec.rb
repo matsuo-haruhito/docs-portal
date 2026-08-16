@@ -391,13 +391,15 @@ RSpec.describe "Admin webhook deliveries", type: :request do
     get admin_webhook_deliveries_path(filters)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("100件ずつ、1/2ページ")
+    expect(page_text).to include("1–100 / 101件")
+    expect(page_text).to include("/ 2ページ")
     expect(selected_value(endpoint_filter)).to eq(endpoint.id.to_s)
     next_page_path = admin_webhook_deliveries_path(filters.merge(page: 2))
-    next_page_link = link_to_target(next_page_path)
-    expect(next_page_link.text.squish).to eq("次のページ")
-    expect(next_page_link["title"]).to eq("Webhook送信履歴検索結果の2ページ目へ進む（2ページ中）")
-    expect(next_page_link["aria-label"]).to eq("Webhook送信履歴検索結果の2ページ目へ進む（2ページ中）")
+    next_page_cue = "Webhook送信履歴検索結果の2ページ目へ進む（2ページ中）"
+    next_page_link = parsed_html.at_css(%(a[href="#{next_page_path}"][aria-label="#{next_page_cue}"]))
+    expect(next_page_link.text.squish).to eq("次へ")
+    expect(next_page_link["title"]).to eq(next_page_cue)
+    expect(next_page_link["aria-label"]).to eq(next_page_cue)
     expect(action_targets).to include(next_page_path)
     expect(action_targets).to include(
       admin_webhook_delivery_path(deliveries.first.public_id, filters.merge(return_context: "deliveries_index"))
@@ -409,13 +411,15 @@ RSpec.describe "Admin webhook deliveries", type: :request do
     get admin_webhook_deliveries_path(filters.merge(page: 9))
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("100件ずつ、2/2ページ")
+    expect(page_text).to include("101–101 / 101件")
+    expect(page_text).to include("/ 2ページ")
     expect(selected_value(endpoint_filter)).to eq(endpoint.id.to_s)
     previous_page_path = admin_webhook_deliveries_path(filters.merge(page: 1))
-    previous_page_link = link_to_target(previous_page_path)
-    expect(previous_page_link.text.squish).to eq("前のページ")
-    expect(previous_page_link["title"]).to eq("Webhook送信履歴検索結果の1ページ目へ戻る（2ページ中）")
-    expect(previous_page_link["aria-label"]).to eq("Webhook送信履歴検索結果の1ページ目へ戻る（2ページ中）")
+    previous_page_cue = "Webhook送信履歴検索結果の1ページ目へ戻る（2ページ中）"
+    previous_page_link = parsed_html.at_css(%(a[href="#{previous_page_path}"][aria-label="#{previous_page_cue}"]))
+    expect(previous_page_link.text.squish).to eq("前へ")
+    expect(previous_page_link["title"]).to eq(previous_page_cue)
+    expect(previous_page_link["aria-label"]).to eq(previous_page_cue)
     expect(action_targets).to include(previous_page_path)
     expect(action_targets).to include(
       admin_webhook_delivery_path(deliveries.last.public_id, filters.merge(return_context: "deliveries_index", page: 2))

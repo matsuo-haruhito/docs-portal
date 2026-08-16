@@ -26,7 +26,7 @@ RSpec.describe "Admin users filters", type: :request do
   end
 
   def toolbar_clear_link
-    parsed_html.css(".admin-filter-toolbar__actions a").find { |link| link.text.squish == "クリア" }
+    parsed_html.css(".admin-filter-toolbar__actions a").find { |link| link.text.squish == "条件をクリア" }
   end
 
   def empty_state_clear_link

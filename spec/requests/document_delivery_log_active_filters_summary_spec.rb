@@ -96,8 +96,8 @@ RSpec.describe "Document delivery log active filters summary", type: :request do
     expect(page_text).to include("送信日時: 2026-01-11 から 2026-01-21 まで")
     expect(page_text).to include("状態: #{localized_status_label(:failed)}")
     expect(page_text).to include("方式: #{localized_delivery_type_label(:portal_link)}")
-    expect(page_text).to include("表示件数はこの条件に一致した履歴のうち、先頭から表示している件数です。")
-    expect(page_text).to include("表示範囲: 1件中1件を表示しています。")
+    expect(parsed_html.at_css(".filter-toolbar__active-filters[aria-label='適用中の検索条件']")).to be_present
+    expect(page_text).to include("1–1 / 1件")
   end
 
   it "keeps the active filter summary visible in the filtered empty state" do

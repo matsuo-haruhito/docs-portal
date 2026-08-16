@@ -403,8 +403,7 @@ form {
   text-align: center;
 }
 
-.button,
-button {
+.button {
   display: inline-block;
   border: 1px solid var(--ui-action);
   background: var(--ui-action);
@@ -417,7 +416,28 @@ button {
 
 .button.secondary {
   background: var(--ui-surface);
-  color: var(--ui-action);
+  border-color: var(--ui-border-strong);
+  color: var(--ui-text-subtle);
+}
+
+.button.secondary:hover,
+.button.secondary:focus-visible {
+  background: var(--ui-surface-muted);
+  border-color: var(--ui-text-subtle);
+  color: var(--ui-text);
+}
+
+.button.utility {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ui-text-subtle);
+}
+
+.button.utility:hover,
+.button.utility:focus-visible {
+  background: var(--ui-surface-muted);
+  border-color: var(--ui-border);
+  color: var(--ui-text);
 }
 
 .button.danger {
@@ -2207,5 +2227,110 @@ table[data-rails-table-preferences-table-key-value] {
 
   .column-settings__dialog-surface {
     max-height: 90vh;
+  }
+}
+
+/* --- Login and integration form hierarchy --- */
+
+.login-shell {
+  width: min(100%, 26.25rem);
+  margin: 0 auto;
+}
+
+.login-card {
+  padding: 2rem;
+  border-top: 3px solid var(--ui-brand);
+}
+
+.login-card__brand {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  color: var(--ui-text-subtle);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.login-card__brand-mark {
+  width: 0.3rem;
+  height: 1.25rem;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-brand);
+}
+
+.login-form-grid {
+  grid-template-columns: 1fr;
+}
+
+.login-card__actions,
+.integration-form-actions {
+  margin-top: 1rem;
+}
+
+.login-card .guidance-disclosure {
+  margin-top: 1rem;
+}
+
+.integration-form-state {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem 1rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface-subtle);
+}
+
+.integration-form-state legend {
+  padding: 0 0.35rem;
+  color: var(--ui-text-subtle);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.integration-form-state .form-grid {
+  gap: 0.75rem;
+}
+
+.integration-form-actions + .guidance-disclosure {
+  margin-top: 1rem;
+}
+
+/* --- Admin dashboard flat metric hierarchy --- */
+
+.admin-dashboard-grid {
+  margin-bottom: 0;
+}
+
+.admin-dashboard-metric {
+  display: flex;
+  min-height: 9rem;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-left-width: 4px;
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-surface);
+}
+
+.admin-dashboard-data-item {
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--ui-border-strong);
+  background: var(--ui-surface-subtle);
+}
+
+.admin-dashboard-data-item h3,
+.admin-dashboard-data-item p {
+  margin: 0;
+}
+
+.admin-dashboard-data-item p {
+  margin-top: 0.5rem;
+  color: var(--ui-text-subtle);
+}
+
+@media (max-width: 767px) {
+  .login-card {
+    padding: 1.25rem;
   }
 }

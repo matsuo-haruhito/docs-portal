@@ -9,7 +9,7 @@ RSpec.describe "Admin read confirmations clear link", type: :request do
   end
 
   def filter_action_links
-    parsed_html.css("section.card").first.css("p.actions a").map { _1.text.squish }
+    parsed_html.css(".filter-toolbar__actions a").map { _1.text.squish }
   end
 
   it "hides the top clear link when there are no removable conditions" do

@@ -50,7 +50,8 @@ RSpec.describe "Admin access log CSV export scope", type: :request do
     get admin_access_logs_path(page: 2, q: "filtered-entry")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 50件 / 1ページ50件 / 2ページ目 / 絞り込み中")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("51–100 / 205件")
+    expect(parsed_html.at_css('[aria-label="適用中の検索条件"]').text.squish).to include("対象名・IPアドレス: filtered-entry")
     expect(page_text).to include("条件一致の最新200件が対象です。")
     expect(csv_export_uri.path).to end_with(".csv")
     expect(csv_export_query).to include("q" => "filtered-entry")

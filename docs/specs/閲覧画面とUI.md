@@ -83,13 +83,33 @@
 - Badge / Status / Filter chipのradiusは6px、件数だけpillとする
 - `table code`と`.identifier-code`はmuted neutralで表示し、警告色に見せない
 
+### Filter / Form / Help
+
+- 一覧Filter、編集・新規Form、Tableは同じwidth strategyを共有しない。Tableはfull width、Filterはfield type別、編集・新規Formは用途別container幅とする
+- `FilterToolbarComponent`のfield wrapperは用途modifierを持ち、入力自体の`width: 100%`はwrapper内だけに閉じる。desktopの基準幅はkeyword 320〜400px、remote combobox 280〜360px、enum 160〜220px、date 150〜170px、HTTP status等の短い数値100〜140px、小さいcode / count 100〜160pxとする
+- Filter内の検索buttonは80〜120px程度、条件クリアはcontent widthとし、入力欄と同じ幅へ引き伸ばさない
+- 作成日・送信日時等の期間条件は、ラベル、開始日、区切り、終了日の関係が読めるrange groupとして表示し、「から」「まで」を独立したgrid itemにしない
+- 編集・新規Formは標準で最大920px前後の`.admin-form-container`へ収める。外部連携等で比較が必要な場合だけwide variantを使い、一覧Tableの幅を狭めない
+- Helpは誤操作や特殊scopeに直結する短文だけを常時表示し、通常の検索対象はlabel / placeholder、技術仕様・例外条件・runbookは`InfoTooltipComponent`または初期状態を閉じたDisclosureへ移す
+- 外部連携設定は「現在の接続状態 → 入力項目 → 接続・保存 → 初めて設定する場合のDisclosure」の順を基本とする
+
+### Dropdown / Popover
+
+- Navbar最右端のDropdownはtriggerの右辺とmenuの右辺を揃え、`left: auto; right: 0`を基本とする。menuはviewportから8px以上離し、`max-width: calc(100vw - 16px)`でclampする
+- Navbar Dropdownはabsolute配置の例外とし、フォーム・Table内のfloating panelは既存のfixed配置とStimulus controllerを使う
+- Dropdown / PopoverはEscape、外側clickで閉じ、閉じた後はtriggerへfocusを戻す。left側triggerはleft aligned、right側triggerはright alignedとする
+
 ### Table / Row action / Pagination
 
 - table headerは`var(--ui-surface-subtle)`、13px / 600、bodyは14pxを基準にする。hoverは薄いneutral blueだけを使う
 - 主識別子を第一導線にし、操作列には現在許可された補助操作だけを表示する
 - 編集はneutral / secondary、削除はoutline dangerとし、低頻度操作はoverflow menuへまとめることを検討する
 - icon-only操作にはBootstrap Icons、対象を特定できる`aria-label`、`title`を付ける。操作列幅は実際のボタン数に合わせ、110pxへ一律固定しない
-- `total_pages == 1`ではpager navを表示しない。総件数は表示し、CSV等のexportはpagerと独立させる
+- 短いRTP列には内容基準の`default_width`を設定し、状態80px、種別85px、日付105px、日時130〜150px、件数70px、HTTP 70〜90px、操作90〜120pxを目安とする。タイトル・文書名・案件名・備考等の長文列は残り幅を使わせる
+- 一覧Metaは`1–50 / 238件`のように表示範囲と総件数を1行で示し、現在ページ、1ページ最大件数、追加の絞り込み説明を重複表示しない
+- 一覧footerは共通`ListFooterComponent`へ集約し、左側にpage navigation・page jump・総ページ数、右側にCSV / Excel等のexportを置く
+- page jumpは現在の検索・sort・view・per-page条件を維持し、`page`だけを変更する。保存済み等の複数page parameterや画面固有CSV scopeは呼び出し側から明示して維持する
+- `total_pages == 1`ではpager navとpage jumpを表示しない。総件数とCSV等のexportはpagerと独立して残す
 - 1ページ時に`前へ（先頭）`、`1ページのみ`、`次へ（最終）`を表示しない
 
 ### Server-rendered tab

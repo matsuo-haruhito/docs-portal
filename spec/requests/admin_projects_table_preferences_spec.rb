@@ -80,7 +80,7 @@ RSpec.describe "Admin projects table preferences", type: :request do
     expect(response).to have_http_status(:ok)
     expect(parsed_html.at_css(".empty-state")).to be_present
     expect(parsed_html.at_css(".admin-list-meta__count")&.text&.squish).to eq("0件")
-    expect(parsed_html.css('a[href="/admin/projects"]').map { |link| link.text.squish }).to include("クリア", "条件をクリア")
+    expect(parsed_html.css('a[href="/admin/projects"]').map { |link| link.text.squish }).to include("条件をクリア")
     expect(project_table).to be_nil
     expect(project_column_keys).to be_empty
   end

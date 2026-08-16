@@ -21,7 +21,12 @@ RSpec.describe "Admin read confirmations pagination", type: :request do
   end
 
   def link_by_text(text)
-    parsed_html.css("a").find { _1.text.squish == text }
+    links = parsed_html.css("a")
+    link = links.find { _1.text.squish == text }
+    return link if link
+
+    direction = { "前へ" => "戻る", "次へ" => "進む" }[text]
+    links.find { |node| direction && node["aria-label"]&.include?(direction) }
   end
 
   def csv_export_link
@@ -43,8 +48,7 @@ RSpec.describe "Admin read confirmations pagination", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(read_confirmation_rows.size).to eq(Admin::ReadConfirmationsController::DISPLAY_LIMIT)
-    expect(page_text).to include("表示中: 200件")
-    expect(page_text).to include("表示範囲: 1-200件目 / 条件一致 201件 / Page 1 / 2")
+    expect(page_text).to include("1–200 / 201件")
     expect(read_confirmation_rows.join).to include("Paged Manual 200")
     expect(read_confirmation_rows.join).to include("Paged Manual 1")
     expect(read_confirmation_rows.join).not_to include("Paged Manual 0")
@@ -57,15 +61,14 @@ RSpec.describe "Admin read confirmations pagination", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(read_confirmation_rows.size).to eq(1)
-    expect(page_text).to include("表示中: 1件")
-    expect(page_text).to include("表示範囲: 201-201件目 / 条件一致 201件 / Page 2 / 2")
+    expect(page_text).to include("201–201 / 201件")
     expect(read_confirmation_rows.join).to include("Paged Manual 0")
     expect(read_confirmation_rows.join).not_to include("Paged Manual 1")
 
     previous_link = link_by_text("前へ")
     expect(previous_link).to be_present
     expect(previous_link["href"]).to include("project_id=#{project.id}")
-    expect(previous_link["href"]).not_to include("page=")
+    expect(previous_link["href"]).to include("page=1")
   end
 
   it "keeps document, company, user, and valid date filters in pagination and CSV links" do
@@ -95,7 +98,7 @@ RSpec.describe "Admin read confirmations pagination", type: :request do
     expect(page_text).to include("文書URL識別子: filtered-manual / 一致文書: 201件")
     expect(page_text).to include("会社: Paged Client")
     expect(page_text).to include("確認者: Paged Reader / paged-reader@example.com")
-    expect(page_text).to include("表示範囲: 201-201件目 / 条件一致 201件 / Page 2 / 2")
+    expect(page_text).to include("201–201 / 201件")
     expect(read_confirmation_rows).to contain_exactly(a_string_including("Filtered Manual 0", "Paged Reader / paged-reader@example.com", "Paged Client"))
     expect(page_text).not_to include("Outside Reader")
 

@@ -34,20 +34,27 @@ RSpec.describe "admin generated file runs source" do
     end
   end
 
-  it "defines generated file run column metadata without changing filters" do
+  it "keeps generated file run filters while using the shared index UI" do
     aggregate_failures do
       expect(helper_source).to include("def generated_file_run_table_columns")
       expect(helper_source).to include('label: "実行ID"')
       expect(helper_source).to include('label: "イベント発生元"')
       expect(helper_source).to include('overflow: :ellipsis')
-      expect(index_source).to include("form.label :q")
-      expect(index_source).to include("form.label :status")
-      expect(index_source).to include("form.label :job_id")
-      expect(index_source).to include("form.label :generator")
-      expect(index_source).to include("form.label :output_writer")
-      expect(index_source).to include("form.label :event_source")
-      expect(index_source).to include("form.label :created_from")
-      expect(index_source).to include("form.label :created_to")
+      expect(index_source).to include('render FilterToolbarComponent.new(label: "生成ファイル実行履歴の検索条件")')
+      expect(index_source).to include("toolbar.with_field(size: :query)")
+      expect(index_source).to include("toolbar.with_field(size: :enum)")
+      expect(index_source).to include("toolbar.with_field(size: :short)")
+      expect(index_source).to include("toolbar.with_field(size: :date)")
+      expect(index_source).to include("form.rfk_search_field :q")
+      expect(index_source).to include("form.rfk_select :status")
+      expect(index_source).to include("form.text_field :job_id")
+      expect(index_source).to include("form.text_field :generator")
+      expect(index_source).to include("form.text_field :output_writer")
+      expect(index_source).to include("form.text_field :event_source")
+      expect(index_source).to include("form.text_field :created_from")
+      expect(index_source).to include("form.text_field :created_to")
+      expect(index_source).to include('render GuidanceDisclosureComponent.new(title: "検索条件の補足")')
+      expect(index_source).to include("render ListFooterComponent.new")
     end
   end
 

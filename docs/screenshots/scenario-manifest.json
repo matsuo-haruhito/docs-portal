@@ -34,8 +34,8 @@
   },
   {
     "id": "admin-dashboard.index.admin.desktop",
-    "screenName": "管理ダッシュボード",
-    "userStory": "管理者が管理画面トップで全体状況を確認する",
+    "screenName": "管理概要",
+    "userStory": "管理者が管理画面トップで要対応事項と主要データへの導線を確認する",
     "url": "/admin",
     "urlRule": "static",
     "httpMethod": "GET",
@@ -67,8 +67,8 @@
   },
   {
     "id": "dashboard.show.external.desktop",
-    "screenName": "利用者ダッシュボード",
-    "userStory": "外部利用者がアクセス可能な案件と文書を確認する",
+    "screenName": "ホーム",
+    "userStory": "外部利用者がアクセス可能な案件・文書と保存済み情報を確認する",
     "url": "/dashboard",
     "urlRule": "static",
     "httpMethod": "GET",
@@ -338,9 +338,150 @@
     ]
   },
   {
+    "id": "admin-project-memberships.index.admin.desktop",
+    "screenName": "案件所属一覧",
+    "userStory": "管理者が案件と利用者の所属・権限を検索して管理する",
+    "url": "/admin/project_memberships",
+    "urlRule": "static",
+    "httpMethod": "GET",
+    "role": "admin",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "execution": "capture",
+    "expectedSelectors": [
+      "main",
+      ".admin-filter-toolbar"
+    ],
+    "expectedState": {
+      "description": "案件所属一覧と検索条件が表示済み",
+      "selector": ".admin-header"
+    },
+    "outputName": "admin-project-memberships-index",
+    "expectedBehavior": [
+      "案件・利用者・権限による所属の検索",
+      "案件所属の登録・編集・削除",
+      "複数ページ時のページ移動とページ指定"
+    ]
+  },
+  {
+    "id": "admin-webhook-deliveries.index.admin.desktop",
+    "screenName": "Webhook送信履歴",
+    "userStory": "管理者がWebhookの送信履歴を条件指定して対象の詳細を確認する",
+    "url": "/admin/webhook_deliveries",
+    "urlRule": "static",
+    "httpMethod": "GET",
+    "role": "admin",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "execution": "capture",
+    "expectedSelectors": [
+      "main",
+      ".admin-filter-toolbar"
+    ],
+    "expectedState": {
+      "description": "Webhook送信履歴の検索条件と一覧が表示済み",
+      "selector": ".admin-header"
+    },
+    "outputName": "admin-webhook-deliveries-index",
+    "expectedBehavior": [
+      "Webhook設定・イベント・状態による送信履歴の検索",
+      "HTTPステータス・エラー断片・作成日範囲による絞り込み",
+      "検索条件を保持したページ移動と詳細確認",
+      "列表示と列幅の変更"
+    ]
+  },
+  {
+    "id": "admin-generated-file-events.index.admin.desktop",
+    "screenName": "生成ファイルイベント一覧",
+    "userStory": "管理者がファイル変更イベントを検索し、生成処理への投入状況を確認する",
+    "url": "/admin/generated_file_events",
+    "urlRule": "static",
+    "httpMethod": "GET",
+    "role": "admin",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "execution": "capture",
+    "expectedSelectors": [
+      "main",
+      ".admin-filter-toolbar"
+    ],
+    "expectedState": {
+      "description": "生成ファイルイベントの検索条件と一覧が表示済み",
+      "selector": ".admin-header"
+    },
+    "outputName": "admin-generated-file-events-index",
+    "expectedBehavior": [
+      "イベント識別子・path・状態・操作種別による検索",
+      "実行予定日の範囲による絞り込み",
+      "現在の条件に一致する失敗イベントだけの一括再投入"
+    ]
+  },
+  {
+    "id": "admin-generated-file-runs.index.admin.desktop",
+    "screenName": "生成ファイル実行履歴",
+    "userStory": "管理者が生成Jobの実行履歴を検索し、失敗対象と処理結果を確認する",
+    "url": "/admin/generated_file_runs",
+    "urlRule": "static",
+    "httpMethod": "GET",
+    "role": "admin",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "execution": "capture",
+    "expectedSelectors": [
+      "main",
+      ".admin-filter-toolbar"
+    ],
+    "expectedState": {
+      "description": "生成ファイル実行履歴の検索条件と一覧が表示済み",
+      "selector": ".admin-header"
+    },
+    "outputName": "admin-generated-file-runs-index",
+    "expectedBehavior": [
+      "実行ID・Job ID・状態・生成先による検索",
+      "作成日の範囲による絞り込み",
+      "現在の条件に一致する失敗履歴だけの一括再実行"
+    ]
+  },
+  {
     "id": "admin-access-logs.index.admin.desktop",
-    "screenName": "アクセスログ",
-    "userStory": "管理者がポータルへのアクセス履歴を監査する",
+    "screenName": "監査ログ",
+    "userStory": "管理者がポータルへのアクセス履歴を条件指定して監査する",
     "url": "/admin/access_logs",
     "urlRule": "static",
     "httpMethod": "GET",
@@ -411,8 +552,8 @@
   },
   {
     "id": "admin-diagnostics.index.admin.desktop",
-    "screenName": "診断",
-    "userStory": "管理者がシステム構成と要対応事項を診断する",
+    "screenName": "運用・診断",
+    "userStory": "管理者が要対応事項、運用失敗、設定、文書ファイル、Storageをread-onlyで確認する",
     "url": "/admin/diagnostics",
     "urlRule": "static",
     "httpMethod": "GET",
@@ -614,35 +755,6 @@
       "selector": ".admin-header"
     },
     "outputName": "admin-projects-edit"
-  },
-  {
-    "id": "admin-project-memberships.index.admin.desktop",
-    "screenName": "project_memberships 一覧",
-    "userStory": "管理者がproject_membershipsの一覧画面で業務情報を確認する",
-    "url": "/admin/project_memberships",
-    "urlRule": "static",
-    "httpMethod": "GET",
-    "role": "admin",
-    "viewport": {
-      "name": "desktop",
-      "width": 1440,
-      "height": 1600
-    },
-    "prerequisites": [
-      "管理者でログイン済み",
-      "標準seedデータを投入済み"
-    ],
-    "actions": [],
-    "stateKind": "default",
-    "execution": "capture",
-    "expectedSelectors": [
-      "main"
-    ],
-    "expectedState": {
-      "description": "一覧画面が表示済み",
-      "selector": ".admin-header"
-    },
-    "outputName": "admin-project-memberships-index"
   },
   {
     "id": "admin-project-memberships.edit.admin.desktop",
@@ -848,39 +960,10 @@
     "outputName": "admin-git-import-runs-index"
   },
   {
-    "id": "admin-generated-file-events.index.admin.desktop",
-    "screenName": "generated_file_events 一覧",
-    "userStory": "管理者がgenerated_file_eventsの一覧画面で業務情報を確認する",
-    "url": "/admin/generated_file_events",
-    "urlRule": "static",
-    "httpMethod": "GET",
-    "role": "admin",
-    "viewport": {
-      "name": "desktop",
-      "width": 1440,
-      "height": 1600
-    },
-    "prerequisites": [
-      "管理者でログイン済み",
-      "標準seedデータを投入済み"
-    ],
-    "actions": [],
-    "stateKind": "default",
-    "execution": "capture",
-    "expectedSelectors": [
-      "main"
-    ],
-    "expectedState": {
-      "description": "一覧画面が表示済み",
-      "selector": ".admin-header"
-    },
-    "outputName": "admin-generated-file-events-index"
-  },
-  {
     "id": "admin-generated-file-events.show.admin.desktop",
     "screenName": "generated_file_events 詳細",
     "userStory": "管理者がgenerated_file_eventsの詳細画面で業務情報を確認する",
-    "url": "/admin/generated_file_events/gfe_screenshot_001?return_to=%2Fadmin%2Fgenerated_file_events",
+    "url": "/admin/generated_file_events/gfe_screenshot_001",
     "urlRule": "first-record",
     "httpMethod": "GET",
     "role": "admin",
@@ -906,39 +989,10 @@
     "outputName": "admin-generated-file-events-show"
   },
   {
-    "id": "admin-generated-file-runs.index.admin.desktop",
-    "screenName": "generated_file_runs 一覧",
-    "userStory": "管理者がgenerated_file_runsの一覧画面で業務情報を確認する",
-    "url": "/admin/generated_file_runs",
-    "urlRule": "static",
-    "httpMethod": "GET",
-    "role": "admin",
-    "viewport": {
-      "name": "desktop",
-      "width": 1440,
-      "height": 1600
-    },
-    "prerequisites": [
-      "管理者でログイン済み",
-      "標準seedデータを投入済み"
-    ],
-    "actions": [],
-    "stateKind": "default",
-    "execution": "capture",
-    "expectedSelectors": [
-      "main"
-    ],
-    "expectedState": {
-      "description": "一覧画面が表示済み",
-      "selector": ".admin-header"
-    },
-    "outputName": "admin-generated-file-runs-index"
-  },
-  {
     "id": "admin-generated-file-runs.show.admin.desktop",
     "screenName": "generated_file_runs 詳細",
     "userStory": "管理者がgenerated_file_runsの詳細画面で業務情報を確認する",
-    "url": "/admin/generated_file_runs/gfr_screenshot_001?return_to=%2Fadmin%2Fgenerated_file_runs",
+    "url": "/admin/generated_file_runs/gfr_screenshot_001",
     "urlRule": "first-record",
     "httpMethod": "GET",
     "role": "admin",
@@ -1141,7 +1195,7 @@
     "id": "admin-recurring-job-schedules.show.admin.desktop",
     "screenName": "recurring_job_schedules 詳細",
     "userStory": "管理者がrecurring_job_schedulesの詳細画面で業務情報を確認する",
-    "url": "/admin/recurring_job_schedules/rjs_ydXA5QnbfybZMkRh?return_to=%2Fadmin%2Frecurring_job_schedules",
+    "url": "/admin/recurring_job_schedules/rjs_ydXA5QnbfybZMkRh",
     "urlRule": "first-record",
     "httpMethod": "GET",
     "role": "admin",
@@ -1170,7 +1224,7 @@
     "id": "admin-external-folder-sync-sources.show.admin.desktop",
     "screenName": "external_folder_sync_sources 詳細",
     "userStory": "管理者がexternal_folder_sync_sourcesの詳細画面で業務情報を確認する",
-    "url": "/admin/external_folder_sync_sources/efss_screenshot_001?return_to=%2Fadmin%2Fexternal_folder_sync_sources",
+    "url": "/admin/external_folder_sync_sources/efss_screenshot_001",
     "urlRule": "first-record",
     "httpMethod": "GET",
     "role": "admin",
@@ -1199,7 +1253,7 @@
     "id": "admin-external-folder-sync-sources.edit.admin.desktop",
     "screenName": "external_folder_sync_sources 編集",
     "userStory": "管理者がexternal_folder_sync_sourcesの編集画面で業務情報を確認する",
-    "url": "/admin/external_folder_sync_sources/efss_screenshot_001?return_to=%2Fadmin%2Fexternal_folder_sync_sources/edit",
+    "url": "/admin/external_folder_sync_sources/efss_screenshot_001/edit",
     "urlRule": "first-record",
     "httpMethod": "GET",
     "role": "admin",
@@ -1428,39 +1482,10 @@
     "outputName": "admin-webhook-endpoints-edit"
   },
   {
-    "id": "admin-webhook-deliveries.index.admin.desktop",
-    "screenName": "webhook_deliveries 一覧",
-    "userStory": "管理者がwebhook_deliveriesの一覧画面で業務情報を確認する",
-    "url": "/admin/webhook_deliveries",
-    "urlRule": "static",
-    "httpMethod": "GET",
-    "role": "admin",
-    "viewport": {
-      "name": "desktop",
-      "width": 1440,
-      "height": 1600
-    },
-    "prerequisites": [
-      "管理者でログイン済み",
-      "標準seedデータを投入済み"
-    ],
-    "actions": [],
-    "stateKind": "default",
-    "execution": "capture",
-    "expectedSelectors": [
-      "main"
-    ],
-    "expectedState": {
-      "description": "一覧画面が表示済み",
-      "selector": ".admin-header"
-    },
-    "outputName": "admin-webhook-deliveries-index"
-  },
-  {
     "id": "admin-webhook-deliveries.show.admin.desktop",
     "screenName": "webhook_deliveries 詳細",
     "userStory": "管理者がwebhook_deliveriesの詳細画面で業務情報を確認する",
-    "url": "/admin/webhook_deliveries/whd_screenshot_001?return_context=deliveries_index",
+    "url": "/admin/webhook_deliveries/whd_screenshot_001",
     "urlRule": "first-record",
     "httpMethod": "GET",
     "role": "admin",
@@ -1518,7 +1543,7 @@
     "id": "admin-access-requests.show.admin.desktop",
     "screenName": "access_requests 詳細",
     "userStory": "管理者がaccess_requestsの詳細画面で業務情報を確認する",
-    "url": "/admin/access_requests/areq_screenshot_001?return_to=%2Fadmin%2Faccess_requests",
+    "url": "/admin/access_requests/areq_screenshot_001",
     "urlRule": "first-record",
     "httpMethod": "GET",
     "role": "admin",

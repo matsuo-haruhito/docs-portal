@@ -260,9 +260,9 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include(middle.public_id)
       expect(response.body).not_to include(newest.public_id)
       expect(response.body).not_to include(oldest.public_id)
-      expect(response.body).to include("全 3 件 / 2 / 3 ページ")
-      expect(response.body).to include("前へ")
-      expect(response.body).to include("次へ")
+      expect(parsed_html.text.squish).to include("2–2 / 3件")
+      expect(parsed_html.at_css('a[aria-label*="1ページ目へ戻る"]')).to be_present
+      expect(parsed_html.at_css('a[aria-label*="3ページ目へ進む"]')).to be_present
     end
 
     it "filters by status" do

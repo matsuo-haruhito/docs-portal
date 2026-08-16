@@ -15,13 +15,13 @@ module Admin::WebhookEndpointsHelper
 
   def webhook_delivery_table_columns
     [
-      table_preferences_column(:created_at, label: "作成日時", default_width: 180, pinned: true, sortable: true),
-      table_preferences_column(:endpoint, label: "設定", default_width: 180, pinned: true, sortable: true),
-      table_preferences_column(:event_type, label: "イベント", default_width: 220),
-      table_preferences_column(:status, label: "ステータス", default_width: 110, pinned: true),
-      table_preferences_column(:response_status, label: "HTTP", default_width: 90),
-      table_preferences_column(:error_message, label: "エラー", default_width: 340, overflow: :ellipsis),
-      table_preferences_column(:actions, label: "操作", default_width: 170, pinned: true)
+      table_preferences_column(:created_at, label: "作成日時", default_width: 140, pinned: true, sortable: true),
+      table_preferences_column(:endpoint, label: "設定", pinned: true, sortable: true),
+      table_preferences_column(:event_type, label: "イベント", default_width: 180),
+      table_preferences_column(:status, label: "状態", default_width: 80, pinned: true),
+      table_preferences_column(:response_status, label: "HTTP", default_width: 80),
+      table_preferences_column(:error_message, label: "エラー", overflow: :ellipsis),
+      table_preferences_column(:actions, label: "操作", default_width: 90, pinned: true)
     ]
   end
 
@@ -60,6 +60,17 @@ module Admin::WebhookEndpointsHelper
   def webhook_delivery_status_label(delivery_or_value)
     value = delivery_or_value.respond_to?(:status) ? delivery_or_value.status : delivery_or_value
     localized_label("webhook_deliveries.status", value)
+  end
+
+  def webhook_delivery_status_tone(delivery_or_value)
+    value = delivery_or_value.respond_to?(:status) ? delivery_or_value.status : delivery_or_value
+
+    {
+      "succeeded" => "success",
+      "failed" => "failed",
+      "retrying" => "running",
+      "pending" => "pending"
+    }.fetch(value.to_s, "pending")
   end
 
   def webhook_delivery_status_filter_options

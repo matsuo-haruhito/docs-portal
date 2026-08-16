@@ -1,4 +1,5 @@
 require "rails_helper"
+require "uri"
 
 RSpec.describe "Admin access log pagination", type: :request do
   let(:admin_company) { create(:company, domain: "audit.example.com", name: "Audit Company") }
@@ -25,10 +26,22 @@ RSpec.describe "Admin access log pagination", type: :request do
     end
   end
 
-  def page_links
-    parsed_html.css('nav[aria-label="監査ログページ移動"] a').map do |link|
-      [link.text.squish, link["href"]]
+  def pagination_link(direction)
+    phrase = direction == :previous ? "ページ目へ戻る" : "ページ目へ進む"
+    parsed_html.css('nav[aria-label="監査ログ一覧"] a').find do |link|
+      link["aria-label"].to_s.include?(phrase)
     end
+  end
+
+  def pagination_query(direction)
+    link = pagination_link(direction)
+    return {} unless link
+
+    Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
+  end
+
+  def footer_summary
+    parsed_html.at_css(".list-footer__summary")&.text&.squish
   end
 
   def create_access_log!(target_name:, action_type: :view, target_type: "page", accessed_at: Time.current)
@@ -62,9 +75,11 @@ RSpec.describe "Admin access log pagination", type: :request do
     expect(log_target_names.size).to eq(50)
     expect(log_target_names.first).to eq("entry-204")
     expect(log_target_names.last).to eq("entry-155")
-    expect(page_text).to include("次ページで古い証跡を確認できます")
-    expect(page_links).to include(["次の50件", admin_access_logs_path(page: 2)])
-    expect(page_links.map(&:first)).not_to include("前の50件")
+    expect(footer_summary).to eq("1–50 / 205件")
+    expect(pagination_query(:next)).to include("page" => "2")
+    expect(pagination_link(:previous)).to be_nil
+    expect(parsed_html.at_css('.table-scroll[role="region"][tabindex="0"][aria-label="監査ログ一覧"]')).to be_present
+    expect(parsed_html.at_css("table caption").text.squish).to eq("監査ログ一覧")
 
     get admin_access_logs_path(page: 2)
 
@@ -72,9 +87,9 @@ RSpec.describe "Admin access log pagination", type: :request do
     expect(log_target_names.size).to eq(50)
     expect(log_target_names.first).to eq("entry-154")
     expect(log_target_names.last).to eq("entry-105")
-    expect(page_text).to include("2ページ目")
-    expect(page_links).to include(["前の50件", admin_access_logs_path(page: 1)])
-    expect(page_links).to include(["次の50件", admin_access_logs_path(page: 3)])
+    expect(footer_summary).to eq("51–100 / 205件")
+    expect(pagination_query(:previous)).to include("page" => "1")
+    expect(pagination_query(:next)).to include("page" => "3")
   end
 
   it "keeps filters on pagination links and does not mix other matching pages" do
@@ -103,8 +118,8 @@ RSpec.describe "Admin access log pagination", type: :request do
     expect(log_target_names.first).to eq("ai-entry-151")
     expect(log_target_names.last).to eq("ai-entry-102")
     expect(log_target_names).not_to include("zip-entry")
-    expect(page_links).to include(["前の50件", admin_access_logs_path(target_type: "ai_context", page: 1)])
-    expect(page_links).to include(["次の50件", admin_access_logs_path(target_type: "ai_context", page: 3)])
+    expect(pagination_query(:previous)).to include("target_type" => "ai_context", "page" => "1")
+    expect(pagination_query(:next)).to include("target_type" => "ai_context", "page" => "3")
   end
 
   it "treats invalid page and limit params as a bounded first page request" do
@@ -122,7 +137,8 @@ RSpec.describe "Admin access log pagination", type: :request do
     expect(log_target_names.size).to eq(50)
     expect(log_target_names.first).to eq("bounded-entry-204")
     expect(log_target_names.last).to eq("bounded-entry-155")
-    expect(page_links).to include(["次の50件", admin_access_logs_path(page: 2)])
+    expect(footer_summary).to eq("1–50 / 205件")
+    expect(pagination_query(:next)).to include("page" => "2")
   end
 
   it "treats pages above the fixed page bound as a first page request" do
@@ -134,6 +150,15 @@ RSpec.describe "Admin access log pagination", type: :request do
 
     sign_in_as(admin_user)
 
+    get admin_access_logs_path(page: "200")
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names.size).to eq(50)
+    expect(log_target_names.first).to eq("max-page-entry-204")
+    expect(log_target_names.last).to eq("max-page-entry-155")
+    expect(footer_summary).to eq("1–50 / 205件")
+    expect(pagination_query(:next)).to include("page" => "2")
+
     get admin_access_logs_path(page: "999999")
 
     expect(response).to have_http_status(:ok)
@@ -143,6 +168,7 @@ RSpec.describe "Admin access log pagination", type: :request do
     expect(log_target_names.first).to eq("max-page-entry-204")
     expect(log_target_names.last).to eq("max-page-entry-155")
     expect(page_text).not_to include("999999ページ目")
-    expect(page_links).to include(["次の50件", admin_access_logs_path(page: 2)])
+    expect(footer_summary).to eq("1–50 / 205件")
+    expect(pagination_query(:next)).to include("page" => "2")
   end
 end

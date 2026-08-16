@@ -1,6 +1,12 @@
 = render "shared/error_messages", record: webhook_endpoint
 
 = form_with model: [:admin, webhook_endpoint] do |form|
+  fieldset.integration-form-state
+    legend 送信状態
+    label.checkbox-label
+      = form.check_box :active
+      | 有効
+
   .form-grid
     label
       | 名称
@@ -17,9 +23,6 @@
       - if webhook_endpoint.persisted?
         span.muted = webhook_endpoint.secret_token.present? ? "設定済み（変更する場合だけ入力）" : "未設定"
       = form.password_field :secret_token, autocomplete: "new-password", placeholder: (webhook_endpoint.persisted? ? "変更する場合だけ入力" : nil)
-    label
-      | 有効
-      = form.check_box :active
 
   fieldset
     legend
@@ -30,7 +33,7 @@
         = check_box_tag "webhook_endpoint[event_types][]", event_type, webhook_endpoint.normalized_event_types.include?(event_type), id: "webhook_endpoint_event_types_#{event_type}"
         = webhook_event_type_label(event_type)
 
-  p.actions
+  .actions.integration-form-actions
     = form.submit "保存", class: "button"
     - if webhook_endpoint.persisted?
       = back_link_to "一覧へ戻る", admin_webhook_endpoints_path

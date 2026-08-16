@@ -5,10 +5,7 @@
 - selected_active_filter = @user_filter_params["active"]
 - user_filter_keyword = @user_filter_params["q"].to_s.strip
 - user_active_filter_label = { "true" => "有効", "false" => "無効" }[selected_active_filter]
-- user_filter_summaries = []
-- user_filter_summaries << "キーワード「#{user_filter_keyword}」" if user_filter_keyword.present?
-- user_filter_summaries << "状態: #{user_active_filter_label}" if user_active_filter_label.present?
-- user_filters_applied = user_filter_summaries.any?
+- user_filters_applied = user_filter_keyword.present? || user_active_filter_label.present?
 - user_return_to = request.query_parameters.present? ? request.fullpath : nil
 
 .admin-list-header
@@ -20,30 +17,36 @@
     .admin-create-panel__body
       = render "form", user: @user
 
-.admin-filter-toolbar
-  = form_with url: admin_users_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
-    .admin-filter-toolbar__fields
-      = form.rfk_search_field :q,
-        value: @user_filter_params["q"],
-        placeholder: "ユーザー名・メールアドレス",
-        wrapper: false,
-        html: { maxlength: 100, class: "admin-filter-toolbar__search" }
+= form_with url: admin_users_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
+  = render FilterToolbarComponent.new(label: "ユーザーマスタの検索条件") do |toolbar|
+    - toolbar.with_field(size: :query) do
+      label
+        | ユーザー名・メールアドレス
+        = form.rfk_search_field :q,
+          value: @user_filter_params["q"],
+          placeholder: "ユーザー名・メールアドレス",
+          wrapper: false,
+          html: { maxlength: 100, class: "admin-filter-toolbar__search" }
+    - toolbar.with_field(size: :enum) do
       = form.rfk_select :active,
         collection: [["有効", "true"], ["無効", "false"]],
         selected: (%w[true false].include?(selected_active_filter) ? selected_active_filter : nil),
         include_blank: "すべて",
-        wrapper: false,
+        wrapper: true,
+        label: "状態",
         allow_clear: true,
-        placeholder: "状態"
-    .admin-filter-toolbar__actions
+        placeholder: "すべて"
+    - toolbar.with_action do
       = form.submit "検索", class: "button"
-      - if user_filters_applied
-        = link_to "クリア", admin_users_path, class: "button secondary"
-
-- if user_filters_applied
-  .admin-filter-chips
-    - user_filter_summaries.each do |summary|
-      span.admin-filter-chip = summary
+    - if user_filters_applied
+      - toolbar.with_action do
+        = link_to "条件をクリア", admin_users_path, class: "button secondary"
+    - if user_filter_keyword.present?
+      - toolbar.with_active_filter do
+        = "キーワード「#{user_filter_keyword}」"
+    - if user_active_filter_label.present?
+      - toolbar.with_active_filter do
+        = "状態: #{user_active_filter_label}"
 
 .admin-list-meta
   span.admin-list-meta__count = "#{@users_filtered_count}件"
@@ -51,7 +54,8 @@
     = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "ユーザー一覧の表示設定")
 
 - if @users.any?
-  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "ユーザー一覧" } }) do
+    caption.table-caption ユーザー一覧
     thead
       tr
         th data-rails-table-preferences-column-key="name" 登録氏名
@@ -85,14 +89,7 @@
               i.bi.bi-trash aria-hidden="true"
               span.visually-hidden 削除
 
-  - if @users_pagination[:total_pages] > 1
-    nav.pagination aria-label="ユーザー一覧ページ"
-      .admin-pagination
-        - if @users_pagination[:prev_page]
-          = link_to "前へ", admin_users_path(@user_page_params.merge(page: @users_pagination[:prev_page])), class: "button secondary"
-        span.muted = "#{@users_pagination[:page]} / #{@users_pagination[:total_pages]}"
-        - if @users_pagination[:next_page]
-          = link_to "次へ", admin_users_path(@user_page_params.merge(page: @users_pagination[:next_page])), class: "button secondary"
+  = render ListFooterComponent.new(pagination: @users_pagination, url: admin_users_path, params: @user_page_params, label: "ユーザー一覧ページ")
 - elsif @users_total_count.to_i.zero?
   = render EmptyStateComponent.new(heading: "ユーザーが未登録です", description: "「新規登録」でメールアドレスと必要な項目を入力してください。")
 - else

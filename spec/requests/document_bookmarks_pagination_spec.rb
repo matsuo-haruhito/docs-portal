@@ -15,15 +15,19 @@ RSpec.describe "Document bookmark pagination", type: :request do
     get document_bookmarks_path, params: { view: "favorite", favorite_page: 2, read_later_page: 1 }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("5 / 25件", "お気に入り 2 / 2 ページ")
+    parsed_html = Nokogiri::HTML(response.body)
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("21–25 / 25件")
+    expect(parsed_html.at_css(".list-footer__page-link.is-current").text.squish).to eq("2")
     expect(response.body).not_to include("Later Checklist")
-    expect(Nokogiri::HTML(response.body).css("nav.pagination a").all? { _1["href"].include?("view=favorite") }).to be(true)
+    expect(parsed_html.css("nav.list-footer__pagination a").all? { _1["href"].include?("view=favorite") }).to be(true)
 
     get document_bookmarks_path, params: { view: "read_later", favorite_page: 2, read_later_page: 1 }
 
-    expect(response.body).to include("20 / 22件", "後で読む 1 / 2 ページ")
+    parsed_html = Nokogiri::HTML(response.body)
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–20 / 22件")
+    expect(parsed_html.at_css(".list-footer__page-link.is-current").text.squish).to eq("1")
     expect(response.body).not_to include("Favorite Manual")
-    expect(Nokogiri::HTML(response.body).css("nav.pagination a").all? { _1["href"].include?("view=read_later") }).to be(true)
+    expect(parsed_html.css("nav.list-footer__pagination a").all? { _1["href"].include?("view=read_later") }).to be(true)
   end
 
   it "normalizes invalid and out-of-range page params per active tab" do
@@ -33,7 +37,9 @@ RSpec.describe "Document bookmark pagination", type: :request do
     get document_bookmarks_path, params: { view: "favorite", favorite_page: 999 }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("5 / 25件", "お気に入り 2 / 2 ページ")
+    parsed_html = Nokogiri::HTML(response.body)
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("21–25 / 25件")
+    expect(parsed_html.at_css(".list-footer__page-link.is-current").text.squish).to eq("2")
   end
 
   it "uses view and page params as the fallback after moving a saved bookmark" do

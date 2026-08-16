@@ -14,20 +14,20 @@ header.admin-list-header
 
 section.card aria-labelledby="admin-attention-heading"
   h2#admin-attention-heading 要対応
-  .dashboard-grid
-    article class="card metric-card admin-dashboard-metric admin-dashboard-metric--#{configuration_metric_status}"
+  .dashboard-grid.admin-dashboard-grid
+    article class="admin-dashboard-metric admin-dashboard-metric--#{configuration_metric_status}"
       = link_to admin_diagnostics_path(anchor: "configuration"), class: "admin-dashboard-metric__link", aria: { label: "設定診断 #{configuration_issue_count}件の詳細を確認" } do
         h3 設定診断
         p.metric-number
           = configuration_issue_count
           span.metric-number__unit 件
-    article class="card metric-card admin-dashboard-metric admin-dashboard-metric--#{missing_metric_status}"
+    article class="admin-dashboard-metric admin-dashboard-metric--#{missing_metric_status}"
       = link_to admin_diagnostics_path(anchor: "document-files"), class: "admin-dashboard-metric__link", aria: { label: "文書実体欠落 #{@document_file_health.missing_count}件の詳細を確認" } do
         h3 文書実体欠落
         p.metric-number
           = @document_file_health.missing_count
           span.metric-number__unit 件
-    article class="card metric-card admin-dashboard-metric admin-dashboard-metric--#{failure_metric_status}"
+    article class="admin-dashboard-metric admin-dashboard-metric--#{failure_metric_status}"
       = link_to admin_diagnostics_path(anchor: "failures"), class: "admin-dashboard-metric__link", aria: { label: "継続失敗候補 #{@continuing_failure_count}件の詳細を確認" } do
         h3 継続失敗候補
         p.metric-number
@@ -36,10 +36,10 @@ section.card aria-labelledby="admin-attention-heading"
 
 section.card aria-labelledby="admin-primary-data-heading"
   h2#admin-primary-data-heading 主要データ
-  .dashboard-grid
+  .dashboard-grid.admin-dashboard-grid
     - @model_browser_entries.each do |entry|
       - summary = @model_browser_entry_summaries.fetch(entry)
-      article.card.metric-card
+      article.admin-dashboard-data-item
         h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
         p
           strong = summary[:total_count]
@@ -51,27 +51,28 @@ section.card aria-labelledby="admin-recent-issues-heading"
     = link_to "すべて確認", admin_diagnostics_path(anchor: "failures"), class: "button secondary"
 
   - if @recent_operational_issues.any?
-    table
-      caption.table-caption 保存済み失敗履歴の最新状況
-      thead
-        tr
-          th 種別
-          th 件数
-          th 最終更新
-          th 操作
-      tbody
-        - @recent_operational_issues.each do |item|
+    .table-scroll tabindex="0" aria-label="最近の運用失敗一覧"
+      table
+        caption.table-caption 保存済み失敗履歴の最新状況
+        thead
           tr
-            td = item[:label]
-            td
-              span.badge = "#{item[:count]}件"
-            td
-              - if item[:latest_at]
-                time datetime=item[:latest_at].iso8601 = l(item[:latest_at], format: :short)
-              - else
-                = "-"
-            td.actions
-              = link_to item[:primary_link].first, item[:primary_link].last, class: "button secondary"
+            th 種別
+            th 件数
+            th 最終更新
+            th 操作
+        tbody
+          - @recent_operational_issues.each do |item|
+            tr
+              td = item[:label]
+              td
+                span.badge = "#{item[:count]}件"
+              td
+                - if item[:latest_at]
+                  time datetime=item[:latest_at].iso8601 = l(item[:latest_at], format: :short)
+                - else
+                  = "-"
+              td.actions
+                = link_to item[:primary_link].first, item[:primary_link].last, class: "button secondary"
   - else
     p.admin-dashboard-compact-state
       i.bi.bi-check-circle.me-1 aria-hidden="true"

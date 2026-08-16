@@ -43,6 +43,36 @@ application.register("rails-fields-kit--tom-select", RailsFieldsKitTomSelectCont
 
 既存のフォームレイアウト内で入力要素だけを描画する場合は `wrapper: false` を指定し、入力要素の class / data / aria 属性は `html:` に渡す。
 
+### FilterToolbarComponent（検索入力の内容別幅）
+
+一覧検索ではformと検索paramsを呼び出し側に残し、`FilterToolbarComponent`のfield slotで入力の用途幅だけを指定する。
+
+```slim
+= form_with url: admin_records_path, method: :get, local: true do |form|
+  = render FilterToolbarComponent.new(label: "レコード検索") do |toolbar|
+    - toolbar.with_field(size: :query) do
+      = form.rfk_search_field :q, value: params[:q], wrapper: false
+    - toolbar.with_field(size: :enum) do
+      = form.rfk_select :status, collection: status_options, selected: params[:status], allow_clear: true
+    - toolbar.with_action do
+      = form.submit "検索", class: "button"
+```
+
+`size`は次を使う。
+
+| size | 用途 |
+| --- | --- |
+| `:query` | キーワード検索 |
+| `:remote` | API検索combobox |
+| `:enum` | 状態・種別等の固定選択 |
+| `:date` | 日付 |
+| `:short` | HTTP status・件数・短いcode |
+| `:wide` | 長いpath・error断片 |
+
+- rfk入力自体の`width: 100%`はfield wrapper内だけに適用する
+- formのURL、hidden parameter、selected value、認可、検索条件生成はComponentへ移さない
+- 検索buttonはaction slotへ置き、入力fieldと同じ幅へ引き伸ばさない
+
 ### rfk_select（検索フィルタ用）
 
 ```slim

@@ -9,12 +9,15 @@ RSpec.describe "Admin access log pagination cues", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  def pagination_link(label)
-    parsed_html.css("nav.pagination a").find { |link| link.text.squish == label }
+  def pagination_link(direction)
+    phrase = direction == :previous ? "ページ目へ戻る" : "ページ目へ進む"
+    parsed_html.css('nav[aria-label="監査ログ一覧"] a').find do |link|
+      link["aria-label"].to_s.include?(phrase)
+    end
   end
 
-  def pagination_query(label)
-    link = pagination_link(label)
+  def pagination_query(direction)
+    link = pagination_link(direction)
     return {} unless link
 
     Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
@@ -64,17 +67,15 @@ RSpec.describe "Admin access log pagination cues", type: :request do
 
     expect(response).to have_http_status(:ok)
 
-    previous_link = pagination_link("前の50件")
-    next_link = pagination_link("次の50件")
+    previous_link = pagination_link(:previous)
+    next_link = pagination_link(:next)
 
     expect(previous_link).to be_present
     expect(next_link).to be_present
-    expect(previous_link["aria-label"]).to eq("監査ログ一覧の1ページ目へ（現在の検索条件を保持）")
-    expect(previous_link["title"]).to eq("監査ログ一覧の1ページ目へ（現在の検索条件を保持）")
-    expect(next_link["aria-label"]).to eq("監査ログ一覧の3ページ目へ（現在の検索条件を保持）")
-    expect(next_link["title"]).to eq("監査ログ一覧の3ページ目へ（現在の検索条件を保持）")
-    expect(previous_link.text.squish).to eq("前の50件")
-    expect(next_link.text.squish).to eq("次の50件")
+    expect(previous_link["aria-label"]).to eq("監査ログ一覧の1ページ目へ戻る（9ページ中）")
+    expect(previous_link["title"]).to eq("監査ログ一覧の1ページ目へ戻る（9ページ中）")
+    expect(next_link["aria-label"]).to eq("監査ログ一覧の3ページ目へ進む（9ページ中）")
+    expect(next_link["title"]).to eq("監査ログ一覧の3ページ目へ進む（9ページ中）")
 
     common_filter_params = {
       "project_id" => pagination_project.id.to_s,
@@ -82,7 +83,7 @@ RSpec.describe "Admin access log pagination cues", type: :request do
       "from" => "2026-05-01",
       "to" => "2026-05-02"
     }
-    expect(pagination_query("前の50件")).to include(common_filter_params.merge("page" => "1"))
-    expect(pagination_query("次の50件")).to include(common_filter_params.merge("page" => "3"))
+    expect(pagination_query(:previous)).to include(common_filter_params.merge("page" => "1"))
+    expect(pagination_query(:next)).to include(common_filter_params.merge("page" => "3"))
   end
 end

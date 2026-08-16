@@ -17,7 +17,7 @@ RSpec.describe "Admin access log export actions", type: :request do
   end
 
   def export_link(label)
-    parsed_html.css("section.card a[href]").find { |node| node.text.squish == label }
+    parsed_html.css(".list-footer__exports a[href]").find { |node| node.text.squish == label }
   end
 
   def export_link_query(label)

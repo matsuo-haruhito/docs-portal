@@ -37,7 +37,7 @@ RSpec.describe "Admin read confirmations safety contracts", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("指定した文書はこの案件に見つかりません。")
-    expect(page_text).to include("表示中: 0件")
+    expect(page_text).to include("0 / 0件")
     expect(page_text).not_to include("Outside Manual")
     expect(page_text).not_to include("Outside Reader")
     expect(read_confirmation_rows).to be_empty

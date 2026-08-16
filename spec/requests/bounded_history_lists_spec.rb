@@ -36,8 +36,7 @@ RSpec.describe "Bounded history lists", type: :request do
     get document_delivery_logs_path, params: { status: :sent, delivery_type: :portal_link }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 51件中50件を表示しています")
-    expect(page_text).to include("さらに絞り込む場合は検索・状態・方式フィルタを使ってください")
+    expect(page_text).to include("1–50 / 51件")
     expect(response.body).to include("送付済み (51)")
     expect(response.body).to include("下書き (1)")
     expect(page_text).to include(visible_logs.last.to_addresses)

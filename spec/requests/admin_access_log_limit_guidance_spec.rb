@@ -6,8 +6,12 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
   let(:document) { create(:document, project:, title: "Audit Document", slug: "audit-document") }
   let(:version) { create(:document_version, document:, version_label: "v1.0.0") }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
   def page_text
-    Nokogiri::HTML(response.body).text.squish
+    parsed_html.text.squish
   end
 
   def create_access_log!(action_type:, target_type:, target_name:, accessed_at: Time.current)
@@ -26,7 +30,7 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
     )
   end
 
-  it "does not show display limit guidance below 50 rows" do
+  it "shows the bounded range without rendering pagination below 50 rows" do
     create_access_log!(action_type: :download, target_type: "zip", target_name: "audit.zip")
 
     sign_in_as(admin_user)
@@ -34,11 +38,12 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 1件 / 1ページ50件")
-    expect(page_text).not_to include("1ページの表示上限50件に達しています。")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–1 / 1件")
+    expect(parsed_html.at_css(".list-footer__pagination")).to be_nil
+    expect(page_text).to include("最大10,000件まで確認できます。")
   end
 
-  it "shows guidance when the 50 row page limit is reached" do
+  it "shows pagination and the bounded display disclosure after 50 rows" do
     base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
 
     205.times do |index|
@@ -55,11 +60,12 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("1ページの表示上限50件に達しています。")
-    expect(page_text).to include("古い証跡は次ページで確認できます。")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–50 / 205件")
+    expect(parsed_html.at_css(".list-footer__pagination")).to be_present
+    expect(page_text).to include("監査ログは新しい順に1ページ50件、最大10,000件まで確認できます。")
   end
 
-  it "shows filtered guidance when the display limit is reached with filters" do
+  it "keeps active filters visible as filter chips at the page boundary" do
     base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
 
     50.times do |index|
@@ -76,7 +82,8 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
     get admin_access_logs_path(action_type: "view")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("1ページの表示上限50件に達しています。")
-    expect(page_text).to include("高度条件を追加してさらに絞り込んでください。")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–50 / 50件")
+    expect(parsed_html.at_css('[aria-label="適用中の検索条件"]').text.squish).to include("操作: 閲覧")
+    expect(parsed_html.at_css(".list-footer__pagination")).to be_nil
   end
 end

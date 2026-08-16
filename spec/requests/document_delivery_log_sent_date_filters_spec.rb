@@ -16,6 +16,10 @@ RSpec.describe "Document delivery log sent date filters", type: :request do
     parsed_html.text.gsub(/[[:space:]]+/, " ").strip
   end
 
+  def selected_filter_value(name)
+    parsed_html.at_css("select[name='#{name}'] option[selected]")&.[]("value")
+  end
+
   def action_targets
     parsed_html.css("a[href], form[action]").map do |node|
       node["href"] || node["action"]
@@ -121,30 +125,11 @@ RSpec.describe "Document delivery log sent date filters", type: :request do
     expect(page_text).not_to include(wrong_type_log.to_addresses)
     expect(page_text).not_to include(blank_draft_log.to_addresses)
     expect(page_text).not_to include(other_sender_log.to_addresses)
-    expect(page_text).to include("表示範囲: 1件中1件を表示しています。")
-
-    expect(action_targets).to include(
-      document_delivery_logs_path(
-        q: "Sent needle",
-        created_from: "2026-01-01",
-        created_to: "2026-01-31",
-        sent_from: "2026-01-10",
-        sent_to: "2026-01-20",
-        status: :failed,
-        delivery_type: :portal_link
-      )
-    )
-    expect(action_targets).to include(
-      document_delivery_logs_path(
-        q: "Sent needle",
-        created_from: "2026-01-01",
-        created_to: "2026-01-31",
-        sent_from: "2026-01-10",
-        sent_to: "2026-01-20",
-        status: :sent,
-        delivery_type: :attachment
-      )
-    )
+    expect(page_text).to include("1–1 / 1件")
+    expect(selected_filter_value("status")).to eq("sent")
+    expect(selected_filter_value("delivery_type")).to eq("portal_link")
+    expect(parsed_html.at_css("select[name='status'] option[value='failed']")).to be_present
+    expect(parsed_html.at_css("select[name='delivery_type'] option[value='attachment']")).to be_present
     expect(href_for("検索をクリア")).to eq(
       document_delivery_logs_path(
         status: :sent,

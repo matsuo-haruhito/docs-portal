@@ -10,8 +10,8 @@ RSpec.describe "Generated file clear action source", type: :request do
 
     aggregate_failures do
       expect(source).to include("- has_active_filters = @filters.compact_blank.any?")
-      expect(source).to match(%r{= form\.submit "絞り込み", class: "rounded bg-blue-600 px-3 py-2 text-sm text-white"\s+- if has_active_filters\s+= link_to "絞り込みを解除", admin_generated_file_events_path, class: "rounded border px-3 py-2 text-sm"})
-      expect(source).not_to match(%r{= form\.submit "絞り込み", class: "rounded bg-blue-600 px-3 py-2 text-sm text-white"\s+= link_to "絞り込みを解除", admin_generated_file_events_path, class: "rounded border px-3 py-2 text-sm"})
+      expect(source).to match(%r{- toolbar\.with_action do\s+= form\.submit "絞り込み", class: "button"\s+- if has_active_filters\s+- toolbar\.with_action do\s+= link_to "絞り込みを解除", admin_generated_file_events_path, class: "button secondary"})
+      expect(source).not_to match(%r{- toolbar\.with_action do\s+= form\.submit "絞り込み", class: "button"\s+- toolbar\.with_action do\s+= link_to "絞り込みを解除", admin_generated_file_events_path})
     end
   end
 
@@ -20,8 +20,8 @@ RSpec.describe "Generated file clear action source", type: :request do
 
     aggregate_failures do
       expect(source).to include("- has_active_filters = @filters.compact_blank.any?")
-      expect(source).to match(%r{= form\.submit "絞り込み", class: "rounded bg-blue-600 px-3 py-2 text-sm text-white"\s+- if has_active_filters\s+= link_to "絞り込みを解除", admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm"})
-      expect(source).not_to match(%r{= form\.submit "絞り込み", class: "rounded bg-blue-600 px-3 py-2 text-sm text-white"\s+= link_to "絞り込みを解除", admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm"})
+      expect(source).to match(%r{- toolbar\.with_action do\s+= form\.submit "絞り込み", class: "button"\s+- if has_active_filters\s+- toolbar\.with_action do\s+= link_to "絞り込みを解除", admin_generated_file_runs_path, class: "button secondary"})
+      expect(source).not_to match(%r{- toolbar\.with_action do\s+= form\.submit "絞り込み", class: "button"\s+- toolbar\.with_action do\s+= link_to "絞り込みを解除", admin_generated_file_runs_path})
     end
   end
 end

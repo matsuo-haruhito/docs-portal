@@ -11,15 +11,11 @@ RSpec.describe "Admin read confirmation pagination links", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  def pagination_link(text)
-    parsed_html.css("a.button.secondary").find { _1.text.squish == text }
+  def pagination_link(direction)
+    parsed_html.css("a.list-footer__page-link").find { _1["aria-label"]&.include?(direction) }
   end
 
-  def disabled_pagination_control(text)
-    parsed_html.css("span.button.secondary[aria-disabled='true']").find { _1.text.squish == text }
-  end
-
-  it "keeps visible pagination text while adding read confirmation context to link cues" do
+  it "keeps read confirmation context and current filters in shared footer pagination cues" do
     base_time = Time.zone.local(2026, 5, 1, 9, 0, 0)
     document
 
@@ -39,13 +35,13 @@ RSpec.describe "Admin read confirmation pagination links", type: :request do
       to: "2026-05-01"
     )
 
-    next_link = pagination_link("次へ")
+    next_link = pagination_link("進む")
 
     expect(response).to have_http_status(:ok)
-    expect(disabled_pagination_control("前へ")).to be_present
+    expect(pagination_link("戻る")).to be_nil
     expect(next_link).to be_present
-    expect(next_link["title"]).to eq("既読確認内訳の2ページ目へ進む（2ページ中、1ページ200件）")
-    expect(next_link["aria-label"]).to eq("既読確認内訳の2ページ目へ進む（2ページ中、1ページ200件）")
+    expect(next_link["title"]).to eq("既読確認内訳の2ページ目へ進む（2ページ中）")
+    expect(next_link["aria-label"]).to eq("既読確認内訳の2ページ目へ進む（2ページ中）")
     expect(next_link["href"]).to include("project_id=#{project.id}")
     expect(next_link["href"]).to include("document_slug=manual-page")
     expect(next_link["href"]).to include("company_id=#{company.id}")
@@ -64,19 +60,19 @@ RSpec.describe "Admin read confirmation pagination links", type: :request do
       page: 2
     )
 
-    previous_link = pagination_link("前へ")
+    previous_link = pagination_link("戻る")
 
     expect(response).to have_http_status(:ok)
     expect(previous_link).to be_present
-    expect(previous_link["title"]).to eq("既読確認内訳の1ページ目へ戻る（2ページ中、1ページ200件）")
-    expect(previous_link["aria-label"]).to eq("既読確認内訳の1ページ目へ戻る（2ページ中、1ページ200件）")
+    expect(previous_link["title"]).to eq("既読確認内訳の1ページ目へ戻る（2ページ中）")
+    expect(previous_link["aria-label"]).to eq("既読確認内訳の1ページ目へ戻る（2ページ中）")
     expect(previous_link["href"]).to include("project_id=#{project.id}")
     expect(previous_link["href"]).to include("document_slug=manual-page")
     expect(previous_link["href"]).to include("company_id=#{company.id}")
     expect(previous_link["href"]).to include("user_id=#{viewer.id}")
     expect(previous_link["href"]).to include("from=2026-05-01")
     expect(previous_link["href"]).to include("to=2026-05-01")
-    expect(previous_link["href"]).not_to include("page=")
-    expect(disabled_pagination_control("次へ")).to be_present
+    expect(previous_link["href"]).to include("page=1")
+    expect(pagination_link("進む")).to be_nil
   end
 end

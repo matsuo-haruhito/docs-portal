@@ -18,7 +18,12 @@ RSpec.describe "Document delivery log pagination", type: :request do
   end
 
   def href_for(text)
-    parsed_html.css("a[href]").find { |node| node.text.strip == text }&.[]("href")
+    links = parsed_html.css("a[href]")
+    link = links.find { |node| node.text.strip == text }
+    return link["href"] if link
+
+    direction = { "前へ" => "戻る", "次へ" => "進む" }[text]
+    links.find { |node| direction && node["aria-label"]&.include?(direction) }&.[]("href")
   end
 
   def href_for_row_containing(row_text, link_text)
@@ -77,7 +82,7 @@ RSpec.describe "Document delivery log pagination", type: :request do
     get document_delivery_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 51件中50件を表示しています。現在のページ: 1-50件。1ページあたり最大50件です。")
+    expect(page_text).to include("1–50 / 51件")
     expect(page_text).to include("paged-50@example.com")
     expect(page_text).not_to include("paged-00@example.com")
     expect(query_params_for("次へ")).to include("page" => "2")
@@ -86,8 +91,9 @@ RSpec.describe "Document delivery log pagination", type: :request do
     get document_delivery_logs_path, params: { page: 2 }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 51件中1件を表示しています。現在のページ: 51-51件。1ページあたり最大50件です。")
-    expect(page_text).to include("2 / 2ページ")
+    expect(page_text).to include("51–51 / 51件")
+    expect(parsed_html.at_css(".list-footer__page-link.is-current").text).to eq("2")
+    expect(parsed_html.at_css(".list-footer__page-total").text.squish).to eq("/ 2ページ")
     expect(page_text).to include("paged-00@example.com")
     expect(page_text).not_to include("paged-50@example.com")
     expect(query_params_for("前へ")).to include("page" => "1")
@@ -127,7 +133,7 @@ RSpec.describe "Document delivery log pagination", type: :request do
     get document_delivery_logs_path, params: filter_params
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 55件中50件を表示しています。現在のページ: 1-50件。1ページあたり最大50件です。")
+    expect(page_text).to include("1–50 / 55件")
     expect(page_text).to include("filter-54@example.com")
     expect(page_text).not_to include("filter-00@example.com")
     expect(page_text).not_to include("wrong-status@example.com")
@@ -146,10 +152,10 @@ RSpec.describe "Document delivery log pagination", type: :request do
     get document_delivery_logs_path, params: filter_params.merge(page: 2)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 55件中5件を表示しています。現在のページ: 51-55件。1ページあたり最大50件です。")
+    expect(page_text).to include("51–55 / 55件")
     expect(page_text).to include("filter-00@example.com")
     expect(page_text).not_to include("filter-54@example.com")
-    expect(page_text).to include("表示件数はこの条件に一致した履歴のうち、現在のページに表示している件数です。")
+    expect(page_text).to include("51–55 / 55件")
   end
 
   it "keeps external users scoped to their own delivery logs on later pages" do
@@ -164,7 +170,7 @@ RSpec.describe "Document delivery log pagination", type: :request do
     get document_delivery_logs_path, params: { page: 2 }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 55件中5件を表示しています。現在のページ: 51-55件。1ページあたり最大50件です。")
+    expect(page_text).to include("51–55 / 55件")
     expect(page_text).to include("own-00@example.com")
     expect(page_text).not_to include("other-00@example.com")
     expect(page_text).not_to include("other-54@example.com")
@@ -183,14 +189,14 @@ RSpec.describe "Document delivery log pagination", type: :request do
     get document_delivery_logs_path, params: { page: "bad" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 51件中50件を表示しています。現在のページ: 1-50件。1ページあたり最大50件です。")
+    expect(page_text).to include("1–50 / 51件")
     expect(page_text).to include("invalid-page-50@example.com")
     expect(page_text).not_to include("invalid-page-00@example.com")
 
     get document_delivery_logs_path, params: { page: 99 }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 51件中1件を表示しています。現在のページ: 51-51件。1ページあたり最大50件です。")
+    expect(page_text).to include("51–51 / 51件")
     expect(page_text).to include("invalid-page-00@example.com")
   end
 end

@@ -51,8 +51,8 @@ RSpec.describe "admin users source" do
       expect(index_source).to include("details.admin-create-panel open=(@user.errors.any?)")
       expect(index_source).to include("form.rfk_search_field :q")
       expect(index_source).to include("form.rfk_select :active")
-      expect(index_source).to include(".admin-filter-toolbar")
-      expect(index_source).to include(".admin-filter-chips")
+      expect(index_source).to include("render FilterToolbarComponent.new")
+      expect(index_source).to include("toolbar.with_active_filter")
       expect(index_source).to include(".admin-list-meta__count")
       expect(index_source).not_to include("user_filter_result_note")
     end

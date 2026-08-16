@@ -6,10 +6,7 @@
 - selected_active_filter = @company_filter_params["active"]
 - company_filter_keyword = @company_filter_params["q"].to_s.strip
 - company_active_filter_label = { "true" => "有効", "false" => "無効" }[selected_active_filter]
-- company_filter_summaries = []
-- company_filter_summaries << "キーワード「#{company_filter_keyword}」" if company_filter_keyword.present?
-- company_filter_summaries << "状態: #{company_active_filter_label}" if company_active_filter_label.present?
-- company_filters_applied = company_filter_summaries.any?
+- company_filters_applied = company_filter_keyword.present? || company_active_filter_label.present?
 - company_return_to = request.query_parameters.present? ? request.fullpath : nil
 
 .admin-list-header
@@ -22,30 +19,40 @@
       .admin-create-panel__body
         = render "form", company: @company
   - else
-    .card
+    .card.admin-form-container
       h2 = company_form_title
       = render "form", company: @company
 
-.admin-filter-toolbar
-  = form_with url: admin_companies_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |f|
-    .admin-filter-toolbar__fields
-      = text_field_tag :q, @company_filter_params["q"], placeholder: "ドメイン・会社名", maxlength: 100, class: "admin-filter-toolbar__search"
-      = f.rfk_select :active,
+= form_with url: admin_companies_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
+  = render FilterToolbarComponent.new(label: "会社マスタの検索条件") do |toolbar|
+    - toolbar.with_field(size: :query) do
+      label
+        | ドメイン・会社名
+        = form.rfk_search_field :q,
+          value: @company_filter_params["q"],
+          placeholder: "ドメイン・会社名",
+          wrapper: false,
+          html: { maxlength: 100 }
+    - toolbar.with_field(size: :enum) do
+      = form.rfk_select :active,
         collection: [["有効", "true"], ["無効", "false"]],
         selected: (%w[true false].include?(selected_active_filter) ? selected_active_filter : nil),
         include_blank: "すべて",
-        wrapper: false,
+        wrapper: true,
+        label: "状態",
         allow_clear: true,
-        placeholder: "状態"
-    .admin-filter-toolbar__actions
-      = submit_tag "検索", class: "button"
-      - if company_filters_applied
-        = link_to "クリア", admin_companies_path, class: "button secondary"
-
-- if company_filters_applied
-  .admin-filter-chips
-    - company_filter_summaries.each do |summary|
-      span.admin-filter-chip = summary
+        placeholder: "すべて"
+    - toolbar.with_action do
+      = form.submit "検索", class: "button"
+    - if company_filters_applied
+      - toolbar.with_action do
+        = link_to "条件をクリア", admin_companies_path, class: "button secondary"
+    - if company_filter_keyword.present?
+      - toolbar.with_active_filter do
+        = "キーワード: #{company_filter_keyword}"
+    - if company_active_filter_label.present?
+      - toolbar.with_active_filter do
+        = "状態: #{company_active_filter_label}"
 
 .admin-list-meta
   span.admin-list-meta__count = "#{@companies_filtered_count}件"
@@ -53,14 +60,15 @@
     = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "会社一覧の表示設定")
 
 - if @companies.any?
-  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "会社一覧" } }) do
+    caption.table-caption 会社一覧
     thead
       tr
         th data-rails-table-preferences-column-key="domain" ドメイン
         th data-rails-table-preferences-column-key="name" 会社名（表示用）
         th data-rails-table-preferences-column-key="display_name" 表示名
         th data-rails-table-preferences-column-key="status" 状態
-        th data-rails-table-preferences-column-key="actions"
+        th data-rails-table-preferences-column-key="actions" 操作
     tbody
       - @companies.each do |company|
         - company_delete_confirm = "会社「#{company.display_name}」を完全に削除しますか？無効化ではありません。所属ユーザーや文書権限への影響を確認してください。"
@@ -78,22 +86,14 @@
             - if admin_user?
               = delete_link_to "削除", admin_company_path(company, return_to: company_return_to), confirm: company_delete_confirm
 
-  - if @companies_pagination[:total_pages] > 1
-    nav.pagination aria-label="会社一覧ページ"
-      .admin-pagination
-        - if @companies_pagination[:prev_page]
-          = link_to "前へ", admin_companies_path(@company_page_params.merge(page: @companies_pagination[:prev_page])), class: "button secondary"
-        span.muted = "#{@companies_pagination[:page]} / #{@companies_pagination[:total_pages]}"
-        - if @companies_pagination[:next_page]
-          = link_to "次へ", admin_companies_path(@company_page_params.merge(page: @companies_pagination[:next_page])), class: "button secondary"
-- else
-  - if @companies_total_count.to_i.zero?
-    - if admin_user?
-      = render EmptyStateComponent.new(heading: "会社が未登録です", description: "「新規登録」でドメインと会社名を入力して、最初の会社を登録してください。")
-    - else
-      = render EmptyStateComponent.new(heading: "会社情報がありません", description: "表示できる自社会社情報がありません。必要な場合は internal admin に確認してください。")
+  = render ListFooterComponent.new(pagination: @companies_pagination, url: admin_companies_path, params: @company_page_params, label: "会社一覧ページ")
+- elsif @companies_total_count.to_i.zero?
+  - if admin_user?
+    = render EmptyStateComponent.new(heading: "会社が未登録です", description: "「新規登録」でドメインと会社名を入力して、最初の会社を登録してください。")
   - else
-    = render EmptyStateComponent.new(heading: "条件に一致する会社がありません", description: "キーワードや状態の条件を変更するか、条件をクリアしてください。") do |component|
-      - if company_filters_applied
-        - component.with_action do
-          = link_to "条件をクリア", admin_companies_path, class: "button secondary"
+    = render EmptyStateComponent.new(heading: "会社情報がありません", description: "表示できる自社会社情報がありません。必要な場合は internal admin に確認してください。")
+- else
+  = render EmptyStateComponent.new(heading: "条件に一致する会社がありません", description: "キーワードや状態の条件を変更するか、条件をクリアしてください。") do |component|
+    - if company_filters_applied
+      - component.with_action do
+        = link_to "条件をクリア", admin_companies_path, class: "button secondary"

@@ -8,6 +8,7 @@
 - filters_active = active_filter_summaries.any?
 - documents_empty = @documents_filtered_count.zero?
 - current_return_to = request.query_string.present? ? request.fullpath : nil
+- document_pagination = @documents_pagination
 
 .admin-list-header
   h1 文書マスタ
@@ -18,83 +19,91 @@
     .admin-create-panel__body
       = render "form", document: @document
 
-.admin-filter-toolbar
-  = form_with url: admin_documents_path, method: :get, local: true do |form|
-    .admin-filter-toolbar__form
-      .admin-filter-toolbar__fields
+= form_with url: admin_documents_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
+  = render FilterToolbarComponent.new(label: "文書マスタの検索条件") do |toolbar|
+    - toolbar.with_field(size: :query) do
+      label
+        | 案件・文書
         = form.rfk_search_field :q,
           value: @filters[:q],
           placeholder: "案件名・案件コード・文書名・URL識別子",
           wrapper: false,
           html: { maxlength: Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH, class: "admin-filter-toolbar__search" }
-        = form.rfk_select :archived,
-          collection: admin_document_archived_filter_options.drop(1),
-          include_blank: "すべて",
-          placeholder: "アーカイブ状態",
-          selected: @filters[:archived],
-          allow_clear: true,
-          wrapper: false
-      .admin-filter-toolbar__actions
-        = form.submit "検索", class: "button"
-        - if filters_active
-          = link_to "クリア", admin_documents_path, class: "button secondary"
-
-    details.filter-details open=(detailed_filters_active ? true : nil)
-      summary 詳細条件
-      .form-grid.form-grid--compact
-        = form.rfk_select :category,
-          collection: admin_document_category_filter_options.drop(1),
-          include_blank: "すべて",
-          placeholder: "すべて",
-          selected: @filters[:category],
-          allow_clear: true,
-          wrapper: true,
-          label: "カテゴリ"
-        = form.rfk_select :document_kind,
-          collection: admin_document_kind_filter_options.drop(1),
-          include_blank: "すべて",
-          placeholder: "すべて",
-          selected: @filters[:document_kind],
-          allow_clear: true,
-          wrapper: true,
-          label: "種別"
-        = form.rfk_select :visibility_policy,
-          collection: admin_document_visibility_filter_options.drop(1),
-          include_blank: "すべて",
-          placeholder: "すべて",
-          selected: @filters[:visibility_policy],
-          allow_clear: true,
-          wrapper: true,
-          label: "公開範囲"
-        = form.rfk_select :source_authority,
-          collection: admin_document_source_authority_filter_options.drop(1),
-          include_blank: "すべて",
-          placeholder: "すべて",
-          selected: @filters[:source_authority],
-          allow_clear: true,
-          wrapper: true,
-          label: "正本区分"
-        = form.rfk_select :retention,
-          collection: admin_document_retention_filter_options.drop(1),
-          include_blank: "すべて",
-          placeholder: "すべて",
-          selected: @filters[:retention],
-          allow_clear: true,
-          wrapper: true,
-          label: "保管期限"
-        = form.rfk_select :discard,
-          collection: admin_document_discard_filter_options.drop(1),
-          include_blank: "すべて",
-          placeholder: "すべて",
-          selected: @filters[:discard],
-          allow_clear: true,
-          wrapper: true,
-          label: "廃棄候補"
-
-- if filters_active
-  .admin-filter-chips
+    - toolbar.with_field(size: :enum) do
+      = form.rfk_select :archived,
+        collection: admin_document_archived_filter_options.drop(1),
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @filters[:archived],
+        allow_clear: true,
+        wrapper: true,
+        label: "アーカイブ状態"
+    - toolbar.with_action do
+      = form.submit "検索", class: "button"
+    - if filters_active
+      - toolbar.with_action do
+        = link_to "条件をクリア", admin_documents_path, class: "button secondary"
     - active_filter_summaries.each do |summary|
-      span.admin-filter-chip = summary
+      - toolbar.with_active_filter do
+        = summary
+    - toolbar.with_details do
+      details.filter-details open=(detailed_filters_active ? true : nil)
+        summary 詳細条件
+        .filter-toolbar__fields
+          .filter-toolbar__field.filter-toolbar__field--enum
+            = form.rfk_select :category,
+              collection: admin_document_category_filter_options.drop(1),
+              include_blank: "すべて",
+              placeholder: "すべて",
+              selected: @filters[:category],
+              allow_clear: true,
+              wrapper: true,
+              label: "カテゴリ"
+          .filter-toolbar__field.filter-toolbar__field--enum
+            = form.rfk_select :document_kind,
+              collection: admin_document_kind_filter_options.drop(1),
+              include_blank: "すべて",
+              placeholder: "すべて",
+              selected: @filters[:document_kind],
+              allow_clear: true,
+              wrapper: true,
+              label: "種別"
+          .filter-toolbar__field.filter-toolbar__field--enum
+            = form.rfk_select :visibility_policy,
+              collection: admin_document_visibility_filter_options.drop(1),
+              include_blank: "すべて",
+              placeholder: "すべて",
+              selected: @filters[:visibility_policy],
+              allow_clear: true,
+              wrapper: true,
+              label: "公開範囲"
+          .filter-toolbar__field.filter-toolbar__field--enum
+            = form.rfk_select :source_authority,
+              collection: admin_document_source_authority_filter_options.drop(1),
+              include_blank: "すべて",
+              placeholder: "すべて",
+              selected: @filters[:source_authority],
+              allow_clear: true,
+              wrapper: true,
+              label: "正本区分"
+          .filter-toolbar__field.filter-toolbar__field--enum
+            = form.rfk_select :retention,
+              collection: admin_document_retention_filter_options.drop(1),
+              include_blank: "すべて",
+              placeholder: "すべて",
+              selected: @filters[:retention],
+              allow_clear: true,
+              wrapper: true,
+              label: "保管期限"
+          .filter-toolbar__field.filter-toolbar__field--enum
+            = form.rfk_select :discard,
+              collection: admin_document_discard_filter_options.drop(1),
+              include_blank: "すべて",
+              placeholder: "すべて",
+              selected: @filters[:discard],
+              allow_clear: true,
+              wrapper: true,
+              label: "廃棄候補"
 
 .admin-list-meta
   span.admin-list-meta__count = "#{@documents_filtered_count}件"
@@ -243,15 +252,5 @@ details.filter-details
             i.bi.bi-trash aria-hidden="true"
             span.visually-hidden 削除
 
-- if @documents_pagination[:total_pages] > 1
-  nav.pagination aria-label="文書マスタ一覧ページ"
-    p.actions
-      - if @documents_pagination[:prev_page]
-        - previous_document_page = @documents_pagination[:prev_page]
-        - previous_document_page_label = "文書マスタ一覧の#{previous_document_page}ページ目へ（現在の検索条件を保持）"
-        = link_to "前へ", admin_documents_path(@document_page_params.merge(page: previous_document_page)), class: "button secondary", aria: { label: previous_document_page_label }, title: previous_document_page_label
-      span.muted = "#{@documents_pagination[:page]} / #{@documents_pagination[:total_pages]}ページ"
-      - if @documents_pagination[:next_page]
-        - next_document_page = @documents_pagination[:next_page]
-        - next_document_page_label = "文書マスタ一覧の#{next_document_page}ページ目へ（現在の検索条件を保持）"
-        = link_to "次へ", admin_documents_path(@document_page_params.merge(page: next_document_page)), class: "button secondary", aria: { label: next_document_page_label }, title: next_document_page_label
+- unless documents_empty
+  = render ListFooterComponent.new(pagination: document_pagination, url: admin_documents_path, params: @document_page_params, label: "文書マスタ一覧")

@@ -1,20 +1,20 @@
 = render "shared/error_messages", record: git_import_source
 
-.card
-  p.eyebrow かんたん接続
-  h2 GitHubリポジトリからpull型で取り込む
-  p.muted
-    | GitHub App連携を推奨します。Fine-grained PATやシークレットの貼り付けは開発・検証用の詳細設定として扱い、通常はリポジトリ、ブランチ、取込元パスだけを指定して同期します。
-  ol
-    li GitHub Appを対象Organizationまたはリポジトリにインストールする
-    li 取り込みたいリポジトリ、ブランチ、パスを指定する
-    li 保存後に手動同期を実行し、Markdownと添付ファイルの取り込み結果を確認する
-  p.muted
-    | Git連携の共通契約は「同期元設定、run履歴、manifest化、削除候補」です。repository / branch / path / commit は Git 専用の入力として扱い、Google Drive / SharePoint 本体や自動同期はこの画面では追加しません。
-  p.muted
-    | GitHub App の installation context が使える場合はリポジトリ候補から選べます。候補を取得できない場合も、既存どおり owner/repo を手入力して保存できます。
-
 = form_with model: [:admin, git_import_source] do |form|
+  fieldset.integration-form-state
+    legend 連携状態
+    .form-grid
+      = form.rfk_select :auth_type,
+        collection: enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys),
+        selected: form.object.auth_type,
+        wrapper: true,
+        label: "認証方式"
+      = form.rfk_select :enabled,
+        collection: [["有効", true], ["無効", false]],
+        selected: form.object.enabled,
+        wrapper: true,
+        label: "状態"
+
   .form-grid data-controller="rfk-dependent-filter" data-rfk-dependent-filter-branch-url-value=branch_search_admin_git_import_sources_path(format: :json, installation_id: git_import_source.installation_id.presence) data-rfk-dependent-filter-path-url-value=directory_search_admin_git_import_sources_path(format: :json, installation_id: git_import_source.installation_id.presence)
     = form.rfk_combobox :project_id,
       collection: [],
@@ -59,7 +59,6 @@
       allow_clear: true,
       free_text: true,
       html: { data: { rfk_dependent_filter_target: "branch", action: "rails-fields-kit--tom-select:change->rfk-dependent-filter#branchChanged" } }
-    span.muted リポジトリが選ばれている場合はブランチ候補から選べます。候補取得不可の場合は手入力で保存できます。
     = form.rfk_combobox :source_path,
       collection: [],
       selected: git_import_source_source_path_selected_option(git_import_source.source_path),
@@ -75,49 +74,55 @@
       allow_clear: true,
       free_text: true,
       html: { data: { rfk_dependent_filter_target: "path" } }
-    span.muted リポジトリとブランチが選ばれている場合はディレクトリ候補から選べます。候補取得不可の場合は手入力で保存できます。例: docs / docs/source
-    p.muted リポジトリは GitHub App の候補から選べます。installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。ブランチと取込元パスもリポジトリ選択後に候補から選べます。候補取得不可の場合は手入力 fallback です。
-    = form.rfk_select :auth_type,
-      collection: enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys),
-      selected: form.object.auth_type,
-      wrapper: true,
-      label: "認証方式"
-    span.muted 通常運用は GitHub App。Fine-grained PAT は開発・検証用、認証なしは公開リポジトリ限定です。詳細設定は、GitHub App の installation ID や PAT の参照名・secret を確認するときだけ開きます。
-    = form.rfk_select :enabled,
-      collection: [["有効", true], ["無効", false]],
-      selected: form.object.enabled,
-      wrapper: true,
-      label: "状態"
 
-  details.card
-    summary 詳細設定（通常は開かない管理者・検証向け）
-    p.muted
-      | GitHub App では installation ID を確認します。Fine-grained PAT では credential ref と secret を使い、no_auth では secret は不要です。通常運用で迷う場合は GitHub App のまま、詳細設定は管理者の調整時だけ開きます。
-    .form-grid
-      = form.rfk_select :provider,
-        collection: enum_options_for("git_import_sources.provider", GitImportSource.providers.keys),
-        selected: form.object.provider,
-        wrapper: true,
-        label: "連携先"
-      label
-        | Organization
-        = form.text_field :organization_name, placeholder: "example-org"
-      label
-        | GitHub App installation ID
-        = form.text_field :installation_id
-      label
-        | 認証情報の参照名
-        = form.text_field :credential_ref, placeholder: "シークレット参照キー名"
-      label
-        | 認証シークレット
-        = form.password_field :credential_secret, value: nil, autocomplete: "new-password", placeholder: git_import_source.persisted? ? "変更時のみ入力" : "Fine-grained PATを入力"
-        - if git_import_source.persisted?
-          span.muted 保存済みシークレットは表示しません。Fine-grained PAT の値を変更するときだけ入力します。GitHub App や認証なしの設定では空欄のまま保存できます。
-        - else
-          span.muted Fine-grained PAT を使う場合のみ入力します。GitHub App や公開リポジトリの認証なしでは空欄のまま保存できます。
-    p.muted GitHub App を本命の認証方式として扱います。installation ID は GitHub App の候補取得と確認用、credential ref / secret は Fine-grained PAT の検証用です。認証なしは公開リポジトリの clone に限定して使います。
+  details.card.action-disclosure
+    summary.action-disclosure__summary 詳細設定（通常は開かない管理者・検証向け）
+    .action-disclosure__body
+      p.muted
+        | GitHub App では installation ID を確認します。Fine-grained PAT では credential ref と secret を使い、no_auth では secret は不要です。通常運用で迷う場合は GitHub App のまま、詳細設定は管理者の調整時だけ開きます。
+      .form-grid
+        = form.rfk_select :provider,
+          collection: enum_options_for("git_import_sources.provider", GitImportSource.providers.keys),
+          selected: form.object.provider,
+          wrapper: true,
+          label: "連携先"
+        label
+          | Organization
+          = form.text_field :organization_name, placeholder: "example-org"
+        label
+          | GitHub App installation ID
+          = form.text_field :installation_id
+        label
+          | 認証情報の参照名
+          = form.text_field :credential_ref, placeholder: "シークレット参照キー名"
+        label
+          | 認証シークレット
+          = form.password_field :credential_secret, value: nil, autocomplete: "new-password", placeholder: git_import_source.persisted? ? "変更時のみ入力" : "Fine-grained PATを入力"
+          - if git_import_source.persisted?
+            span.muted 保存済みシークレットは表示しません。Fine-grained PAT の値を変更するときだけ入力します。GitHub App や認証なしの設定では空欄のまま保存できます。
+          - else
+            span.muted Fine-grained PAT を使う場合のみ入力します。GitHub App や公開リポジトリの認証なしでは空欄のまま保存できます。
 
-  p.actions
+  .actions.integration-form-actions
     = form.submit "保存", class: "button"
     - if git_import_source.persisted?
       = back_link_to "一覧へ戻る", admin_git_import_sources_path
+
+  = render GuidanceDisclosureComponent.new(title: "Git連携の設定方法を確認", icon: "bi-git") do
+    h2 GitHubリポジトリからpull型で取り込む
+    p.muted
+      | GitHub App連携を推奨します。Fine-grained PATやシークレットの貼り付けは開発・検証用の詳細設定として扱い、通常はリポジトリ、ブランチ、取込元パスだけを指定して同期します。
+    ol
+      li GitHub Appを対象Organizationまたはリポジトリにインストールする
+      li 取り込みたいリポジトリ、ブランチ、パスを指定する
+      li 保存後に手動同期を実行し、Markdownと添付ファイルの取り込み結果を確認する
+    p.muted
+      | Git連携の共通契約は「同期元設定、run履歴、manifest化、削除候補」です。repository / branch / path / commit は Git 専用の入力として扱い、Google Drive / SharePoint 本体や自動同期はこの画面では追加しません。
+    p.muted
+      | GitHub App の installation context が使える場合はリポジトリ候補から選べます。候補を取得できない場合も、既存どおり owner/repo を手入力して保存できます。
+    ul
+      li リポジトリが選ばれている場合はブランチ候補から選べます。候補取得不可の場合は手入力で保存できます。
+      li リポジトリとブランチが選ばれている場合はディレクトリ候補から選べます。候補取得不可の場合は手入力で保存できます。例: docs / docs/source
+      li GitHub App の installation context が使える場合はリポジトリ候補から選べます。installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。ブランチと取込元パスもリポジトリ選択後に候補から選べます。候補取得不可の場合は手入力 fallback です。
+      li 通常運用は GitHub App。Fine-grained PAT は開発・検証用、認証なしは公開リポジトリ限定です。詳細設定は、GitHub App の installation ID や PAT の参照名・secret を確認するときだけ開きます。
+      li 認証なしは公開リポジトリの clone に限定して使います。

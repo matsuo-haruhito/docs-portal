@@ -1,19 +1,25 @@
 - page_title "ログイン"
 
-.card style="max-width: 420px; margin: 0 auto;"
-  h1 ログイン
-  p.muted 文書ポータルを利用するにはログインが必要です。
+.login-shell
+  section.card.login-card aria-labelledby="login-heading"
+    .login-card__brand aria-hidden="true"
+      span.login-card__brand-mark
+      span docs-portal
 
-  = form_with url: session_path, scope: :session, data: { turbo: false } do |form|
-    .form-grid style="grid-template-columns: 1fr;"
-      label
-        | メールアドレス
-        = form.email_field :email_address, autofocus: true, autocomplete: "username"
-      label
-        | パスワード
-        = form.password_field :password, autocomplete: "current-password"
-    p.actions style="margin-top: 16px;"
-      = form.submit "ログイン", class: "button"
+    h1#login-heading ログイン
+    p.muted 文書ポータルを利用するにはログインが必要です。
 
-  p.muted style="margin-top: 16px;"
-    | サンプル: `admin@example.com / password123!`
+    = form_with url: session_path, scope: :session, data: { turbo: false } do |form|
+      .form-grid.login-form-grid
+        label
+          | メールアドレス
+          = form.email_field :email_address, autofocus: true, autocomplete: "username"
+        label
+          | パスワード
+          = form.password_field :password, autocomplete: "current-password"
+      .actions.login-card__actions
+        = form.submit "ログイン", class: "button"
+
+    = render GuidanceDisclosureComponent.new(title: "デモ用ログイン情報を確認", icon: "bi-person-lock") do
+      p.muted
+        | サンプル: `admin@example.com / password123!`

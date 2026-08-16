@@ -37,7 +37,7 @@ RSpec.describe "Admin read confirmation empty state", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("文書URL識別子: manual / 文書名: Manual")
     expect(page_text).to include("確認者: Reader Two / reader-two@example.com")
-    expect(page_text).to include("表示中: 0件")
+    expect(page_text).to include("0 / 0件")
     expect(page_text).to include("選択した条件に一致する既読確認はありません。")
     expect(page_text).to include("文書・期間・会社・確認者の組み合わせを見直すか、案件だけを残して条件を解除してください。")
     expect(link_href("案件だけ残して条件を解除")).to eq(admin_read_confirmations_path(project_id: project.id))

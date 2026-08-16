@@ -6,6 +6,12 @@
 - current_bookmark_params = saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact
 - tab_navigation_params = current_bookmark_params.except(:view)
 - panel_ids = { "favorite" => "favorite-bookmarks", "read_later" => "read-later-bookmarks", "recent" => "recent-documents" }
+- favorite_start = @favorite_bookmarks_page.total_count.zero? ? 0 : ((@favorite_bookmarks_page.page - 1) * @favorite_bookmarks_page.per_page) + 1
+- favorite_end = favorite_start.zero? ? 0 : favorite_start + @favorite_bookmarks.size - 1
+- favorite_pagination = { page: @favorite_bookmarks_page.page, total_pages: @favorite_bookmarks_page.total_pages, total_count: @favorite_bookmarks_page.total_count, from: favorite_start, to: favorite_end }
+- read_later_start = @read_later_bookmarks_page.total_count.zero? ? 0 : ((@read_later_bookmarks_page.page - 1) * @read_later_bookmarks_page.per_page) + 1
+- read_later_end = read_later_start.zero? ? 0 : read_later_start + @read_later_bookmarks.size - 1
+- read_later_pagination = { page: @read_later_bookmarks_page.page, total_pages: @read_later_bookmarks_page.total_pages, total_count: @read_later_bookmarks_page.total_count, from: read_later_start, to: read_later_end }
 
 h1 保存済み
 
@@ -22,43 +28,43 @@ nav.admin-tabs aria-label="保存済みの表示切替" role="tablist" data-cont
       = tag.span(count, class: "admin-tab__count")
 
 - if %w[favorite read_later].include?(@view)
-  section.card.bookmark-filter
-    h2.bookmark-filter__heading 絞り込み
-    = form_with url: document_bookmarks_path, method: :get, local: true do |form|
-      = form.hidden_field :view, value: @view
-      - if @recent_documents_query.present?
-        = form.hidden_field :recent_q, value: @recent_documents_query
-      .form-grid
-        .field
-          = form.rfk_select :project_code,
-            collection: @bookmark_project_options.map { |project| [project.code.present? ? "#{project.name}（#{project.code}）" : project.name, project.code] },
-            selected: @bookmark_project_code.presence,
-            include_blank: "すべての案件",
-            wrapper: false,
-            label: "案件",
-            allow_clear: true,
-            placeholder: "すべての案件"
-        .field
-          = form.label :bookmark_q, "保存済みを検索"
+  = form_with url: document_bookmarks_path, method: :get, local: true do |form|
+    = form.hidden_field :view, value: @view
+    - if @recent_documents_query.present?
+      = form.hidden_field :recent_q, value: @recent_documents_query
+    = render FilterToolbarComponent.new(label: "保存済み文書の検索条件") do |toolbar|
+      - toolbar.with_field(size: :enum) do
+        = form.rfk_select :project_code,
+          collection: @bookmark_project_options.map { |project| [project.code.present? ? "#{project.name}（#{project.code}）" : project.name, project.code] },
+          selected: @bookmark_project_code.presence,
+          include_blank: "すべての案件",
+          wrapper: true,
+          label: "案件",
+          allow_clear: true,
+          placeholder: "すべての案件"
+      - toolbar.with_field(size: :query) do
+        label
+          | 文書名・案件
           = form.rfk_search_field :bookmark_q,
             value: @bookmark_query,
             placeholder: "文書名・案件名・案件コード",
             wrapper: false,
             html: { maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, autocomplete: "off" }
-        .form-actions
-          = form.submit "絞り込む", class: "button"
-          - if @saved_bookmark_filter_active
-            = link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params), class: "button secondary"
+      - toolbar.with_action do
+        = form.submit "絞り込む", class: "button"
+      - if @saved_bookmark_filter_active
+        - toolbar.with_action do
+          = link_to "条件をクリア", document_bookmarks_path(saved_bookmark_reset_params), class: "button secondary"
+      - if @bookmark_project_filter_active
+        - toolbar.with_active_filter do
+          = "案件: #{bookmark_project_filter_label}"
+      - if @bookmark_search_active
+        - toolbar.with_active_filter do
+          = "検索: #{@bookmark_query}"
 
 - if @view == "favorite"
   section.card id="favorite-bookmarks" role="tabpanel" aria-labelledby="favorite-tab"
-    h2
-      = "お気に入り "
-      span.muted = @favorite_bookmarks_page.summary_label
-    - if @favorite_bookmarks_page.range_label
-      p.muted
-        span.badge = @favorite_bookmarks_page.range_label
-        = " 条件一致 #{@favorite_bookmarks_page.total_count}件のうち、最大 #{@favorite_bookmarks_page.per_page}件ずつ表示します。"
+    h2 お気に入り
     - if @favorite_bookmarks_page.any?
       ul.resource-list
         - @favorite_bookmarks.each do |bookmark|
@@ -69,13 +75,7 @@ nav.admin-tabs aria-label="保存済みの表示切替" role="tablist" data-cont
                 span.muted = bookmark.document.project.name
             .resource-list__actions
               = button_to "解除", document_bookmark_path(bookmark, current_bookmark_params), method: :delete, class: "button secondary"
-      - if @favorite_bookmarks_page.multiple_pages?
-        nav.pagination aria-label="お気に入りのページ移動"
-          - if @favorite_bookmarks_page.previous_page
-            = link_to "前へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.previous_page, read_later_page: @read_later_bookmarks_page.page, anchor: "favorite-bookmarks")), class: "button secondary"
-          span.muted = "お気に入り #{@favorite_bookmarks_page.page} / #{@favorite_bookmarks_page.total_pages} ページ"
-          - if @favorite_bookmarks_page.next_page
-            = link_to "次へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.next_page, read_later_page: @read_later_bookmarks_page.page, anchor: "favorite-bookmarks")), class: "button secondary"
+      = render ListFooterComponent.new(pagination: favorite_pagination, url: document_bookmarks_path, params: saved_bookmark_params.merge(read_later_page: @read_later_bookmarks_page.page), page_param: :favorite_page, label: "お気に入り", anchor: "favorite-bookmarks")
     - else
       - if @bookmark_search_active
         p.muted = "保存済み検索「#{@bookmark_query}」に一致するお気に入りはありません。"
@@ -84,16 +84,10 @@ nav.admin-tabs aria-label="保存済みの表示切替" role="tablist" data-cont
       - else
         p.muted 文書画面でお気に入りに追加すると、ここに表示されます。
       - if @saved_bookmark_filter_active
-        p.actions = link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "favorite-bookmarks")), class: "button secondary"
+        p.actions = link_to "条件をクリア", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "favorite-bookmarks")), class: "button secondary"
 - elsif @view == "read_later"
   section.card id="read-later-bookmarks" role="tabpanel" aria-labelledby="read-later-tab"
-    h2
-      = "後で読む "
-      span.muted = @read_later_bookmarks_page.summary_label
-    - if @read_later_bookmarks_page.range_label
-      p.muted
-        span.badge = @read_later_bookmarks_page.range_label
-        = " 条件一致 #{@read_later_bookmarks_page.total_count}件のうち、最大 #{@read_later_bookmarks_page.per_page}件ずつ表示します。"
+    h2 後で読む
     - if @read_later_bookmarks_page.any?
       ul.resource-list
         - @read_later_bookmarks.each do |bookmark|
@@ -108,13 +102,7 @@ nav.admin-tabs aria-label="保存済みの表示切替" role="tablist" data-cont
             .resource-list__actions
               = button_to "お気に入りへ移す", move_to_favorite_document_bookmark_path(bookmark, current_bookmark_params), method: :post, class: "button"
               = button_to "解除", document_bookmark_path(bookmark, current_bookmark_params), method: :delete, class: "button secondary"
-      - if @read_later_bookmarks_page.multiple_pages?
-        nav.pagination aria-label="後で読むのページ移動"
-          - if @read_later_bookmarks_page.previous_page
-            = link_to "前へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.previous_page, anchor: "read-later-bookmarks")), class: "button secondary"
-          span.muted = "後で読む #{@read_later_bookmarks_page.page} / #{@read_later_bookmarks_page.total_pages} ページ"
-          - if @read_later_bookmarks_page.next_page
-            = link_to "次へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.next_page, anchor: "read-later-bookmarks")), class: "button secondary"
+      = render ListFooterComponent.new(pagination: read_later_pagination, url: document_bookmarks_path, params: saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page), page_param: :read_later_page, label: "後で読む", anchor: "read-later-bookmarks")
     - else
       - if @bookmark_search_active
         p.muted = "保存済み検索「#{@bookmark_query}」に一致する後で読む文書はありません。"
@@ -123,32 +111,35 @@ nav.admin-tabs aria-label="保存済みの表示切替" role="tablist" data-cont
       - else
         p.muted 文書画面で後で読むに追加すると、ここに表示されます。
       - if @saved_bookmark_filter_active
-        p.actions = link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "read-later-bookmarks")), class: "button secondary"
+        p.actions = link_to "条件をクリア", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "read-later-bookmarks")), class: "button secondary"
 - else
   section.card id="recent-documents" role="tabpanel" aria-labelledby="recent-tab"
     .heading-with-help
-      h2
-        = "最近見た文書 "
-        span.muted = "#{@recent_documents.size}件"
+      h2 最近見た文書
       = render InfoTooltipComponent.new(label: "最近見た文書", description: "最近表示された文書を最大20件表示します。")
-    h3.bookmark-filter__heading 絞り込み
-    = form_with url: document_bookmarks_path, method: :get, local: true, class: "filter-form" do |form|
+    = form_with url: document_bookmarks_path, method: :get, local: true do |form|
       = form.hidden_field :view, value: @view
       - if @bookmark_project_code.present?
         = form.hidden_field :project_code, value: @bookmark_project_code
       - if @bookmark_query.present?
         = form.hidden_field :bookmark_q, value: @bookmark_query
-      .form-field
-        = form.label :recent_q, "最近見た文書を検索"
-        = form.rfk_search_field :recent_q,
-          value: @recent_documents_query,
-          placeholder: "文書名・案件名・案件コード",
-          wrapper: false,
-          html: { maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, autocomplete: "off" }
-      .form-actions
-        = form.submit "絞り込む", class: "button"
+      = render FilterToolbarComponent.new(label: "最近見た文書の検索条件") do |toolbar|
+        - toolbar.with_field(size: :query) do
+          label
+            | 文書名・案件
+            = form.rfk_search_field :recent_q,
+              value: @recent_documents_query,
+              placeholder: "文書名・案件名・案件コード",
+              wrapper: false,
+              html: { maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, autocomplete: "off" }
+        - toolbar.with_action do
+          = form.submit "絞り込む", class: "button"
         - if @recent_documents_query.present?
-          = link_to "最近見た条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary"
+          - toolbar.with_action do
+            = link_to "条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary"
+        - if @recent_documents_query.present?
+          - toolbar.with_active_filter do
+            = "検索: #{@recent_documents_query}"
 
     - if @recent_documents.any?
       ul.resource-list
@@ -161,7 +152,7 @@ nav.admin-tabs aria-label="保存済みの表示切替" role="tablist" data-cont
     - elsif @all_recent_documents.any? && @recent_documents_query.present?
       p.muted = "最近見た文書検索「#{@recent_documents_query}」に一致する文書は、最近表示された最大20件内にありません。"
       p.actions
-        = link_to "最近見た条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary"
+        = link_to "条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary"
         = link_to "案件一覧から探す", projects_path, class: "button secondary"
         = link_to "文書一覧から探す", documents_path, class: "button secondary"
     - else

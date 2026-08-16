@@ -39,7 +39,10 @@ RSpec.describe "Admin access logs", type: :request do
   end
 
   def pagination_link(label)
-    parsed_html.css("nav.pagination a").find { |link| link.text.squish == label }
+    phrase = label.start_with?("前") ? "ページ目へ戻る" : "ページ目へ進む"
+    parsed_html.css('nav[aria-label="監査ログ一覧"] a').find do |link|
+      link["aria-label"].to_s.include?(phrase)
+    end
   end
 
   def pagination_query(label)
@@ -95,7 +98,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(heading_texts).to include("監査ログ")
     expect(page_text).to include("Audit Project")
     expect(page_text).to include("Audit Document")
-    expect(page_text).to include("表示中: 1件 / 1ページ50件")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–1 / 1件")
     expect(page_text).to include("監査ログ一覧の表示設定")
     expect(log_target_names).to eq(["audit.zip"])
     expect(row_column_texts("company")).to eq(["Audit Company audit.example.com"])
@@ -152,7 +155,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["index.html", "audit.zip"])
     expect(parsed_html.at_css('select[name="target_type"] option[value="unknown"][selected]')).to be_nil
-    expect(page_text).to include("表示中: 2件 / 1ページ50件")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–2 / 2件")
     expect(page_text).not_to include("絞り込み中")
   end
 
@@ -252,7 +255,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(parsed_html.at_css('select[name="ai_context_scope"] option[value="partial"][selected]')).to be_nil
     expect(page_text).not_to include("AI context mode:")
     expect(page_text).not_to include("AI context scope:")
-    active_filter_summary = parsed_html.css("p.muted").find { _1.text.squish.include?("有効な条件:") }.text.squish
+    active_filter_summary = parsed_html.at_css('[aria-label="適用中の検索条件"]').text.squish
     expect(active_filter_summary).not_to include("AI出力モード:")
     expect(active_filter_summary).not_to include("AI出力範囲:")
   end
@@ -402,8 +405,9 @@ RSpec.describe "Admin access logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["range-match.html"])
-    expect(page_text).to include("表示中: 1件 / 1ページ50件 / 絞り込み中")
-    expect(page_text).to include("期間指定後も、条件に一致する監査ログを新しい順に1ページ50件まで表示します。")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–1 / 1件")
+    expect(parsed_html.at_css('[aria-label="適用中の検索条件"]')).to be_present
+    expect(page_text).to include("監査ログは新しい順に1ページ50件、最大10,000件まで確認できます。")
   end
 
   it "ignores invalid accessed date filters without failing" do
@@ -415,7 +419,8 @@ RSpec.describe "Admin access logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["audit.zip"])
-    expect(page_text).to include("表示中: 1件 / 1ページ50件 / 絞り込み中")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–1 / 1件")
+    expect(parsed_html.at_css('[aria-label="適用中の検索条件"]')).to be_present
   end
 
   it "renders only non-duplicated secondary identifiers in company and project rows" do
@@ -653,7 +658,7 @@ RSpec.describe "Admin access logs", type: :request do
     get admin_access_logs_path(page: 2)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 50件 / 1ページ50件 / 2ページ目")
+    expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("51–100 / 205件")
     expect(log_target_names.size).to eq(50)
     expect(log_target_names.first).to eq("entry-154")
     expect(log_target_names.last).to eq("entry-105")
@@ -952,7 +957,7 @@ RSpec.describe "Admin access logs", type: :request do
       get admin_access_logs_path(page:)
 
       expect(response).to have_http_status(:ok)
-      expect(page_text).to include("表示中: 2件 / 1ページ50件")
+      expect(parsed_html.at_css(".list-footer__summary").text.squish).to eq("1–2 / 2件")
       expect(log_target_names).to eq(["entry-new", "entry-old"])
       expect(page_text).not_to include("2ページ目")
     end
