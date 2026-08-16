@@ -7,7 +7,7 @@ RSpec.describe "markdown preview table fallback boundary" do
 
   let(:inventory_source) { read_source(".kiro/skills/frontend-initialization-inventory.md") }
   let(:table_tools_source) { read_source("app/frontend/lib/markdown_preview_table_tools.js") }
-  let(:table_resizer_source) { read_source("app/frontend/controllers/preview_table_resizer_controller.js") }
+  let(:table_resizer_source) { read_source("app/frontend/controllers/preview_table_resizer_controller.ts") }
 
   it "documents the current fallback support without claiming full rails_table_preferences integration" do
     aggregate_failures do
@@ -37,8 +37,8 @@ RSpec.describe "markdown preview table fallback boundary" do
       expect(table_resizer_source).to include("const TABLE_COLUMN_WIDTH_STORAGE_PREFIX")
       expect(table_resizer_source).to include("const TABLE_STICKY_HEADER_STORAGE_PREFIX")
       expect(table_resizer_source).to include("const TABLE_STICKY_COLUMN_STORAGE_PREFIX")
-      expect(table_resizer_source).to include("function previewContextKey(frame)")
-      expect(table_resizer_source).to include("function copyTablePreferenceMetadata(wrapper, table)")
+      expect(table_resizer_source).to match(/function previewContextKey\(frame/)
+      expect(table_resizer_source).to match(/function copyTablePreferenceMetadata\(wrapper/)
       expect(table_resizer_source).to include("notifyTablesEnhanced(frame)")
     end
   end

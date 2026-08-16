@@ -7,15 +7,15 @@ RSpec.describe "Related gem wiring source" do
 
   describe "Stimulus entrypoint wiring" do
     it "registers related gem controllers on the shared Stimulus application" do
-      entrypoint_source = read_source("app/frontend/entrypoints/application.js")
+      entrypoint_source = read_source("app/frontend/entrypoints/application.ts")
       table_preferences_controller_source = read_source("app/frontend/controllers/rails_table_preferences_controller.ts")
 
       expect(entrypoint_source).to include('import RailsTablePreferencesController from "../controllers/rails_table_preferences_controller"')
       expect(table_preferences_controller_source).to include('import { RailsTablePreferencesController as BaseController } from "rails_table_preferences"')
-      expect(entrypoint_source).to include('import { TomSelectController } from "rails_fields_kit"')
+      expect(entrypoint_source).to include('import { TomSelectController as RailsFieldsKitTomSelectController } from "rails_fields_kit"')
       expect(entrypoint_source).to include("const application = Application.start()")
       expect(entrypoint_source).to include('application.register("rails-table-preferences", RailsTablePreferencesController)')
-      expect(entrypoint_source).to include('application.register("rails-fields-kit--tom-select", TomSelectController)')
+      expect(entrypoint_source).to include('application.register("rails-fields-kit--tom-select", ExtendedRfkTomSelectController)')
     end
 
     it "keeps app-side helper and initializer seams aligned with the registered controllers" do
@@ -82,10 +82,13 @@ RSpec.describe "Related gem wiring source" do
       expect(vite_source).to include('{ find: /^rails_fields_kit\\/tom_select_controller$/, replacement: gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/tom_select_controller.js") }')
     end
 
-    it "does not treat tree_view as a JavaScript alias dependency" do
+    it "registers tree_view controllers via the Vite alias and entrypoint" do
       vite_source = read_source("vite.config.ts")
+      entrypoint_source = read_source("app/frontend/entrypoints/application.ts")
 
-      expect(vite_source).not_to match(/tree_view/i)
+      expect(vite_source).to include('{ find: /^tree_view$/, replacement: gemJavaScriptPath("tree_view", "tree_view/index.js") }')
+      expect(entrypoint_source).to include('import { registerTreeViewControllers } from "tree_view"')
+      expect(entrypoint_source).to include("registerTreeViewControllers(application)")
     end
   end
 
@@ -96,7 +99,7 @@ RSpec.describe "Related gem wiring source" do
       expect(layout_source).to include('= stylesheet_link_tag "tree_view", media: "all"')
       expect(layout_source).to include('= stylesheet_link_tag "rails_table_preferences", media: "all"')
       expect(layout_source).to include("= vite_client_tag")
-      expect(layout_source).to include('= vite_javascript_tag "application"')
+      expect(layout_source).to include('= vite_typescript_tag "application"')
     end
   end
 

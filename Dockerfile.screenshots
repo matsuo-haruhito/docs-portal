@@ -1,16 +1,10 @@
 # syntax=docker/dockerfile:1
-
 FROM mcr.microsoft.com/playwright:v1.62.1-jammy
-
 WORKDIR /opt/docs-portal
-
 COPY package.json package-lock.json ./
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-RUN npm ci
-
-RUN mkdir -p /workspace && cp -a /opt/docs-portal/node_modules /workspace/node_modules
-
+RUN npm ci && cp -a node_modules /opt/docs-portal/node_modules_snapshot
 ENV NODE_PATH=/opt/docs-portal/node_modules
 ENV PATH=/opt/docs-portal/node_modules/.bin:$PATH
-
 WORKDIR /workspace
+# コンテナ起動時に /workspace/node_modules が空の場合、snapshot からコピーする
+ENTRYPOINT ["sh", "-c", "if [ ! -f /workspace/node_modules/.package-lock.json ]; then cp -a /opt/docs-portal/node_modules_snapshot/. /workspace/node_modules/; fi; exec \"$@\"", "--"]

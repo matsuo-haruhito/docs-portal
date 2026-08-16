@@ -41,6 +41,9 @@ inclusion: always
 | maintenance-mode 境界 | `.kiro/steering/maintenance-mode-boundaries.md` |
 | gem 責務境界・判断基準 | `.kiro/steering/internal-ui-gem-boundaries.md` |
 | 公開 API 仕様（Docusaurus build 用 Markdown） | `docs-src/*.md` |
+| 画面仕様ドキュメント生成 | `.kiro/steering/screen-docs.md` |
+| 画面シナリオ定義（正本） | `script/screenshot_scenarios.ts` |
+| 画面仕様ガイド（自動生成） | `docs/screen_guide.md`（直接編集禁止） |
 
 **重複が生じたら正本を1つ選び、他はポインタ（リンク）に置き換える。**
 

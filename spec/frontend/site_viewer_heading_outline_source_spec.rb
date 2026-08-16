@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe "Site viewer heading outline source" do
   let(:outline_source) { Rails.root.join("app/frontend/lib/site_viewer_heading_outline.js").read }
-  let(:controller_source) { Rails.root.join("app/frontend/controllers/site_viewer_iframe_height_controller.js").read }
+  let(:controller_source) { Rails.root.join("app/frontend/controllers/site_viewer_iframe_height_controller.ts").read }
   let(:stylesheet_source) { Rails.root.join("app/frontend/entrypoints/application.css").read }
   let(:view_source) { Rails.root.join("app/views/shared/site_viewer.html.slim").read }
 

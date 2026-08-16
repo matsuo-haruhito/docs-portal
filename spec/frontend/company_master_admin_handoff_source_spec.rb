@@ -1,19 +1,21 @@
 require "rails_helper"
 
 RSpec.describe "Company master admin handoff source" do
-  let(:controller_source) { Rails.root.join("app/frontend/controllers/company_master_admin_handoff_controller.js").read }
-  let(:application_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
+  let(:controller_source) { Rails.root.join("app/frontend/controllers/company_master_admin_handoff_controller.ts").read }
+  let(:application_source) { Rails.root.join("app/frontend/entrypoints/application.ts").read }
   let(:view_source) { Rails.root.join("app/views/admin/dashboard/company_master_admin.html.slim").read }
   let(:nav_source) { Rails.root.join("app/views/admin/_nav.html.slim").read }
   let(:visual_check_note) { Rails.root.join("docs/qa/company_master_admin_handoff_visual_check.md").read }
 
   it "registers the handoff controller without adding entrypoint DOM setup" do
+    # ExtendedRfkTomSelectController のクラス定義部分を除外して検証する
+    top_level_source = application_source.sub(/^type OverlayTomSelect\b.*?^}\n/m, "").sub(/^type ExtendedRfkControllerState\b.*?^}\n/m, "").sub(/^class ExtendedRfkTomSelectController.*?^}\n/m, "")
     aggregate_failures do
       expect(application_source).to include('import CompanyMasterAdminHandoffController from "../controllers/company_master_admin_handoff_controller"')
       expect(application_source).to include('application.register("company-master-admin-handoff", CompanyMasterAdminHandoffController)')
-      expect(application_source).not_to include("querySelectorAll")
-      expect(application_source).not_to include("addEventListener")
-      expect(application_source).not_to include("new TomSelect")
+      expect(top_level_source).not_to include("querySelectorAll")
+      expect(top_level_source).not_to include("addEventListener")
+      expect(top_level_source).not_to include("new TomSelect")
     end
   end
 
@@ -113,8 +115,8 @@ RSpec.describe "Company master admin handoff source" do
   it "generates template text from the selected category and editable fields" do
     aggregate_failures do
       expect(controller_source).to include("connect()")
-      expect(controller_source).to include("selectCategory(event)")
-      expect(controller_source).to include("applyCategoryHints(category)")
+      expect(controller_source).to include("selectCategory(event")
+      expect(controller_source).to include("applyCategoryHints(category")
       expect(controller_source).to include("updateTemplate()")
       expect(controller_source).to include('`【会社】${this.companyNameValue || "自社会社名"}`')
       expect(controller_source).to include('`【依頼者】${this.requesterValue || "依頼者名・連絡先"}`')

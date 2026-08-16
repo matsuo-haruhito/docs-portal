@@ -301,7 +301,7 @@ test('document version tabs preserve hash routing, keyboard movement, and ARIA s
     }
   }
 
-  const { default: DocumentVersionTabsController } = await import(new URL('../../app/frontend/controllers/document_version_tabs.js', import.meta.url))
+  const { default: DocumentVersionTabsController } = await import(new URL('../../app/frontend/controllers/document_version_tabs.ts', import.meta.url))
   const controller = new DocumentVersionTabsController({ scope: { element: nav } })
   controller.connect()
 

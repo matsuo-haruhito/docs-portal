@@ -1,8 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "document version tabs source contract" do
-  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_version_tabs.js").read }
-  let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
+  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_version_tabs.ts").read }
+  let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.ts").read }
   let(:show_view_source) { Rails.root.join("app/views/document_versions/show.html.slim").read }
 
   it "mounts document version tabs through Stimulus instead of global load listeners" do
@@ -51,10 +51,10 @@ RSpec.describe "document version tabs source contract" do
   it "reuses already wrapped panels on reconnect" do
     aggregate_failures do
       expect(controller_source).to include("function existingPanelMap()")
-      expect(controller_source).to include('const enhanced = this.element.dataset.versionTabsEnhanced === "true"')
+      expect(controller_source).to include('dataset.versionTabsEnhanced === "true"')
       expect(controller_source).to include("this.panelMap = enhanced ? existingPanelMap() : buildPanelMap()")
       expect(controller_source).to include("if (!enhanced)")
-      expect(controller_source).to include('this.element.dataset.versionTabsEnhanced = "true"')
+      expect(controller_source).to include('dataset.versionTabsEnhanced = "true"')
     end
   end
 end

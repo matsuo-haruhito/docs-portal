@@ -89,7 +89,7 @@ hash と deep link の読み方:
 - tabs は `role="tablist"` / `role="tab"` / `role="tabpanel"` と `aria-controls` / `aria-selected` で対応づけられる
 - keyboard では左右 / 上下 arrow で隣の tab、Home / End で先頭 / 末尾、Enter / Space で選択 tab を開く
 - secondary link は tab panel の切り替えではなく、HTML本文や品質チェックなど別の導線として扱う
-- #1704 のような runtime migration が未mergeの間は、この runbook では current `app/frontend/controllers/document_version_tabs.js` の挙動だけを正本にする
+- #1704 のような runtime migration が未mergeの間は、この runbook では current `app/frontend/controllers/document_version_tabs.ts` の挙動だけを正本にする
 
 使いどころ:
 
@@ -288,13 +288,13 @@ PDF / image の inline preview では、画面上の button 操作に加えて�
 - `app/views/document_versions/_rollback_actions.html.slim`
 - `app/services/manual_document_upload_review.rb`
 - `app/services/document_version_rollback.rb`
-- `app/frontend/controllers/document_version_tabs.js`
+- `app/frontend/controllers/document_version_tabs.ts`
 - `app/views/shared/site_viewer.html.slim`
 - `app/frontend/lib/site_viewer_heading_outline.js`
-- `app/frontend/controllers/site_viewer_iframe_height_controller.js`
+- `app/frontend/controllers/site_viewer_iframe_height_controller.ts`
 - `app/frontend/lib/markdown_preview_codeblock_tools.js`
 - `app/frontend/lib/markdown_preview_document_search.js`
-- `app/frontend/controllers/markdown_preview_document_search_controller.js`
+- `app/frontend/controllers/markdown_preview_document_search_controller.ts`
 - `app/frontend/lib/image_preview_tools.js`
 - `app/frontend/lib/pdf_preview_tools.js`
 - `app/views/document_files/show_pdf_preview.html.slim`

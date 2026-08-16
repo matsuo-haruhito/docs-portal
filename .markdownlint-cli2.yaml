@@ -3,3 +3,6 @@ config:
   MD009: true
   MD010: true
   MD012: true
+
+ignores:
+  - "docs/screen_guide.md"

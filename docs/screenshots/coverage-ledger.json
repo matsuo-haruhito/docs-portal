@@ -1,0 +1,430 @@
+[
+  {
+    "scenarioId": "dashboard.show.external.desktop",
+    "outputName": "dashboard-external",
+    "userStory": "外部利用者がアクセス可能な案件と文書を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "deferred",
+    "reason": "撮影環境に外部利用者の認証情報がまだない",
+    "resumeCondition": "SCREENSHOT_EXTERNAL_EMAILとSCREENSHOT_EXTERNAL_PASSWORDを環境変数に登録する"
+  },
+  {
+    "scenarioId": "projects.show.external.desktop",
+    "outputName": "projects-show-tree",
+    "userStory": "外部利用者が案件内の文書ツリーから目的の文書を探す",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "deferred",
+    "reason": "動的な案件codeが必要。撮影スクリプトがseed案件を特定して撮影する",
+    "resumeCondition": "外部利用者の認証情報と閲覧可能案件をseedに追加する"
+  },
+  {
+    "scenarioId": "session.new.guest.desktop",
+    "outputName": "session-new",
+    "userStory": "未ログインの利用者がメールアドレスとパスワードを入力してポータルへ進む",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-dashboard.index.admin.desktop",
+    "outputName": "admin-dashboard",
+    "userStory": "管理者が管理画面トップで全体状況を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-documents.index.admin.desktop",
+    "outputName": "admin-documents-index",
+    "userStory": "管理者が文書マスタを検索・フィルタして対象文書を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-projects.index.admin.desktop",
+    "outputName": "admin-projects-index",
+    "userStory": "管理者が案件を検索・管理する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-document-permissions.index.admin.desktop",
+    "outputName": "admin-document-permissions-index",
+    "userStory": "管理者が文書権限の付与状況を確認・管理する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-document-sets.index.admin.desktop",
+    "outputName": "admin-document-sets-index",
+    "userStory": "管理者が文書セットを確認・管理する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-git-import-sources.index.admin.desktop",
+    "outputName": "admin-git-import-sources-index",
+    "userStory": "管理者がGit連携ソースの設定状況と同期履歴を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-external-folder-sync-sources.index.admin.desktop",
+    "outputName": "admin-external-folder-sync-sources-index",
+    "userStory": "管理者が外部フォルダ同期ソースの設定状況を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-webhook-endpoints.index.admin.desktop",
+    "outputName": "admin-webhook-endpoints-index",
+    "userStory": "管理者がWebhook通知先の設定と送信状況を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-access-logs.index.admin.desktop",
+    "outputName": "admin-access-logs-index",
+    "userStory": "管理者がポータルへのアクセス履歴を監査する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-diagnostics.index.admin.desktop",
+    "outputName": "admin-diagnostics-index",
+    "userStory": "管理者がシステム構成と要対応事項を診断する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-missing-document-files.show.admin.desktop",
+    "outputName": "admin-missing-document-files-show",
+    "userStory": "管理者がmissing_document_filesの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-companies.index.admin.desktop",
+    "outputName": "admin-companies-index",
+    "userStory": "管理者がcompaniesの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-companies.edit.admin.desktop",
+    "outputName": "admin-companies-edit",
+    "userStory": "管理者がcompaniesの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-users.index.admin.desktop",
+    "outputName": "admin-users-index",
+    "userStory": "管理者がusersの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-users.edit.admin.desktop",
+    "outputName": "admin-users-edit",
+    "userStory": "管理者がusersの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-projects.edit.admin.desktop",
+    "outputName": "admin-projects-edit",
+    "userStory": "管理者がprojectsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-project-memberships.index.admin.desktop",
+    "outputName": "admin-project-memberships-index",
+    "userStory": "管理者がproject_membershipsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-project-memberships.edit.admin.desktop",
+    "outputName": "admin-project-memberships-edit",
+    "userStory": "管理者がproject_membershipsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-consent-terms.index.admin.desktop",
+    "outputName": "admin-consent-terms-index",
+    "userStory": "管理者がconsent_termsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-consent-terms.edit.admin.desktop",
+    "outputName": "admin-consent-terms-edit",
+    "userStory": "管理者がconsent_termsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-project-consent-settings.index.admin.desktop",
+    "outputName": "admin-project-consent-settings-index",
+    "userStory": "管理者がproject_consent_settingsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-project-consent-settings.edit.admin.desktop",
+    "outputName": "admin-project-consent-settings-edit",
+    "userStory": "管理者がproject_consent_settingsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-git-import-sources.edit.admin.desktop",
+    "outputName": "admin-git-import-sources-edit",
+    "userStory": "管理者がgit_import_sourcesの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-git-import-runs.index.admin.desktop",
+    "outputName": "admin-git-import-runs-index",
+    "userStory": "管理者がgit_import_runsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-generated-file-events.index.admin.desktop",
+    "outputName": "admin-generated-file-events-index",
+    "userStory": "管理者がgenerated_file_eventsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-generated-file-events.show.admin.desktop",
+    "outputName": "admin-generated-file-events-show",
+    "userStory": "管理者がgenerated_file_eventsの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-generated-file-runs.index.admin.desktop",
+    "outputName": "admin-generated-file-runs-index",
+    "userStory": "管理者がgenerated_file_runsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-generated-file-runs.show.admin.desktop",
+    "outputName": "admin-generated-file-runs-show",
+    "userStory": "管理者がgenerated_file_runsの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-zip-imports.new.admin.desktop",
+    "outputName": "admin-zip-imports-new",
+    "userStory": "管理者がzip_importsの新規作成画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-file-upload-dry-runs.index.admin.desktop",
+    "outputName": "admin-file-upload-dry-runs-index",
+    "userStory": "管理者がfile_upload_dry_runsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-file-upload-dry-runs.show.admin.desktop",
+    "outputName": "admin-file-upload-dry-runs-show",
+    "userStory": "管理者がfile_upload_dry_runsの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-microsoft-graph-connections.index.admin.desktop",
+    "outputName": "admin-microsoft-graph-connections-index",
+    "userStory": "管理者がmicrosoft_graph_connectionsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-microsoft-graph-connections.edit.admin.desktop",
+    "outputName": "admin-microsoft-graph-connections-edit",
+    "userStory": "管理者がmicrosoft_graph_connectionsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-recurring-job-schedules.index.admin.desktop",
+    "outputName": "admin-recurring-job-schedules-index",
+    "userStory": "管理者がrecurring_job_schedulesの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-recurring-job-schedules.show.admin.desktop",
+    "outputName": "admin-recurring-job-schedules-show",
+    "userStory": "管理者がrecurring_job_schedulesの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-external-folder-sync-sources.show.admin.desktop",
+    "outputName": "admin-external-folder-sync-sources-show",
+    "userStory": "管理者がexternal_folder_sync_sourcesの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-external-folder-sync-sources.edit.admin.desktop",
+    "outputName": "admin-external-folder-sync-sources-edit",
+    "userStory": "管理者がexternal_folder_sync_sourcesの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-documents.edit.admin.desktop",
+    "outputName": "admin-documents-edit",
+    "userStory": "管理者がdocumentsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-bulk-edit-dry-runs.new.admin.desktop",
+    "outputName": "admin-bulk-edit-dry-runs-new",
+    "userStory": "管理者がbulk_edit_dry_runsの新規作成画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-document-sets.edit.admin.desktop",
+    "outputName": "admin-document-sets-edit",
+    "userStory": "管理者がdocument_setsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-document-catalogs.index.admin.desktop",
+    "outputName": "admin-document-catalogs-index",
+    "userStory": "管理者がdocument_catalogsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-document-catalogs.edit.admin.desktop",
+    "outputName": "admin-document-catalogs-edit",
+    "userStory": "管理者がdocument_catalogsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-document-permissions.edit.admin.desktop",
+    "outputName": "admin-document-permissions-edit",
+    "userStory": "管理者がdocument_permissionsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-webhook-endpoints.edit.admin.desktop",
+    "outputName": "admin-webhook-endpoints-edit",
+    "userStory": "管理者がwebhook_endpointsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-webhook-deliveries.index.admin.desktop",
+    "outputName": "admin-webhook-deliveries-index",
+    "userStory": "管理者がwebhook_deliveriesの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-webhook-deliveries.show.admin.desktop",
+    "outputName": "admin-webhook-deliveries-show",
+    "userStory": "管理者がwebhook_deliveriesの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-access-requests.index.admin.desktop",
+    "outputName": "admin-access-requests-index",
+    "userStory": "管理者がaccess_requestsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-access-requests.show.admin.desktop",
+    "outputName": "admin-access-requests-show",
+    "userStory": "管理者がaccess_requestsの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-document-usage-reports.index.admin.desktop",
+    "outputName": "admin-document-usage-reports-index",
+    "userStory": "管理者がdocument_usage_reportsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  },
+  {
+    "scenarioId": "admin-read-confirmations.index.admin.desktop",
+    "outputName": "admin-read-confirmations-index",
+    "userStory": "管理者がread_confirmationsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "stateKind": "default",
+    "status": "captured"
+  }
+]

@@ -28,6 +28,7 @@ export default defineConfig({
       { find: /^rails_table_preferences\/controller$/, replacement: gemJavaScriptPath("rails_table_preferences", "rails_table_preferences/controller.js") },
       { find: /^rails_fields_kit$/, replacement: gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/index.js") },
       { find: /^rails_fields_kit\/tom_select_controller$/, replacement: gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/tom_select_controller.js") },
+      { find: /^tree_view$/, replacement: gemJavaScriptPath("tree_view", "tree_view/index.js") },
     ],
   },
 })

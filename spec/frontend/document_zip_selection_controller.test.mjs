@@ -4,10 +4,14 @@ import { resolve } from "node:path"
 import test from "node:test"
 
 async function loadControllerClass() {
-  const source = readFileSync(resolve("app/frontend/controllers/document_zip_selection_controller.js"), "utf8")
+  const source = readFileSync(resolve("app/frontend/controllers/document_zip_selection_controller.ts"), "utf8")
   const transformed = source
     .replace('import { Controller } from "@hotwired/stimulus"\n\n', "")
     .replace("export default class extends Controller", "class DocumentZipSelectionController")
+    .replace(/^\s*declare\s+.*$/gm, "")
+    .replace(/\bprivate\s+/g, "")
+    .replace(/\(event\?\s*:\s*Event\)/g, "(event)")
+    .replace(/:\s*(?:void|string|number|boolean)\s*(?=[{;,=)])/g, "")
     .concat("\nexport { DocumentZipSelectionController }\n")
   const moduleUrl = `data:text/javascript;base64,${Buffer.from(transformed).toString("base64")}`
   const { DocumentZipSelectionController } = await import(moduleUrl)

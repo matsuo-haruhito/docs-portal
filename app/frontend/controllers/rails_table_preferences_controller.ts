@@ -93,14 +93,14 @@ export default class extends BaseController {
     const editorController = this.pairedController(".rails-table-preferences-editor")
     if (!editorController) return
 
-    editorController.mergeColumnLayout(this.settingsValue)
+    editorController.mergeColumnLayout(this.settingsValue as TableSettings)
   }
 
   private mergeColumnLayout(sourceSettings: TableSettings): void {
     const sourceColumns = new Map((sourceSettings.columns || []).map((column) => [column.key, column]))
-    const currentSettings = this.settingsValue || {}
+    const currentSettings = (this.settingsValue || {}) as TableSettings
     const currentColumns = currentSettings.columns || []
-    const columns = currentColumns.map((column) => {
+    const columns = currentColumns.map((column: ColumnSetting) => {
       const source = sourceColumns.get(column.key)
       if (!source) return column
 
@@ -109,7 +109,7 @@ export default class extends BaseController {
         order: source.order ?? column.order,
         width: source.width ?? column.width
       }
-    }).sort((left, right) => (left.order ?? Number.MAX_SAFE_INTEGER) - (right.order ?? Number.MAX_SAFE_INTEGER))
+    }).sort((left: ColumnSetting, right: ColumnSetting) => (left.order ?? Number.MAX_SAFE_INTEGER) - (right.order ?? Number.MAX_SAFE_INTEGER))
 
     this.settingsValue = { ...currentSettings, columns }
     if (this.hasEditorRowsTarget) this.renderEditor()

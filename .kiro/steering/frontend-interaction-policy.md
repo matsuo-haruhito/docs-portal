@@ -33,7 +33,7 @@ Turbo だけでは表現しづらい、DOM に密着した小さな振る舞い�
 - iframe 内やプレビュー内の補助 UI
 - キーボード操作やアクセシビリティ属性の同期
 
-Stimulus controller は、対象 DOM の `data-controller` と `data-*-target` に責務を閉じ込める。`application.js` に直接 `querySelectorAll` とイベント登録を増やさない。
+Stimulus controller は、対象 DOM の `data-controller` と `data-*-target` に責務を閉じ込める。`application.ts` に直接 `querySelectorAll` とイベント登録を増やさない。
 
 ## 3. 素の JavaScript は最後の手段にする
 
@@ -58,7 +58,7 @@ Rails helper / HTML 生成が中心。可能な限り Turbo による差し替�
 
 表示列、列幅、プリセット、並び替えなどブラウザ上の小さな状態管理が必要なため、gem 提供の Stimulus controller を使う。
 
-ただし、Markdown preview table は別扱いです。current `main` では Docusaurus が生成した HTML table を Rails helper 経由で `rails_table_preferences` に接続しておらず、`app/frontend/controllers/preview_table_resizer_controller.js` が app 側 fallback path として表幅、列幅、ヘッダー固定、先頭列固定、localStorage ベースの状態保存を担っています。table search、copy、CSV / Markdown export、preference path 補助は `app/frontend/controllers/markdown_preview_table_tools_controller.js` が既存 helper を Turbo 再描画後にも refresh します。
+ただし、Markdown preview table は別扱いです。current `main` では Docusaurus が生成した HTML table を Rails helper 経由で `rails_table_preferences` に接続しておらず、`app/frontend/controllers/preview_table_resizer_controller.ts` が app 側 fallback path として表幅、列幅、ヘッダー固定、先頭列固定、localStorage ベースの状態保存を担っています。table search、copy、CSV / Markdown export、preference path 補助は `app/frontend/controllers/markdown_preview_table_tools_controller.ts` が既存 helper を Turbo 再描画後にも refresh します。
 
 現時点の責務分担は次の通りです。
 

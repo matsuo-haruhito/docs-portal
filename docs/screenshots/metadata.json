@@ -1,0 +1,1326 @@
+[
+  {
+    "scenarioId": "session.new.guest.desktop",
+    "screenName": "ログイン",
+    "userStory": "未ログインの利用者がメールアドレスとパスワードを入力してポータルへ進む",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "未認証のブラウザーセッション"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:14:02.500Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "guest",
+    "requestedUrl": "/session/new",
+    "finalUrl": "http://web:3000/session/new",
+    "outputName": "session-new",
+    "sha256": "349263df94b627bc2286c33f941e747f3e7e5a0b587cc65beb79991bfd557410"
+  },
+  {
+    "scenarioId": "admin-dashboard.index.admin.desktop",
+    "screenName": "管理ダッシュボード",
+    "userStory": "管理者が管理画面トップで全体状況を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:14:12.459Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin",
+    "finalUrl": "http://web:3000/admin",
+    "outputName": "admin-dashboard",
+    "sha256": "864a8c6a7c786dee21db01b7caba5804443c0ae590c064d5c227ed68f06592c0"
+  },
+  {
+    "scenarioId": "admin-documents.index.admin.desktop",
+    "screenName": "文書マスタ一覧",
+    "userStory": "管理者が文書マスタを検索・フィルタして対象文書を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:14:15.819Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/documents",
+    "finalUrl": "http://web:3000/admin/documents",
+    "outputName": "admin-documents-index",
+    "sha256": "1858ab6b0dea5284b9a7b994a3dfce852618d1f75890ba73f189b2a74e36d640"
+  },
+  {
+    "scenarioId": "admin-projects.index.admin.desktop",
+    "screenName": "案件一覧",
+    "userStory": "管理者が案件を検索・管理する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:14:17.693Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/projects",
+    "finalUrl": "http://web:3000/admin/projects",
+    "outputName": "admin-projects-index",
+    "sha256": "8282ea9d6d983ae85292a11bd9d74740f9fc01c785d367100fe21cb697e85c34"
+  },
+  {
+    "scenarioId": "admin-document-permissions.index.admin.desktop",
+    "screenName": "文書権限一覧",
+    "userStory": "管理者が文書権限の付与状況を確認・管理する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:15:18.784Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/document_permissions",
+    "finalUrl": "http://web:3000/admin/document_permissions",
+    "outputName": "admin-document-permissions-index",
+    "sha256": "a2b88f52e8567054eac541508f05e89e2cba69ff5275cebf11f0e4d5e9703796"
+  },
+  {
+    "scenarioId": "admin-document-sets.index.admin.desktop",
+    "screenName": "文書セット一覧",
+    "userStory": "管理者が文書セットを確認・管理する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:15:21.404Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/document_sets",
+    "finalUrl": "http://web:3000/admin/document_sets",
+    "outputName": "admin-document-sets-index",
+    "sha256": "471403f99a17495430219120c9d027bcfb00fa68c49ec7148f5f0721b3997e02"
+  },
+  {
+    "scenarioId": "admin-git-import-sources.index.admin.desktop",
+    "screenName": "Git連携設定一覧",
+    "userStory": "管理者がGit連携ソースの設定状況と同期履歴を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:15:24.141Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/git_import_sources",
+    "finalUrl": "http://web:3000/admin/git_import_sources",
+    "outputName": "admin-git-import-sources-index",
+    "sha256": "90cc1387a9b70b9ef58bc707fb3547387c14d53bf1d22c97824e0e2e3906837a"
+  },
+  {
+    "scenarioId": "admin-external-folder-sync-sources.index.admin.desktop",
+    "screenName": "外部フォルダ同期設定一覧",
+    "userStory": "管理者が外部フォルダ同期ソースの設定状況を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:15:25.939Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/external_folder_sync_sources",
+    "finalUrl": "http://web:3000/admin/external_folder_sync_sources",
+    "outputName": "admin-external-folder-sync-sources-index",
+    "sha256": "5c5b7928e0de94d783a2eb4a66a17df044d5e6a9a7bf49193b83e9766ce41a15"
+  },
+  {
+    "scenarioId": "admin-webhook-endpoints.index.admin.desktop",
+    "screenName": "Webhook設定一覧",
+    "userStory": "管理者がWebhook通知先の設定と送信状況を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:15:27.914Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/webhook_endpoints",
+    "finalUrl": "http://web:3000/admin/webhook_endpoints",
+    "outputName": "admin-webhook-endpoints-index",
+    "sha256": "55165643be12ed6fd8dfe5dc92bacdc731495e834552e322d73ec74511589f28"
+  },
+  {
+    "scenarioId": "admin-access-logs.index.admin.desktop",
+    "screenName": "アクセスログ",
+    "userStory": "管理者がポータルへのアクセス履歴を監査する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:15:29.616Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/access_logs",
+    "finalUrl": "http://web:3000/admin/access_logs",
+    "outputName": "admin-access-logs-index",
+    "sha256": "3a1021358fe649474aa631fee924d03ef515b5235a58501ca8018853230d0ec1"
+  },
+  {
+    "scenarioId": "admin-diagnostics.index.admin.desktop",
+    "screenName": "診断",
+    "userStory": "管理者がシステム構成と要対応事項を診断する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:15:51.823Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/diagnostics",
+    "finalUrl": "http://web:3000/admin/diagnostics",
+    "outputName": "admin-diagnostics-index",
+    "sha256": "ef72b8c6ca3aec4147c69380f4840db65987d5d1e8f0bc5f095dae9d3d222ad3"
+  },
+  {
+    "scenarioId": "admin-missing-document-files.show.admin.desktop",
+    "screenName": "missing_document_files 詳細",
+    "userStory": "管理者がmissing_document_filesの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:15:54.846Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/missing_document_files",
+    "finalUrl": "http://web:3000/admin/missing_document_files",
+    "outputName": "admin-missing-document-files-show",
+    "sha256": "34a9872dd6f135ebb7c502d007b4aba1343fe9164e56add8fb7b926e1c39f32a"
+  },
+  {
+    "scenarioId": "admin-companies.index.admin.desktop",
+    "screenName": "companies 一覧",
+    "userStory": "管理者がcompaniesの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:15:56.162Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/companies",
+    "finalUrl": "http://web:3000/admin/companies",
+    "outputName": "admin-companies-index",
+    "sha256": "bce449c87ee106ce96b359095dae4c734fc5f7fa1509742a0a751b7748c1dc92"
+  },
+  {
+    "scenarioId": "admin-companies.edit.admin.desktop",
+    "screenName": "companies 編集",
+    "userStory": "管理者がcompaniesの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:15:59.568Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/companies/com_5c675ce2444f08f21793/edit",
+    "finalUrl": "http://web:3000/admin/companies/com_5c675ce2444f08f21793/edit",
+    "outputName": "admin-companies-edit",
+    "sha256": "20e410ab0be029d1a8ddddb59dac0a9a8a7df97c9682e921893525019a7c0f1c"
+  },
+  {
+    "scenarioId": "admin-users.index.admin.desktop",
+    "screenName": "users 一覧",
+    "userStory": "管理者がusersの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:01.743Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/users",
+    "finalUrl": "http://web:3000/admin/users",
+    "outputName": "admin-users-index",
+    "sha256": "58eeaf8e2dc2beafb2195301e36ab1d27a7ecb194d6246de2e2742d1baf49513"
+  },
+  {
+    "scenarioId": "admin-users.edit.admin.desktop",
+    "screenName": "users 編集",
+    "userStory": "管理者がusersの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:05.185Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/users/usr_258d8dc916db8cea2caf/edit",
+    "finalUrl": "http://web:3000/admin/users/usr_258d8dc916db8cea2caf/edit",
+    "outputName": "admin-users-edit",
+    "sha256": "837cea6c8d5b58aa8dd0b89b99ed9b1a76175e38dd3e1d5d0348f9f98b003149"
+  },
+  {
+    "scenarioId": "admin-projects.edit.admin.desktop",
+    "screenName": "projects 編集",
+    "userStory": "管理者がprojectsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:08.460Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/projects/EXT_AI-USECASES__7B4ACC/edit",
+    "finalUrl": "http://web:3000/admin/projects/EXT_AI-USECASES__7B4ACC/edit",
+    "outputName": "admin-projects-edit",
+    "sha256": "0ecde87dfcd98d436b303009b2ed0d35f36699359bc29601dc267c506035457f"
+  },
+  {
+    "scenarioId": "admin-project-memberships.index.admin.desktop",
+    "screenName": "project_memberships 一覧",
+    "userStory": "管理者がproject_membershipsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:10.395Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/project_memberships",
+    "finalUrl": "http://web:3000/admin/project_memberships",
+    "outputName": "admin-project-memberships-index",
+    "sha256": "e1972141cb21ecd8046ffb3c7243f5797ae4ff4f162dfcfc615537220a739ac0"
+  },
+  {
+    "scenarioId": "admin-project-memberships.edit.admin.desktop",
+    "screenName": "project_memberships 編集",
+    "userStory": "管理者がproject_membershipsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:13.070Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/project_memberships/pmem_b62e6ed90a739af49fd7/edit",
+    "finalUrl": "http://web:3000/admin/project_memberships/pmem_b62e6ed90a739af49fd7/edit",
+    "outputName": "admin-project-memberships-edit",
+    "sha256": "d311ac835763b4e679298182fc1fd05e21658f03cca2e2e634f808f204f25511"
+  },
+  {
+    "scenarioId": "admin-consent-terms.index.admin.desktop",
+    "screenName": "consent_terms 一覧",
+    "userStory": "管理者がconsent_termsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:14.620Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/consent_terms",
+    "finalUrl": "http://web:3000/admin/consent_terms",
+    "outputName": "admin-consent-terms-index",
+    "sha256": "01d9b499e81b1f57572b33f89b7119b4c11c187e59c1307dbaf248b318ee30a8"
+  },
+  {
+    "scenarioId": "admin-consent-terms.edit.admin.desktop",
+    "screenName": "consent_terms 編集",
+    "userStory": "管理者がconsent_termsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:17.334Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/consent_terms/cterm_screenshot_001/edit",
+    "finalUrl": "http://web:3000/admin/consent_terms/cterm_screenshot_001/edit",
+    "outputName": "admin-consent-terms-edit",
+    "sha256": "0c138a09088bb9df768505c98b7f090c7fc4925c1e7e7489330f6ac9947ebe8d"
+  },
+  {
+    "scenarioId": "admin-project-consent-settings.index.admin.desktop",
+    "screenName": "project_consent_settings 一覧",
+    "userStory": "管理者がproject_consent_settingsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:19.232Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/project_consent_settings",
+    "finalUrl": "http://web:3000/admin/project_consent_settings",
+    "outputName": "admin-project-consent-settings-index",
+    "sha256": "640e90222d320aedc1828a9ebe27dc0e226dfa32bb2d7b9d49b35b7bc250172f"
+  },
+  {
+    "scenarioId": "admin-project-consent-settings.edit.admin.desktop",
+    "screenName": "project_consent_settings 編集",
+    "userStory": "管理者がproject_consent_settingsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:22.139Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/project_consent_settings/pcs_screenshot_001/edit",
+    "finalUrl": "http://web:3000/admin/project_consent_settings/pcs_screenshot_001/edit",
+    "outputName": "admin-project-consent-settings-edit",
+    "sha256": "c406cf2fe319ad5824147594b5d552c4807a9c86b74d993d4e719314abc5950e"
+  },
+  {
+    "scenarioId": "admin-git-import-sources.edit.admin.desktop",
+    "screenName": "git_import_sources 編集",
+    "userStory": "管理者がgit_import_sourcesの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:24.996Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/git_import_sources/gis_screenshot_001/edit",
+    "finalUrl": "http://web:3000/admin/git_import_sources/gis_screenshot_001/edit",
+    "outputName": "admin-git-import-sources-edit",
+    "sha256": "dcd46489117bf3b2210a071ade8792712cfc888af231fa069748aa6a99f02de2"
+  },
+  {
+    "scenarioId": "admin-git-import-runs.index.admin.desktop",
+    "screenName": "git_import_runs 一覧",
+    "userStory": "管理者がgit_import_runsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:28.712Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/git_import_runs",
+    "finalUrl": "http://web:3000/admin/git_import_runs",
+    "outputName": "admin-git-import-runs-index",
+    "sha256": "8e246f0a7e54888519899d884e66649d400930e151e3e153bca8f64db457daf4"
+  },
+  {
+    "scenarioId": "admin-generated-file-events.index.admin.desktop",
+    "screenName": "generated_file_events 一覧",
+    "userStory": "管理者がgenerated_file_eventsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:31.199Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/generated_file_events",
+    "finalUrl": "http://web:3000/admin/generated_file_events",
+    "outputName": "admin-generated-file-events-index",
+    "sha256": "3c2ab3851e07d00f9000ebd4227b47325425d0e88e14c4c39a8b46ce812defaf"
+  },
+  {
+    "scenarioId": "admin-generated-file-events.show.admin.desktop",
+    "screenName": "generated_file_events 詳細",
+    "userStory": "管理者がgenerated_file_eventsの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:33.957Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/generated_file_events/gfe_screenshot_001?return_to=%2Fadmin%2Fgenerated_file_events",
+    "finalUrl": "http://web:3000/admin/generated_file_events/gfe_screenshot_001?return_to=%2Fadmin%2Fgenerated_file_events",
+    "outputName": "admin-generated-file-events-show",
+    "sha256": "fde40669660f65734c68fe5b0faaeba0c3896134538cfddf185237e7babedbb7"
+  },
+  {
+    "scenarioId": "admin-generated-file-runs.index.admin.desktop",
+    "screenName": "generated_file_runs 一覧",
+    "userStory": "管理者がgenerated_file_runsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:35.364Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/generated_file_runs",
+    "finalUrl": "http://web:3000/admin/generated_file_runs",
+    "outputName": "admin-generated-file-runs-index",
+    "sha256": "29985b5f319c1392eb24492edcefe4e086c4ed695f0e69ec20f7fa19c4f5f6b6"
+  },
+  {
+    "scenarioId": "admin-generated-file-runs.show.admin.desktop",
+    "screenName": "generated_file_runs 詳細",
+    "userStory": "管理者がgenerated_file_runsの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:37.510Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/generated_file_runs/gfr_screenshot_001?return_to=%2Fadmin%2Fgenerated_file_runs",
+    "finalUrl": "http://web:3000/admin/generated_file_runs/gfr_screenshot_001?return_to=%2Fadmin%2Fgenerated_file_runs",
+    "outputName": "admin-generated-file-runs-show",
+    "sha256": "0c331de861d50d20f70f82d63162e7abe4a8503a5fd4f46cf5bded6106a736ea"
+  },
+  {
+    "scenarioId": "admin-zip-imports.new.admin.desktop",
+    "screenName": "zip_imports 新規作成",
+    "userStory": "管理者がzip_importsの新規作成画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:38.823Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/zip_imports/new",
+    "finalUrl": "http://web:3000/admin/zip_imports/new",
+    "outputName": "admin-zip-imports-new",
+    "sha256": "c95cd421f30890eb3ac12c2fdbacec4dedac555d9ec733088fc2a3132fb1a8cb"
+  },
+  {
+    "scenarioId": "admin-file-upload-dry-runs.index.admin.desktop",
+    "screenName": "file_upload_dry_runs 一覧",
+    "userStory": "管理者がfile_upload_dry_runsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:39.976Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/file_upload_dry_runs",
+    "finalUrl": "http://web:3000/admin/file_upload_dry_runs",
+    "outputName": "admin-file-upload-dry-runs-index",
+    "sha256": "950719cd585fbaa8fac16cb0dd8da5a1575852074bb389ac8744b2573c566fe3"
+  },
+  {
+    "scenarioId": "admin-file-upload-dry-runs.show.admin.desktop",
+    "screenName": "file_upload_dry_runs 詳細",
+    "userStory": "管理者がfile_upload_dry_runsの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:42.119Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/file_upload_dry_runs/idr_screenshot_002",
+    "finalUrl": "http://web:3000/admin/file_upload_dry_runs/idr_screenshot_002",
+    "outputName": "admin-file-upload-dry-runs-show",
+    "sha256": "3a5abc056e323fd08417c0c2c4727cc5202f68a344addf58eeb4117187dab0c8"
+  },
+  {
+    "scenarioId": "admin-microsoft-graph-connections.index.admin.desktop",
+    "screenName": "microsoft_graph_connections 一覧",
+    "userStory": "管理者がmicrosoft_graph_connectionsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:43.681Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/microsoft_graph_connections",
+    "finalUrl": "http://web:3000/admin/microsoft_graph_connections",
+    "outputName": "admin-microsoft-graph-connections-index",
+    "sha256": "d7ab12e08c300d5780ee92aae0e28c0203c96af783cbf672cc57914425383907"
+  },
+  {
+    "scenarioId": "admin-microsoft-graph-connections.edit.admin.desktop",
+    "screenName": "microsoft_graph_connections 編集",
+    "userStory": "管理者がmicrosoft_graph_connectionsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:45.836Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/microsoft_graph_connections/mgc_screenshot_001/edit",
+    "finalUrl": "http://web:3000/admin/microsoft_graph_connections/mgc_screenshot_001/edit",
+    "outputName": "admin-microsoft-graph-connections-edit",
+    "sha256": "30abfb1977e8a0b3634529a5ff26393a06351c6c2b5c1fd569cad263495c724a"
+  },
+  {
+    "scenarioId": "admin-recurring-job-schedules.index.admin.desktop",
+    "screenName": "recurring_job_schedules 一覧",
+    "userStory": "管理者がrecurring_job_schedulesの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:47.782Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/recurring_job_schedules",
+    "finalUrl": "http://web:3000/admin/recurring_job_schedules",
+    "outputName": "admin-recurring-job-schedules-index",
+    "sha256": "2f11eae07bc61f4074b3ce68aa0ccc8e178ec23cd22e21aaafceefa9e2c68604"
+  },
+  {
+    "scenarioId": "admin-recurring-job-schedules.show.admin.desktop",
+    "screenName": "recurring_job_schedules 詳細",
+    "userStory": "管理者がrecurring_job_schedulesの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:50.211Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/recurring_job_schedules/rjs_ydXA5QnbfybZMkRh?return_to=%2Fadmin%2Frecurring_job_schedules",
+    "finalUrl": "http://web:3000/admin/recurring_job_schedules/rjs_ydXA5QnbfybZMkRh?return_to=%2Fadmin%2Frecurring_job_schedules",
+    "outputName": "admin-recurring-job-schedules-show",
+    "sha256": "bf877787177e87ddf711ce238b89760fc87680114482fef9bc40f57e556b4cda"
+  },
+  {
+    "scenarioId": "admin-external-folder-sync-sources.show.admin.desktop",
+    "screenName": "external_folder_sync_sources 詳細",
+    "userStory": "管理者がexternal_folder_sync_sourcesの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:52.685Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/external_folder_sync_sources/efss_screenshot_001?return_to=%2Fadmin%2Fexternal_folder_sync_sources",
+    "finalUrl": "http://web:3000/admin/external_folder_sync_sources/efss_screenshot_001?return_to=%2Fadmin%2Fexternal_folder_sync_sources",
+    "outputName": "admin-external-folder-sync-sources-show",
+    "sha256": "cc5e01dd9d69abcdfd0596a70934da338b8dfe88ece9acc4544244fdf0fe04d0"
+  },
+  {
+    "scenarioId": "admin-external-folder-sync-sources.edit.admin.desktop",
+    "screenName": "external_folder_sync_sources 編集",
+    "userStory": "管理者がexternal_folder_sync_sourcesの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:53.410Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/external_folder_sync_sources/efss_screenshot_001?return_to=%2Fadmin%2Fexternal_folder_sync_sources/edit",
+    "finalUrl": "http://web:3000/admin/external_folder_sync_sources/efss_screenshot_001?return_to=%2Fadmin%2Fexternal_folder_sync_sources/edit",
+    "outputName": "admin-external-folder-sync-sources-edit",
+    "sha256": "cc5e01dd9d69abcdfd0596a70934da338b8dfe88ece9acc4544244fdf0fe04d0"
+  },
+  {
+    "scenarioId": "admin-documents.edit.admin.desktop",
+    "screenName": "documents 編集",
+    "userStory": "管理者がdocumentsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:56.007Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/documents/doc_d26c4a604792359972ad/edit",
+    "finalUrl": "http://web:3000/admin/documents/doc_d26c4a604792359972ad/edit",
+    "outputName": "admin-documents-edit",
+    "sha256": "58b188e9ca5765431529b06b3f0f784bec9a6bac42a5bf34d898013e481d8fb9"
+  },
+  {
+    "scenarioId": "admin-bulk-edit-dry-runs.new.admin.desktop",
+    "screenName": "bulk_edit_dry_runs 新規作成",
+    "userStory": "管理者がbulk_edit_dry_runsの新規作成画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:16:58.076Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/bulk_edit_dry_runs/new",
+    "finalUrl": "http://web:3000/admin/bulk_edit_dry_runs/new",
+    "outputName": "admin-bulk-edit-dry-runs-new",
+    "sha256": "84896476567215b3761c7068833427c81a33469fb9530a84766ff9bd04de87e6"
+  },
+  {
+    "scenarioId": "admin-document-sets.edit.admin.desktop",
+    "screenName": "document_sets 編集",
+    "userStory": "管理者がdocument_setsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:00.727Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/document_sets/dset_screenshot_001/edit",
+    "finalUrl": "http://web:3000/admin/document_sets/dset_screenshot_001/edit",
+    "outputName": "admin-document-sets-edit",
+    "sha256": "b8e1953998f1099da40a6feaa5f2a09694589d3f903456ea4f2c52c52dfa3f9e"
+  },
+  {
+    "scenarioId": "admin-document-catalogs.index.admin.desktop",
+    "screenName": "document_catalogs 一覧",
+    "userStory": "管理者がdocument_catalogsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:01.955Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/document_catalogs",
+    "finalUrl": "http://web:3000/admin/document_catalogs",
+    "outputName": "admin-document-catalogs-index",
+    "sha256": "77845f35660e933dcc61d2c6b6579e42da52137f7e882c1b876fe11466ae54b9"
+  },
+  {
+    "scenarioId": "admin-document-catalogs.edit.admin.desktop",
+    "screenName": "document_catalogs 編集",
+    "userStory": "管理者がdocument_catalogsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:05.206Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/document_catalogs/dcat_screenshot_001/edit",
+    "finalUrl": "http://web:3000/admin/document_catalogs/dcat_screenshot_001/edit",
+    "outputName": "admin-document-catalogs-edit",
+    "sha256": "6ad736070758c9527f2ebaac8f7b942b739473187190708ee7560d1efe9e9bdf"
+  },
+  {
+    "scenarioId": "admin-document-permissions.edit.admin.desktop",
+    "screenName": "document_permissions 編集",
+    "userStory": "管理者がdocument_permissionsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:37.589Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/document_permissions/perm_67b5e6bfce46bcb8f17d/edit",
+    "finalUrl": "http://web:3000/admin/document_permissions/perm_67b5e6bfce46bcb8f17d/edit",
+    "outputName": "admin-document-permissions-edit",
+    "sha256": "1b6a16bc44c8a853dcaebb0b2679401ef1f31f2c8cedd38a65586e82469efae6"
+  },
+  {
+    "scenarioId": "admin-webhook-endpoints.edit.admin.desktop",
+    "screenName": "webhook_endpoints 編集",
+    "userStory": "管理者がwebhook_endpointsの編集画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:40.784Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/webhook_endpoints/whe_screenshot_001/edit",
+    "finalUrl": "http://web:3000/admin/webhook_endpoints/whe_screenshot_001/edit",
+    "outputName": "admin-webhook-endpoints-edit",
+    "sha256": "a27527cbe92c2dea2b7bb0365e4244b888c01bd86bb8a3023182640b459560ab"
+  },
+  {
+    "scenarioId": "admin-webhook-deliveries.index.admin.desktop",
+    "screenName": "webhook_deliveries 一覧",
+    "userStory": "管理者がwebhook_deliveriesの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:42.975Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/webhook_deliveries",
+    "finalUrl": "http://web:3000/admin/webhook_deliveries",
+    "outputName": "admin-webhook-deliveries-index",
+    "sha256": "6d7274168f2f126baec035bdc249cad3f4ef67e5bd54278e9b4a81095dcf0288"
+  },
+  {
+    "scenarioId": "admin-webhook-deliveries.show.admin.desktop",
+    "screenName": "webhook_deliveries 詳細",
+    "userStory": "管理者がwebhook_deliveriesの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:45.444Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/webhook_deliveries/whd_screenshot_001?return_context=deliveries_index",
+    "finalUrl": "http://web:3000/admin/webhook_deliveries/whd_screenshot_001?return_context=deliveries_index",
+    "outputName": "admin-webhook-deliveries-show",
+    "sha256": "0670f5902a80503d7921894278048533239c120bee201fa9c790906fdc922adf"
+  },
+  {
+    "scenarioId": "admin-access-requests.index.admin.desktop",
+    "screenName": "access_requests 一覧",
+    "userStory": "管理者がaccess_requestsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:46.823Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/access_requests",
+    "finalUrl": "http://web:3000/admin/access_requests",
+    "outputName": "admin-access-requests-index",
+    "sha256": "523856791564ae7c4aeb4300dde12b73356710091157827366f2938184dd7d31"
+  },
+  {
+    "scenarioId": "admin-access-requests.show.admin.desktop",
+    "screenName": "access_requests 詳細",
+    "userStory": "管理者がaccess_requestsの詳細画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:50.281Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/access_requests/areq_screenshot_001?return_to=%2Fadmin%2Faccess_requests",
+    "finalUrl": "http://web:3000/admin/access_requests/areq_screenshot_001?return_to=%2Fadmin%2Faccess_requests",
+    "outputName": "admin-access-requests-show",
+    "sha256": "4b7ddc4056bfb12e82e02a57b7f91ebb77a1644674104e25aff1503a56343ee4"
+  },
+  {
+    "scenarioId": "admin-document-usage-reports.index.admin.desktop",
+    "screenName": "document_usage_reports 一覧",
+    "userStory": "管理者がdocument_usage_reportsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:51.785Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/document_usage_reports",
+    "finalUrl": "http://web:3000/admin/document_usage_reports",
+    "outputName": "admin-document-usage-reports-index",
+    "sha256": "5dc15daa75d3ed49335b0dbe9e1c020031ac33091b52a45ac04cc0bad4ec5652"
+  },
+  {
+    "scenarioId": "admin-read-confirmations.index.admin.desktop",
+    "screenName": "read_confirmations 一覧",
+    "userStory": "管理者がread_confirmationsの一覧画面で業務情報を確認する",
+    "httpMethod": "GET",
+    "prerequisites": [
+      "管理者でログイン済み",
+      "標準seedデータを投入済み"
+    ],
+    "actions": [],
+    "stateKind": "default",
+    "sourceRevision": "unknown",
+    "capturedAt": "2026-08-16T09:17:52.233Z",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1600
+    },
+    "role": "admin",
+    "requestedUrl": "/admin/read_confirmations",
+    "finalUrl": "http://web:3000/admin/read_confirmations",
+    "outputName": "admin-read-confirmations-index",
+    "sha256": "99f1eaaa7db198984382337644e667b3b160b70407068c459b5cd07c4c0ded56"
+  }
+]

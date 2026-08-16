@@ -5,13 +5,13 @@ RSpec.describe "preview table resizer source" do
     Rails.root.join(path).read
   end
 
-  let(:resizer_source) { read_source("app/frontend/controllers/preview_table_resizer_controller.js") }
+  let(:resizer_source) { read_source("app/frontend/controllers/preview_table_resizer_controller.ts") }
   let(:document_sites_source) { read_source("app/controllers/document_sites_controller.rb") }
   let(:project_sites_source) { read_source("app/controllers/project_sites_controller.rb") }
 
   it "builds localStorage keys from the shared preview context before the table index suffix" do
     aggregate_failures do
-      expect(resizer_source).to include("function previewContextKey(frame)")
+      expect(resizer_source).to match(/function previewContextKey\(frame/)
       expect(resizer_source).to include("return previewContextKeyFromBody(frame) || previewContextKeyFromUrl(frame)")
       expect(resizer_source).to include('return `${prefix}:${previewContextKey(frame)}:table:${index}`')
       expect(resizer_source).to include('return frame.contentDocument?.body?.dataset?.docsPortalPreviewContextKey || null')

@@ -101,7 +101,7 @@ test("view wires text preview rows to the controller without adding visible row 
 })
 
 test("entrypoint registers target and match cue assets separately", () => {
-  const entrypoint = readFileSync(resolve("app/frontend/entrypoints/application.js"), "utf8")
+  const entrypoint = readFileSync(resolve("app/frontend/entrypoints/application.ts"), "utf8")
   const styles = readFileSync(resolve("app/frontend/entrypoints/text_preview_cues.css"), "utf8")
 
   assert.match(entrypoint, /import "\.\/text_preview_cues\.css"/)

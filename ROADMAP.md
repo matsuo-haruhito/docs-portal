@@ -21,7 +21,7 @@
 
 - rtp 新規一覧展開: 未展開の具体的な index 画面、column metadata、filter、CSV 契約、代表 request spec を 1 画面単位で固定してから着手する
 - rfk 横展開: 未対応画面の具体的な field と selected value / validation rerender / remote search 契約を特定してから着手する
-- Stimulus 化: 既存の素 JavaScript を変更するタイミングで、対象 DOM に閉じた controller へ移す。`application.js` に `querySelectorAll` とイベント登録を直接増やさない
+- Stimulus 化: 既存の素 JavaScript を変更するタイミングで、対象 DOM に閉じた controller へ移す。`application.ts` に `querySelectorAll` とイベント登録を直接増やさない
 - tree と table state: current / expanded と column / filter / sort は独立した責務を維持する。具体的な不足が再現するまで自動連携を追加しない
 - Markdown preview table: 現行 app 側 fallback の stable key、Turbo 再描画後 refresh、keyboard / cleanup、export を回帰確認する。full rtp 統合を進行中タスクとして扱わない
 

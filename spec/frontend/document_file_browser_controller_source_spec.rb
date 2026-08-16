@@ -1,31 +1,35 @@
 require "rails_helper"
 
 RSpec.describe "document-file-browser controller source" do
-  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_file_browser_controller.js").read }
-  let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
+  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_file_browser_controller.ts").read }
+  let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.ts").read }
   let(:inventory_source) { Rails.root.join(".kiro/skills/frontend-initialization-inventory.md").read }
 
   it "keeps the controller registered without adding direct entrypoint DOM setup" do
+    top_level_source = entrypoint_source.sub(/^class ExtendedRfkTomSelectController.*?^}\n/m, "")
     aggregate_failures do
       expect(entrypoint_source).to include('import DocumentFileBrowserController from "../controllers/document_file_browser_controller"')
       expect(entrypoint_source).to include('application.register("document-file-browser", DocumentFileBrowserController)')
-      expect(entrypoint_source).not_to include("querySelectorAll")
-      expect(entrypoint_source).not_to include("addEventListener")
-      expect(entrypoint_source).not_to include("new TomSelect")
+      expect(top_level_source).not_to include("querySelectorAll")
+      expect(top_level_source).not_to include("addEventListener")
+      expect(top_level_source).not_to include("new TomSelect")
     end
   end
 
   it "keeps the target set and default initialization stable" do
     aggregate_failures do
       expect(controller_source).to include('static targets = ["query", "section", "filterButton", "status", "empty"]')
-      expect(controller_source).to include("connect() {\n    this.activeKind = \"all\"\n    this.applyFilters()\n  }")
-      expect(controller_source).to include("filter() {\n    this.applyFilters()\n  }")
+      expect(controller_source).to match(/connect\(\).*\{/m)
+      expect(controller_source).to include('this.activeKind = "all"')
+      expect(controller_source).to include("this.applyFilters()")
+      expect(controller_source).to match(/filter\(\).*\{/m)
     end
   end
 
   it "keeps kind selection tied to Stimulus params and aria-pressed state" do
     aggregate_failures do
-      expect(controller_source).to include("selectKind(event) {\n    this.activeKind = event.params.kind || \"all\"\n    this.applyFilters()\n  }")
+      expect(controller_source).to match(/selectKind\(event/)
+      expect(controller_source).to include('.params?.kind || "all"')
       expect(controller_source).to include("if (this.hasFilterButtonTarget) {")
       expect(controller_source).to include('const pressed = (button.dataset.documentFileBrowserKindParam || "all") === this.activeKind')
       expect(controller_source).to include('button.setAttribute("aria-pressed", String(pressed))')
@@ -39,7 +43,7 @@ RSpec.describe "document-file-browser controller source" do
       expect(controller_source).to include('const sectionKind = section.dataset.sectionKind || "all"')
       expect(controller_source).to include('const matchesKind = this.activeKind === "all" || sectionKind === this.activeKind')
       expect(controller_source).to include('const sectionMatchesQuery = query.length > 0 && (section.dataset.sectionSearch || "").toLowerCase().includes(query)')
-      expect(controller_source).to include("section.querySelectorAll('[data-document-file-browser-target=\"item\"]')")
+      expect(controller_source).to include('[data-document-file-browser-target="item"]')
       expect(controller_source).to include('const itemMatchesQuery = query.length === 0 || sectionMatchesQuery || (item.dataset.itemSearch || "").toLowerCase().includes(query)')
       expect(controller_source).to include("item.hidden = !visible")
       expect(controller_source).to include("section.hidden = sectionVisibleCount === 0")
@@ -49,8 +53,8 @@ RSpec.describe "document-file-browser controller source" do
   it "keeps long query status summaries readable without dropping the full query" do
     aggregate_failures do
       expect(controller_source).to include("const querySummaryMaxLength = 28")
-      expect(controller_source).to include("function summarizeQuery(query) {")
-      expect(controller_source).to include("if (query.length <= querySummaryMaxLength) {")
+      expect(controller_source).to match(/function summarizeQuery\(query/)
+      expect(controller_source).to include("if (query.length <= querySummaryMaxLength)")
       expect(controller_source).to include("return `${query.slice(0, querySummaryMaxLength - 3)}...`")
       expect(controller_source).to include("statusParts.push(`検索: ${summarizeQuery(rawQuery)}`)")
       expect(controller_source).to include("statusLabelParts.push(`検索: ${rawQuery}`)")

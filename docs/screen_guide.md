@@ -1,613 +1,470 @@
-# 画面操作ガイド
+# 画面仕様ガイド
 
 > このドキュメントは `npx tsx script/generate_screen_docs.ts` で自動生成されています。
+> 正本は `script/screenshot_scenarios.ts`（明示的シナリオ）と
+> `capture_screenshots.ts` が routes.rb から自動生成するシナリオです。
 > スクリーンショットは `docs/screenshots/` を参照しています。
 
 ---
 
 ## 目次
 
+### 公開側
+
+- [利用者ダッシュボード](#利用者ダッシュボード)
+- [案件文書ツリー](#案件文書ツリー)
+- [ログイン](#ログイン)
+
 ### 管理画面
 
-- [管理概要](#管理概要)
-- [運用・診断](#運用診断)
-- [会社マスタ](#会社マスタ)
-- [ユーザーマスタ](#ユーザーマスタ)
-- [案件マスタ](#案件マスタ)
-- [案件所属](#案件所属)
-- [文書マスタ](#文書マスタ)
-- [文書セット](#文書セット)
-- [文書カタログ](#文書カタログ)
-- [文書権限](#文書権限)
-- [文書一括編集](#文書一括編集)
-- [Git連携設定](#git連携設定)
-- [Git同期履歴](#git同期履歴)
-- [外部フォルダ同期設定](#外部フォルダ同期設定)
-- [Microsoft Graph接続](#microsoft-graph接続)
-- [Webhook設定](#webhook設定)
-- [Webhook送信履歴検索](#webhook送信履歴検索)
-- [ZIPインポート](#zipインポート)
-- [単体ファイルアップロード](#単体ファイルアップロード)
-- [生成ファイルイベント](#生成ファイルイベント)
-- [生成ファイル実行](#生成ファイル実行)
-- [定期ジョブ](#定期ジョブ)
-- [同意文面](#同意文面)
-- [案件別同意設定](#案件別同意設定)
-- [監査ログ](#監査ログ)
-- [アクセス申請（管理）](#アクセス申請管理)
-- [文書利用レポート](#文書利用レポート)
-- [既読確認](#既読確認)
+- [管理ダッシュボード](#管理ダッシュボード)
+- [診断](#診断)
+- [文書マスタ一覧](#文書マスタ一覧)
+- [案件一覧](#案件一覧)
+- [文書権限一覧](#文書権限一覧)
+- [文書セット一覧](#文書セット一覧)
+- [document_catalogs 一覧](#documentcatalogs-一覧)
+- [companies 一覧](#companies-一覧)
+- [users 一覧](#users-一覧)
+- [project_memberships 一覧](#projectmemberships-一覧)
+- [consent_terms 一覧](#consentterms-一覧)
+- [project_consent_settings 一覧](#projectconsentsettings-一覧)
+- [Git連携設定一覧](#git連携設定一覧)
+- [git_import_runs 一覧](#gitimportruns-一覧)
+- [外部フォルダ同期設定一覧](#外部フォルダ同期設定一覧)
+- [microsoft_graph_connections 一覧](#microsoftgraphconnections-一覧)
+- [zip_imports 新規作成](#zipimports-新規作成)
+- [file_upload_dry_runs 一覧](#fileuploaddryruns-一覧)
+- [bulk_edit_dry_runs 新規作成](#bulkeditdryruns-新規作成)
+- [missing_document_files 詳細](#missingdocumentfiles-詳細)
 
-### 利用者画面
+### システム管理
 
-- [ホーム](#ホーム)
-- [案件一覧・詳細](#案件一覧詳細)
-- [閲覧可能文書一覧](#閲覧可能文書一覧)
-- [確認依頼](#確認依頼)
-- [送付履歴](#送付履歴)
-- [保存済み](#保存済み)
-- [アクセス申請](#アクセス申請)
-- [同意管理](#同意管理)
+- [Webhook設定一覧](#webhook設定一覧)
+- [webhook_deliveries 一覧](#webhookdeliveries-一覧)
+- [アクセスログ](#アクセスログ)
+- [access_requests 一覧](#accessrequests-一覧)
+- [document_usage_reports 一覧](#documentusagereports-一覧)
+- [read_confirmations 一覧](#readconfirmations-一覧)
+- [recurring_job_schedules 一覧](#recurringjobschedules-一覧)
+- [generated_file_events 一覧](#generatedfileevents-一覧)
+- [generated_file_runs 一覧](#generatedfileruns-一覧)
 
 ---
 
+## 公開側
+
+### 利用者ダッシュボード
+
+**用途:** 外部利用者がアクセス可能な案件と文書を確認する
+
+#### メイン画面
+
+**この画面での操作:**
+
+- アクセス可能な案件の一覧確認
+- 最近閲覧した文書へのアクセス
+- お気に入り・後で読むショートカット
+
+> ⏳ このシナリオは未撮影です（deferred）
+
+### 案件文書ツリー
+
+**用途:** 外部利用者が案件内の文書ツリーから目的の文書を探す
+
+#### メイン画面
+
+**この画面での操作:**
+
+- 文書ツリーの展開・折りたたみ
+- 文書の選択と本文表示
+- サイドバーのリサイズ・折りたたみ
+
+> ⏳ このシナリオは未撮影です（deferred）
+
+### ログイン
+
+**用途:** 未ログインの利用者がメールアドレスとパスワードを入力してポータルへ進む
+
+#### 新規作成画面
+
+**この画面での操作:**
+
+- メールアドレスとパスワードを入力してログイン
+
+![新規作成画面](screenshots/session-new.png)
+
 ## 管理画面
 
-### 管理概要
+### 管理ダッシュボード
 
-**用途:** 管理者がシステム全体の状況を俯瞰するトップ画面
+**用途:** 管理者が管理画面トップで全体状況を確認する
 
-#### 管理概要
-
-**この画面での操作:**
-
-- 文書数・案件数・ユーザー数の確認
-- 最近の同期状態やジョブ状態の確認
-
-![管理概要](screenshots/admin_dashboard.png)
-
-### 運用・診断
-
-**用途:** 管理者が設定・保存ファイル・運用ジョブの詳細な診断情報を確認する
-
-#### 運用・診断 一覧画面
+#### メイン画面
 
 **この画面での操作:**
 
-- 設定診断・文書ファイル健全性・Storage内訳の確認
-- 継続失敗候補とrunbook導線の確認
+- 要対応事項の確認
+- 各管理機能への導線
 
-![運用・診断 一覧画面](screenshots/admin_diagnostics_index.png)
+![メイン画面](screenshots/admin-dashboard.png)
 
-### 会社マスタ
+### 診断
 
-**用途:** 管理者が会社（テナント）を登録・管理する
+**用途:** 管理者がシステム構成と要対応事項を診断する
 
-#### 会社マスタ 編集画面
-
-**この画面での操作:**
-
-- 会社情報（ドメイン・会社名・有効/無効）の編集
-
-![会社マスタ 編集画面](screenshots/admin_companies_edit.png)
-
-#### 会社マスタ 一覧画面
+#### 一覧画面
 
 **この画面での操作:**
 
-- 会社の検索・フィルタ・一覧確認
+- 環境設定の整合性確認
+- 要対応事項の確認と対処導線
+
+![一覧画面](screenshots/admin-diagnostics-index.png)
+
+### 文書マスタ一覧
+
+**用途:** 管理者が文書マスタを検索・フィルタして対象文書を確認する
+
+#### 一覧画面
+
+**この画面での操作:**
+
+- 案件・状態・種別による検索とフィルタ
 - 列設定のカスタマイズ
-
-![会社マスタ 一覧画面](screenshots/admin_companies_index.png)
-
-### ユーザーマスタ
-
-**用途:** 管理者がユーザーアカウントを登録・管理する
-
-#### ユーザーマスタ 編集画面
-
-**この画面での操作:**
-
-- ユーザー情報（名前・メール・種別・会社・パスワード）の編集
-
-![ユーザーマスタ 編集画面](screenshots/admin_users_edit.png)
-
-#### ユーザーマスタ 一覧画面
-
-**この画面での操作:**
-
-- ユーザーの検索・フィルタ（キーワード・状態）
-- 列設定のカスタマイズ
-
-![ユーザーマスタ 一覧画面](screenshots/admin_users_index.png)
-
-### 案件マスタ
-
-**用途:** 管理者が案件を登録・管理する
-
-#### 案件マスタ 編集画面
-
-**この画面での操作:**
-
-- 案件情報（コード・名称・会社・状態）の編集
-
-![案件マスタ 編集画面](screenshots/admin_projects_edit.png)
-
-#### 案件マスタ 一覧画面
-
-**この画面での操作:**
-
-- 案件の検索・フィルタ（キーワード・会社・状態）
-- 列設定のカスタマイズ
-
-![案件マスタ 一覧画面](screenshots/admin_projects_index.png)
-
-### 案件所属
-
-**用途:** 管理者がユーザーの案件所属を管理する
-
-#### 案件所属 編集画面
-
-**この画面での操作:**
-
-- 所属設定（ユーザー・案件・ロール）の編集
-
-![案件所属 編集画面](screenshots/admin_project_memberships_edit.png)
-
-#### 案件所属 一覧画面
-
-**この画面での操作:**
-
-- 案件所属の一覧確認・フィルタ
-
-![案件所属 一覧画面](screenshots/admin_project_memberships_index.png)
-
-### 文書マスタ
-
-**用途:** 管理者が文書を登録・管理し、版管理やアーカイブを行う
-
-#### 文書マスタ 編集画面
-
-**この画面での操作:**
-
-- 文書情報（案件・タイトル・slug・カテゴリ・種別・公開範囲・正本区分）の編集
-
-![文書マスタ 編集画面](screenshots/admin_documents_edit.png)
-
-#### 文書マスタ 一覧画面
-
-**この画面での操作:**
-
-- 文書の検索・フィルタ（キーワード・カテゴリ・種別・公開範囲・正本区分・状態）
-- 列設定のカスタマイズ
-- 一括編集候補の選択
-- 保管期限・廃棄候補のライフサイクル管理
-
-![文書マスタ 一覧画面](screenshots/admin_documents_index.png)
-
-### 文書セット
-
-**用途:** 管理者が文書のグループ（セット）を作成し、配布対象を管理する
-
-#### 文書セット 一覧画面
-
-**この画面での操作:**
-
-- 文書セットの検索・フィルタ（名称・種別・公開範囲）
 - CSV出力
-- 列設定のカスタマイズ
+- 文書のアーカイブ・復元操作
 
-![文書セット 一覧画面](screenshots/admin_document_sets_index.png)
+![一覧画面](screenshots/admin-documents-index.png)
 
-### 文書カタログ
+#### 編集画面
 
-**用途:** 管理者が公開側に表示する文書カタログを管理する
+![編集画面](screenshots/admin-documents-edit.png)
 
-#### 文書カタログ 一覧画面
+### 案件一覧
 
-**この画面での操作:**
+**用途:** 管理者が案件を検索・管理する
 
-- カタログの一覧確認・管理
-
-![文書カタログ 一覧画面](screenshots/admin_document_catalogs_index.png)
-
-### 文書権限
-
-**用途:** 管理者が文書ごとのアクセス権限（会社・ユーザー単位）を付与する
-
-#### 文書権限 権限一覧
+#### 一覧画面
 
 **この画面での操作:**
 
-- 権限の検索・フィルタ（案件・文書名・アクセスレベル・付与先種別）
+- 会社・案件名による検索
+- 案件の新規作成・編集
+
+![一覧画面](screenshots/admin-projects-index.png)
+
+#### 編集画面
+
+![編集画面](screenshots/admin-projects-edit.png)
+
+### 文書権限一覧
+
+**用途:** 管理者が文書権限の付与状況を確認・管理する
+
+#### 一覧画面
+
+**この画面での操作:**
+
+- 案件・文書・会社・ユーザーによるフィルタ
+- 権限の追加・変更・削除
 - CSV出力
 
-![文書権限 権限一覧](screenshots/admin_document_permissions_assignments.png)
+![一覧画面](screenshots/admin-document-permissions-index.png)
 
-#### 文書権限 編集画面
+#### 編集画面
 
-**この画面での操作:**
+![編集画面](screenshots/admin-document-permissions-edit.png)
 
-- 権限設定（文書・付与先・アクセスレベル）の編集
+### 文書セット一覧
 
-![文書権限 編集画面](screenshots/admin_document_permissions_edit.png)
+**用途:** 管理者が文書セットを確認・管理する
 
-#### 文書権限 文書別概要
-
-**この画面での操作:**
-
-- 文書別の権限付与状況と付与先の要約確認
-- 案件・文書名による絞り込み
-
-![文書権限 文書別概要](screenshots/admin_document_permissions_overview.png)
-
-### 文書一括編集
-
-**用途:** 管理者が複数文書のメタデータを一括変更する（dry-run → 実行）
-
-#### 文書一括編集 新規作成画面
+#### 一覧画面
 
 **この画面での操作:**
 
-- 一括編集のdry-run作成（対象文書・変更内容の指定）
+- 文書セットの作成・編集・削除
+- 対象文書の管理（固定版 / 最新版）
 
-![文書一括編集 新規作成画面](screenshots/admin_bulk_edit_dry_runs_new.png)
+![一覧画面](screenshots/admin-document-sets-index.png)
 
-### Git連携設定
+#### 編集画面
 
-**用途:** 管理者がGitリポジトリからの文書取り込み設定を管理する
+![編集画面](screenshots/admin-document-sets-edit.png)
 
-#### Git連携設定 一覧画面
+### document_catalogs 一覧
+
+**用途:** 管理者がdocument_catalogsの一覧画面で業務情報を確認する
+
+#### 一覧画面
+
+![一覧画面](screenshots/admin-document-catalogs-index.png)
+
+#### 編集画面
+
+![編集画面](screenshots/admin-document-catalogs-edit.png)
+
+### companies 一覧
+
+**用途:** 管理者がcompaniesの一覧画面で業務情報を確認する
+
+#### 一覧画面
+
+![一覧画面](screenshots/admin-companies-index.png)
+
+#### 編集画面
+
+![編集画面](screenshots/admin-companies-edit.png)
+
+### users 一覧
+
+**用途:** 管理者がusersの一覧画面で業務情報を確認する
+
+#### 一覧画面
+
+![一覧画面](screenshots/admin-users-index.png)
+
+#### 編集画面
+
+![編集画面](screenshots/admin-users-edit.png)
+
+### project_memberships 一覧
+
+**用途:** 管理者がproject_membershipsの一覧画面で業務情報を確認する
+
+#### 一覧画面
+
+![一覧画面](screenshots/admin-project-memberships-index.png)
+
+#### 編集画面
+
+![編集画面](screenshots/admin-project-memberships-edit.png)
+
+### consent_terms 一覧
+
+**用途:** 管理者がconsent_termsの一覧画面で業務情報を確認する
+
+#### 一覧画面
+
+![一覧画面](screenshots/admin-consent-terms-index.png)
+
+#### 編集画面
+
+![編集画面](screenshots/admin-consent-terms-edit.png)
+
+### project_consent_settings 一覧
+
+**用途:** 管理者がproject_consent_settingsの一覧画面で業務情報を確認する
+
+#### 一覧画面
+
+![一覧画面](screenshots/admin-project-consent-settings-index.png)
+
+#### 編集画面
+
+![編集画面](screenshots/admin-project-consent-settings-edit.png)
+
+### Git連携設定一覧
+
+**用途:** 管理者がGit連携ソースの設定状況と同期履歴を確認する
+
+#### 一覧画面
 
 **この画面での操作:**
 
-- Git連携設定の検索・フィルタ（案件・状態）
+- 連携設定の追加・編集・削除
 - 手動同期の実行
 
-![Git連携設定 一覧画面](screenshots/admin_git_import_sources_index.png)
+![一覧画面](screenshots/admin-git-import-sources-index.png)
 
-### Git同期履歴
+#### 編集画面
 
-**用途:** 管理者がGit同期の実行結果を確認する
+![編集画面](screenshots/admin-git-import-sources-edit.png)
 
-#### Git同期履歴 一覧画面
+### git_import_runs 一覧
 
-**この画面での操作:**
+**用途:** 管理者がgit_import_runsの一覧画面で業務情報を確認する
 
-- 同期履歴の一覧確認・フィルタ（案件・ステータス）
+#### 一覧画面
 
-![Git同期履歴 一覧画面](screenshots/admin_git_import_runs_index.png)
+![一覧画面](screenshots/admin-git-import-runs-index.png)
 
-### 外部フォルダ同期設定
+### 外部フォルダ同期設定一覧
 
-**用途:** 管理者がGoogle Drive / SharePointからの文書取り込み設定を管理する
+**用途:** 管理者が外部フォルダ同期ソースの設定状況を確認する
 
-#### 外部フォルダ同期設定 一覧画面
-
-**この画面での操作:**
-
-- 同期設定の一覧確認・フィルタ（プロバイダ・状態・警告/エラー）
-- OAuth接続の管理
-- 同期プレビュー・強制適用の実行
-
-![外部フォルダ同期設定 一覧画面](screenshots/admin_external_folder_sync_sources_index.png)
-
-### Microsoft Graph接続
-
-**用途:** 管理者がMicrosoft Graph（SharePoint/OneDrive）接続を管理する
-
-#### Microsoft Graph接続 一覧画面
+#### 一覧画面
 
 **この画面での操作:**
 
-- 接続設定の一覧・新規登録・編集
+- Google Drive / SharePoint 同期設定の管理
+- dry-run → レビュー → 適用のフロー
+- OAuth接続・Webhook購読の管理
 
-![Microsoft Graph接続 一覧画面](screenshots/admin_microsoft_graph_connections_index.png)
+![一覧画面](screenshots/admin-external-folder-sync-sources-index.png)
 
-### Webhook設定
+#### 詳細画面
 
-**用途:** 管理者が外部通知用のWebhookエンドポイントを管理する
+![詳細画面](screenshots/admin-external-folder-sync-sources-show.png)
 
-#### Webhook設定 一覧画面
+#### 編集画面
 
-**この画面での操作:**
+![編集画面](screenshots/admin-external-folder-sync-sources-edit.png)
 
-- Webhook設定の一覧・フィルタ（名称・イベント・状態）
-- 最近の送信履歴の確認
-- 失敗Webhookの再送
+### microsoft_graph_connections 一覧
 
-![Webhook設定 一覧画面](screenshots/admin_webhook_endpoints_index.png)
+**用途:** 管理者がmicrosoft_graph_connectionsの一覧画面で業務情報を確認する
 
-### Webhook送信履歴検索
+#### 一覧画面
 
-**用途:** 管理者がWebhook送信の詳細履歴を検索・確認する
+![一覧画面](screenshots/admin-microsoft-graph-connections-index.png)
 
-#### Webhook送信履歴検索 一覧画面
+#### 編集画面
 
-**この画面での操作:**
+![編集画面](screenshots/admin-microsoft-graph-connections-edit.png)
 
-- 送信履歴の検索・フィルタ（設定・イベント・ステータス・日時）
+### zip_imports 新規作成
 
-![Webhook送信履歴検索 一覧画面](screenshots/admin_webhook_deliveries_index.png)
+**用途:** 管理者がzip_importsの新規作成画面で業務情報を確認する
 
-### ZIPインポート
+#### 新規作成画面
 
-**用途:** 管理者がZIPファイルから文書を一括取り込みする
+![新規作成画面](screenshots/admin-zip-imports-new.png)
 
-#### ZIPインポート 新規作成画面
+### file_upload_dry_runs 一覧
 
-**この画面での操作:**
+**用途:** 管理者がfile_upload_dry_runsの一覧画面で業務情報を確認する
 
-- ZIPファイルのアップロード（案件・版ラベル・ステータス指定）
-- dry-runの作成
+#### 一覧画面
 
-![ZIPインポート 新規作成画面](screenshots/admin_zip_imports_new.png)
+![一覧画面](screenshots/admin-file-upload-dry-runs-index.png)
 
-### 単体ファイルアップロード
+#### 詳細画面
 
-**用途:** 管理者が個別ファイルのアップロード結果を確認する
+![詳細画面](screenshots/admin-file-upload-dry-runs-show.png)
 
-#### 単体ファイルアップロード 一覧画面
+### bulk_edit_dry_runs 新規作成
 
-**この画面での操作:**
+**用途:** 管理者がbulk_edit_dry_runsの新規作成画面で業務情報を確認する
 
-- アップロードdry-runの一覧確認
+#### 新規作成画面
 
-![単体ファイルアップロード 一覧画面](screenshots/admin_file_upload_dry_runs_index.png)
+![新規作成画面](screenshots/admin-bulk-edit-dry-runs-new.png)
 
-### 生成ファイルイベント
+### missing_document_files 詳細
 
-**用途:** 管理者がDocusaurus build等のファイル生成イベントを確認する
+**用途:** 管理者がmissing_document_filesの詳細画面で業務情報を確認する
 
-#### 生成ファイルイベント 一覧画面
+#### 詳細画面
 
-**この画面での操作:**
+![詳細画面](screenshots/admin-missing-document-files-show.png)
 
-- 生成イベントの一覧確認・フィルタ
+## システム管理
 
-![生成ファイルイベント 一覧画面](screenshots/admin_generated_file_events_index.png)
+### Webhook設定一覧
 
-### 生成ファイル実行
+**用途:** 管理者がWebhook通知先の設定と送信状況を確認する
 
-**用途:** 管理者がファイル生成ジョブの実行結果を確認・再実行する
-
-#### 生成ファイル実行 一覧画面
+#### 一覧画面
 
 **この画面での操作:**
 
-- 生成ジョブの一覧・フィルタ（ステータス・案件）
-- 失敗ジョブの一括再実行
+- Webhookエンドポイントの追加・編集・削除
+- イベント種別の設定
 
-![生成ファイル実行 一覧画面](screenshots/admin_generated_file_runs_index.png)
+![一覧画面](screenshots/admin-webhook-endpoints-index.png)
 
-#### 生成ファイル実行 詳細画面
+#### 編集画面
 
-**この画面での操作:**
+![編集画面](screenshots/admin-webhook-endpoints-edit.png)
 
-- ジョブ詳細の確認（入出力・エラー）
-- 個別再実行
+### webhook_deliveries 一覧
 
-![生成ファイル実行 詳細画面](screenshots/admin_generated_file_runs_show.png)
+**用途:** 管理者がwebhook_deliveriesの一覧画面で業務情報を確認する
 
-### 定期ジョブ
+#### 一覧画面
 
-**用途:** 管理者が定期実行ジョブのスケジュールを管理する
+![一覧画面](screenshots/admin-webhook-deliveries-index.png)
 
-#### 定期ジョブ 一覧画面
+#### 詳細画面
 
-**この画面での操作:**
+![詳細画面](screenshots/admin-webhook-deliveries-show.png)
 
-- 定期ジョブの一覧確認・同期
+### アクセスログ
 
-![定期ジョブ 一覧画面](screenshots/admin_recurring_job_schedules_index.png)
+**用途:** 管理者がポータルへのアクセス履歴を監査する
 
-#### 定期ジョブ 詳細画面
-
-**この画面での操作:**
-
-- ジョブ詳細・実行履歴の確認
-- 即時実行の要求
-
-![定期ジョブ 詳細画面](screenshots/admin_recurring_job_schedules_show.png)
-
-### 同意文面
-
-**用途:** 管理者が利用者に表示する同意文面を管理する
-
-#### 同意文面 一覧画面
+#### 一覧画面
 
 **この画面での操作:**
 
-- 同意文面の一覧確認・フィルタ
+- ユーザー・案件・会社・日付によるフィルタ
+- CSV出力
 
-![同意文面 一覧画面](screenshots/admin_consent_terms_index.png)
+![一覧画面](screenshots/admin-access-logs-index.png)
 
-### 案件別同意設定
+### access_requests 一覧
 
-**用途:** 管理者が案件ごとの同意要求設定を管理する
+**用途:** 管理者がaccess_requestsの一覧画面で業務情報を確認する
 
-#### 案件別同意設定 一覧画面
+#### 一覧画面
 
-**この画面での操作:**
+![一覧画面](screenshots/admin-access-requests-index.png)
 
-- 案件別同意設定の一覧確認
+#### 詳細画面
 
-![案件別同意設定 一覧画面](screenshots/admin_project_consent_settings_index.png)
+![詳細画面](screenshots/admin-access-requests-show.png)
 
-### 監査ログ
+### document_usage_reports 一覧
 
-**用途:** 管理者がユーザーの操作履歴を確認する（監査用）
+**用途:** 管理者がdocument_usage_reportsの一覧画面で業務情報を確認する
 
-#### 監査ログ 一覧画面
+#### 一覧画面
 
-**この画面での操作:**
+![一覧画面](screenshots/admin-document-usage-reports-index.png)
 
-- 監査ログの検索・フィルタ（ユーザー・操作種別・対象・日時）
+### read_confirmations 一覧
 
-![監査ログ 一覧画面](screenshots/admin_access_logs_index.png)
+**用途:** 管理者がread_confirmationsの一覧画面で業務情報を確認する
 
-### アクセス申請（管理）
+#### 一覧画面
 
-**用途:** 管理者がユーザーからのアクセス申請を承認・却下する
+![一覧画面](screenshots/admin-read-confirmations-index.png)
 
-#### アクセス申請（管理） 一覧画面
+### recurring_job_schedules 一覧
 
-**この画面での操作:**
+**用途:** 管理者がrecurring_job_schedulesの一覧画面で業務情報を確認する
 
-- 申請の一覧確認・フィルタ（ステータス・申請者）
+#### 一覧画面
 
-![アクセス申請（管理） 一覧画面](screenshots/admin_access_requests_index.png)
+![一覧画面](screenshots/admin-recurring-job-schedules-index.png)
 
-### 文書利用レポート
+#### 詳細画面
 
-**用途:** 管理者が文書の利用状況を集計・確認する
+![詳細画面](screenshots/admin-recurring-job-schedules-show.png)
 
-#### 文書利用レポート 一覧画面
+### generated_file_events 一覧
 
-**この画面での操作:**
+**用途:** 管理者がgenerated_file_eventsの一覧画面で業務情報を確認する
 
-- 文書利用状況の集計レポート表示
+#### 一覧画面
 
-![文書利用レポート 一覧画面](screenshots/admin_document_usage_reports_index.png)
+![一覧画面](screenshots/admin-generated-file-events-index.png)
 
-### 既読確認
+#### 詳細画面
 
-**用途:** 管理者が文書の既読確認状況を管理する
+![詳細画面](screenshots/admin-generated-file-events-show.png)
 
-#### 既読確認 一覧画面
+### generated_file_runs 一覧
 
-**この画面での操作:**
+**用途:** 管理者がgenerated_file_runsの一覧画面で業務情報を確認する
 
-- 既読確認の一覧・フィルタ
+#### 一覧画面
 
-![既読確認 一覧画面](screenshots/admin_read_confirmations_index.png)
+![一覧画面](screenshots/admin-generated-file-runs-index.png)
 
-## 利用者画面
+#### 詳細画面
 
-### ホーム
+![詳細画面](screenshots/admin-generated-file-runs-show.png)
 
-**用途:** ログインユーザーが自分に関連する文書・案件の状況を確認するトップ画面
-
-#### ホーム
-
-**この画面での操作:**
-
-- アクセス可能な案件と文書の一覧確認
-- 最近閲覧した文書へのクイックアクセス
-
-![ホーム](screenshots/dashboard.png)
-
-### 案件一覧・詳細
-
-**用途:** ユーザーがアクセス可能な案件と所属文書を閲覧する
-
-#### 案件一覧・詳細 一覧画面
-
-**この画面での操作:**
-
-- 案件の一覧確認・検索
-
-![案件一覧・詳細 一覧画面](screenshots/projects_index.png)
-
-#### 案件一覧・詳細 詳細画面
-
-**この画面での操作:**
-
-- 案件配下の文書ツリー表示
-- 文書の閲覧・ダウンロードへの遷移
-
-![案件一覧・詳細 詳細画面](screenshots/projects_show.png)
-
-### 閲覧可能文書一覧
-
-**用途:** ユーザーが権限のある文書を案件横断で検索する
-
-#### 閲覧可能文書一覧 一覧画面
-
-**この画面での操作:**
-
-- キーワード・案件・タグによる文書検索
-- 追加条件によるカテゴリ・ファイル種・公開範囲等の絞り込み
-
-![閲覧可能文書一覧 一覧画面](screenshots/accessible_documents_index.png)
-
-### 確認依頼
-
-**用途:** ユーザーが文書の確認依頼を送信・管理する
-
-#### 確認依頼 一覧画面
-
-**この画面での操作:**
-
-- 確認依頼の一覧・フィルタ（ステータス・依頼者・承認者）
-
-![確認依頼 一覧画面](screenshots/document_approval_requests_index.png)
-
-### 送付履歴
-
-**用途:** ユーザーが文書の外部送付履歴を確認する
-
-#### 送付履歴 一覧画面
-
-**この画面での操作:**
-
-- 送付履歴の一覧・フィルタ（ステータス・方式）
-
-![送付履歴 一覧画面](screenshots/document_delivery_logs_index.png)
-
-### 保存済み
-
-**用途:** ユーザーがお気に入り・後で読む文書と最近見た文書を確認する
-
-#### 保存済み お気に入り
-
-**この画面での操作:**
-
-- お気に入り文書の検索・確認
-- お気に入りの解除
-
-![保存済み お気に入り](screenshots/document_bookmarks_favorite.png)
-
-#### 保存済み 後で読む
-
-**この画面での操作:**
-
-- 後で読む文書の検索・確認
-- お気に入りへの移動・登録解除
-
-![保存済み 後で読む](screenshots/document_bookmarks_read_later.png)
-
-#### 保存済み 最近見た文書
-
-**この画面での操作:**
-
-- 最近見た文書の検索・確認
-- 文書詳細への移動
-
-![保存済み 最近見た文書](screenshots/document_bookmarks_recent.png)
-
-### アクセス申請
-
-**用途:** ユーザーがアクセス権のない文書・案件への申請を行う
-
-#### アクセス申請 一覧画面
-
-**この画面での操作:**
-
-- 申請の一覧確認（ステータス・種別）
-- 新規アクセス申請の作成
-
-![アクセス申請 一覧画面](screenshots/access_requests_index.png)
-
-### 同意管理
-
-**用途:** ユーザーが同意履歴を確認し、必要な同意を行う
-
-#### 同意管理 一覧画面
-
-**この画面での操作:**
-
-- 同意履歴の確認
-- 有効な同意文面の確認
-
-![同意管理 一覧画面](screenshots/consents_index.png)

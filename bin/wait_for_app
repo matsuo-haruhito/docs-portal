@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Wait for the Rails app to respond at /up
+# Usage: bin/wait_for_app [url] [max_attempts]
+
+require "net/http"
+require "uri"
+
+url = URI(ARGV[0] || "http://localhost:3000/")
+max_attempts = (ARGV[1] || "90").to_i
+
+max_attempts.times do |i|
+  response = Net::HTTP.get_response(url)
+  if response.code.to_i < 500
+    puts "App ready after #{(i + 1) * 2}s (HTTP #{response.code})"
+    exit 0
+  end
+  $stderr.puts "Attempt #{i + 1}/#{max_attempts}: #{response.code}" if (i + 1) % 10 == 0
+rescue StandardError => e
+  $stderr.puts "Attempt #{i + 1}/#{max_attempts}: #{e.class} - #{e.message}" if (i + 1) % 10 == 0
+ensure
+  sleep 2
+end
+
+warn "App not ready after #{max_attempts * 2}s at #{url}"
+exit 1

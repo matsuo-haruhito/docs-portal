@@ -225,7 +225,7 @@ Tom Select のデフォルト CSS では `.ts-control` が `flex-wrap: wrap` の
 - `.ts-wrapper.has-items .ts-control > input` — `min-width: 1px` で折り返し防止
 - `.ts-wrapper.single.has-items .ts-control > input` — `width: 0` + `flex: 0 0 0px` で完全に縮小
 
-このファイルは `application.js` で `tom-select.css` の直後に import される。新しい rfk フィールドを追加する際、追加の CSS は不要（自動で適用される）。
+このファイルは `application.ts` で `tom-select.css` の直後に import される。新しい rfk フィールドを追加する際、追加の CSS は不要（自動で適用される）。
 
 ### カスタマイズが必要な場合
 

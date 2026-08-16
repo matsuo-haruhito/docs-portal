@@ -10,10 +10,10 @@ RSpec.describe "Tom Select integration source" do
   end
 
   it "registers the rails fields kit controller without calling the legacy shim" do
-    entrypoint_source = Rails.root.join("app/frontend/entrypoints/application.js").read
+    entrypoint_source = Rails.root.join("app/frontend/entrypoints/application.ts").read
 
-    expect(entrypoint_source).to include('import { TomSelectController } from "rails_fields_kit"')
-    expect(entrypoint_source).to include('application.register("rails-fields-kit--tom-select", TomSelectController)')
+    expect(entrypoint_source).to include('import { TomSelectController as RailsFieldsKitTomSelectController } from "rails_fields_kit"')
+    expect(entrypoint_source).to include('application.register("rails-fields-kit--tom-select", ExtendedRfkTomSelectController)')
     expect(entrypoint_source).not_to include("setupTomSelectFields")
   end
 

@@ -24,7 +24,8 @@ RSpec.describe "Access request pagination", type: :request do
         requester: user,
         requestable: request_project,
         requested_access_level: :manage,
-        reason: "page request #{format("%03d", index + 1)}"
+        reason: "page request #{format("%03d", index + 1)}",
+        created_at: (105 - index).minutes.ago
       )
     end
     other_project = create(:project, code: "AREQOTHER", name: "Other Access Request Project")

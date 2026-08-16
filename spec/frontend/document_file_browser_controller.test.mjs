@@ -4,13 +4,34 @@ import { resolve } from "node:path"
 import test from "node:test"
 
 async function loadControllerClass() {
-  const source = readFileSync(resolve("app/frontend/controllers/document_file_browser_controller.js"), "utf8")
-  const transformed = source
-    .replace('import { Controller } from "@hotwired/stimulus"\n\n', "")
-    .replace("export default class extends Controller", "class DocumentFileBrowserController")
-    .concat("\nexport { DocumentFileBrowserController }\n")
-  const moduleUrl = `data:text/javascript;base64,${Buffer.from(transformed).toString("base64")}`
-  const { DocumentFileBrowserController } = await import(moduleUrl)
+  const { execSync } = await import("node:child_process")
+  const { writeFileSync, mkdtempSync } = await import("node:fs")
+  const { tmpdir } = await import("node:os")
+  const { join } = await import("node:path")
+
+  const controllerPath = resolve("app/frontend/controllers/document_file_browser_controller.ts")
+  const source = readFileSync(controllerPath, "utf8")
+
+  // tsx を使って TypeScript → JavaScript に変換する
+  const dir = mkdtempSync(join(tmpdir(), "dfb-test-"))
+  const tsPath = join(dir, "controller.ts")
+  const mjsPath = join(dir, "controller.mjs")
+
+  // import を除去し、Controller を空クラスに差し替えた TS ソースを作成
+  const tsSource = "class Controller { static targets = []; element = {} }\n" +
+    source
+      .replace(/^import\s+.*$/gm, "")
+      .replace("export default class extends Controller", "export class DocumentFileBrowserController extends Controller")
+  writeFileSync(tsPath, tsSource)
+
+  // tsx で JS にトランスパイル
+  try {
+    execSync(`npx tsx --no-cache -e "import('file://${tsPath}')"`, { stdio: "pipe" })
+  } catch (_e) { /* ignore — tsx register will handle it */ }
+
+  // tsx register を使って直接 import
+  await import("tsx/esm/api").then(({ register }) => register()).catch(() => {})
+  const { DocumentFileBrowserController } = await import(`file://${tsPath}`)
   return DocumentFileBrowserController
 }
 

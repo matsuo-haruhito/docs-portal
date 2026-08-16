@@ -263,7 +263,7 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - `app/views/admin/companies/index.html.slim`
 - `app/views/admin/users/index.html.slim`
 - `app/views/admin/users/_form.html.slim`
-- `app/frontend/controllers/company_master_admin_handoff_controller.js`
+- `app/frontend/controllers/company_master_admin_handoff_controller.ts`
 - `spec/frontend/company_master_admin_handoff_source_spec.rb`
 - `spec/frontend/admin_companies_source_spec.rb`
 - `spec/requests/admin_company_master_admin_boundary_spec.rb`

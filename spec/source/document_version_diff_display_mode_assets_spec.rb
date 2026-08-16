@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe "Document version diff display mode assets" do
   let(:view_source) { Rails.root.join("app/views/document_versions/show.html.slim").read }
-  let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
+  let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.ts").read }
   let(:stylesheet_source) { Rails.root.join("app/frontend/entrypoints/document_version_diff_display_mode.css").read }
 
   it "keeps diff display mode rules in a stylesheet asset instead of inline view markup" do
