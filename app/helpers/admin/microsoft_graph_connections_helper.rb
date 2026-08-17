@@ -12,7 +12,7 @@ module Admin::MicrosoftGraphConnectionsHelper
   def microsoft_graph_connection_table_columns
     [
       table_preferences_column(:project, label: "案件", default_width: 220, pinned: true, overflow: :ellipsis),
-      table_preferences_column(:name, label: "接続名", default_width: 200, overflow: :ellipsis, sortable: true),
+      table_preferences_column(:name, label: "接続名", default_width: 200, overflow: :ellipsis),
       table_preferences_column(:graph_identifiers, label: "Tenant / Client / Site", default_width: 280, overflow: :ellipsis),
       table_preferences_column(:drive, label: "Drive", default_width: 260, overflow: :ellipsis),
       table_preferences_column(:preview_folder, label: "プレビュー用フォルダ", default_width: 260, overflow: :ellipsis),

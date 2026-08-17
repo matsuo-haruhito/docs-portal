@@ -1,7 +1,7 @@
 module DocumentDeliveryLogsHelper
   def document_delivery_log_table_columns
     [
-      table_preferences_column(:created_at, label: "作成日時", default_width: 130, pinned: true, sortable: true),
+      table_preferences_column(:created_at, label: "作成日時", default_width: 130, pinned: true),
       table_preferences_column(:project, label: "案件", overflow: :ellipsis),
       table_preferences_column(:target, label: "文書名/文書セット名", overflow: :ellipsis),
       table_preferences_column(:recipients, label: "受信者", overflow: :ellipsis),

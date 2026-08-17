@@ -21,7 +21,7 @@ module AccessibleDocumentsHelper
       table_preferences_column(:latest_version, label: "最新版", default_visible: false, default_width: 70),
       table_preferences_column(:html, label: "HTML", default_visible: false, default_width: 85),
       table_preferences_column(:files, label: "添付", default_visible: false, default_width: 70),
-      table_preferences_column(:updated_at, label: "最終更新", default_visible: true, default_width: 130, sortable: true, overflow: :ellipsis)
+      table_preferences_column(:updated_at, label: "最終更新", default_visible: true, default_width: 130, overflow: :ellipsis)
     ]
   end
 

@@ -5,7 +5,7 @@ module Admin::WebhookEndpointsHelper
 
   def webhook_endpoint_table_columns
     [
-      table_preferences_column(:name, label: "名称", default_width: 180, pinned: true, sortable: true),
+      table_preferences_column(:name, label: "名称", default_width: 180, pinned: true),
       table_preferences_column(:target_url, label: "送信先URL", default_width: 320, overflow: :ellipsis),
       table_preferences_column(:event_types, label: "イベント", default_width: 260),
       table_preferences_column(:active, label: "状態", default_width: 100, pinned: true),
@@ -15,8 +15,8 @@ module Admin::WebhookEndpointsHelper
 
   def webhook_delivery_table_columns
     [
-      table_preferences_column(:created_at, label: "作成日時", default_width: 140, pinned: true, sortable: true),
-      table_preferences_column(:endpoint, label: "設定", pinned: true, sortable: true),
+      table_preferences_column(:created_at, label: "作成日時", default_width: 140, pinned: true),
+      table_preferences_column(:endpoint, label: "設定", pinned: true),
       table_preferences_column(:event_type, label: "イベント", default_width: 180),
       table_preferences_column(:status, label: "状態", default_width: 80, pinned: true),
       table_preferences_column(:response_status, label: "HTTP", default_width: 80),

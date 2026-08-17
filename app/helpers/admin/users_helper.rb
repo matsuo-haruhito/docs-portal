@@ -4,7 +4,7 @@ module Admin::UsersHelper
   def admin_user_table_columns
     [
       table_preferences_column(:name, label: "登録氏名", default_visible: false, overflow: :ellipsis),
-      table_preferences_column(:email_address, label: "メールアドレス", overflow: :ellipsis, sortable: true),
+      table_preferences_column(:email_address, label: "メールアドレス", overflow: :ellipsis),
       table_preferences_column(:display_name, label: "画面表示名", default_visible: true, overflow: :ellipsis),
       table_preferences_column(:user_type, label: "種別", default_width: 80),
       table_preferences_column(:company, label: "会社", overflow: :ellipsis),

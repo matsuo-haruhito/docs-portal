@@ -25,7 +25,6 @@ export default defineConfig({
       { find: /^@hotwired\/turbo-rails$/, replacement: projectPath("node_modules/@hotwired/turbo-rails/app/javascript/turbo/index.js") },
       { find: /^tom-select$/, replacement: projectPath("node_modules/tom-select/dist/js/tom-select.complete.js") },
       { find: /^rails_table_preferences$/, replacement: gemJavaScriptPath("rails_table_preferences", "rails_table_preferences/index.js") },
-      { find: /^rails_table_preferences\/controller$/, replacement: gemJavaScriptPath("rails_table_preferences", "rails_table_preferences/controller.js") },
       { find: /^rails_fields_kit$/, replacement: gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/index.js") },
       { find: /^rails_fields_kit\/tom_select_controller$/, replacement: gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/tom_select_controller.js") },
       { find: /^tree_view$/, replacement: gemJavaScriptPath("tree_view", "tree_view/index.js") },

@@ -32,15 +32,15 @@ description: "docs-portalでrails_table_preferences (rtp) を使うための標�
 
 ## Stimulus 登録
 
-現行docs-portalではpackage-root public exportを入口にし、table rootのpreset target不足回避とtable→editor同期だけをhost controllerへ閉じ込める。
+現行docs-portalではpackage-root public exportを入口にし、table→editor間の列幅・列順同期だけをhost controllerへ閉じ込める。gem側でpreset target不足のguardは実装済みのため、host側で重複overrideしない。
 
 ```typescript
 // app/frontend/controllers/rails_table_preferences_controller.ts
 import { RailsTablePreferencesController as BaseController } from "rails_table_preferences"
 
 export default class extends BaseController {
-  // table rootではpreset取得を開始しない
-  // resize/DnD完了後は同じtable_keyのeditorへwidth/orderを同期する
+  // docs-portal固有: resize/DnD完了後に同じtable_keyのeditorへwidth/orderを同期する
+  // docs-portal固有: editor dialog開閉時にpairedTableから列幅を取得する
 }
 
 // app/frontend/entrypoints/application.ts
@@ -188,10 +188,10 @@ header
 
 ```ruby
 columns = [
-  { key: "title", label: "タイトル", sortable: true },
-  { key: "status", label: "状態", sortable: true, default_width: 100 },
-  { key: "project", label: "案件", sortable: true, default_width: 180 },
-  { key: "updated_at", label: "更新日時", sortable: true, default_width: 130 },
+  { key: "title", label: "タイトル" },
+  { key: "status", label: "状態", default_width: 100 },
+  { key: "project", label: "案件", default_width: 180 },
+  { key: "updated_at", label: "更新日時", default_width: 130 },
   { key: "notes", label: "備考", default_visible: false, overflow: :wrap },
 ]
 ```
@@ -202,7 +202,6 @@ columns = [
 |-----------|------|
 | `key` | カラム識別子（th/td の data属性と一致させる） |
 | `label` | 日本語ヘッダー |
-| `sortable: true` | ソートクリック有効 |
 | `default_visible: false` | 初期非表示 |
 | `default_width` | 初期列幅（px） |
 | `overflow: :ellipsis` | 省略表示（デフォルト） |
@@ -251,18 +250,22 @@ filter_columns = [
 
 ## ソートの仕組み
 
-### th にはラベルだけ書き、手動ソートリンクを置かない
+### 現状: sortable: true は使用しない
 
-現在採用中のrtp Stimulus controllerは、`sortable: true` のヘッダーで昇順・降順・解除の状態とindicatorを管理する。一方、採用中versionはヘッダークリックだけではURL遷移やserver queryの並び替えを行わない。
+採用中の RTP v1.0.0 では、`sortable: true` を指定するとヘッダーに昇順・降順 indicator が表示されクリック可能になるが、**URL遷移やサーバーリクエストは発生しない**。つまり visual indicator が変化するだけで、実際のデータ行順は変わらない。
 
-- host appで未接続のまま `sortable: true` を付け、実際に行順が変わるように見せない
-- server-side sortを接続するときは、upstreamの公開されたrequest/navigation contractを確認してからallowlist付きqueryへ接続する
+この不一致を防ぐため、docs-portal では全画面で `sortable: true` を付与しない。
+
+### ルール
+
+- 列定義に `sortable: true` を指定しない
+- th にはラベルだけ書き、手動ソートリンクも置かない
 - gem内部pathのimport、手書きのheader click handler、画面ごとのsort linkで補完しない
-- 公開contractが不足する場合はupstream issueとして扱い、host appのRTP列表示・列幅・列順・保存とは分けて検証する
+- 各controllerではビジネス要件に即した固定の `.order(...)` を使う
 
-### サーバーサイド
+### 将来: server-side sort の接続
 
-upstreamの公開navigation contractが利用可能になった場合だけ、許可列を明示してqueryへ接続する。
+RTP upstream が公開 navigation contract（sort click → URL遷移）を提供した場合に限り、以下のパターンで server-side sort を接続する。
 
 ```ruby
 def index
@@ -286,6 +289,8 @@ def apply_sort(scope)
 end
 ```
 
+upstream contract が提供されるまで、`sortable: true` は追加しない。
+
 ---
 
 ## Turbo Frame の効果
@@ -294,6 +299,21 @@ end
 - TomSelect が destroy されない（選択値が維持される）
 - `turbo_action: "advance"` でURL履歴も更新（戻るボタン・ブックマーク対応）
 - ソートのURL遷移は採用中rtp versionの公開contractが提供する場合だけ接続する
+
+---
+
+## Header Filter metadata は使用しない
+
+RTP の列定義に `filter: { type: :select, param: ... }` を指定するとヘッダーに filter UI ボタン（▾）が表示されるが、docs-portal の RTP controller にはfilter state → GET query への反映処理がない。
+
+そのため、filter UI を操作しても実際の検索結果は変わらない。
+
+### ルール
+
+- 列定義に `filter:` metadata を指定しない
+- 検索の正本は既存の GET 検索フォーム（rfk ヘルパー + `form_with`）とする
+- controller 側で `params[:xxx]` を読んで ActiveRecord query に適用するパターンを維持する
+- 同一条件を2つの独立した state（フォーム + RTP header filter）で管理しない
 
 ---
 
@@ -315,18 +335,18 @@ end
 ## チェックリスト: 新しい一覧画面
 
 1. table_key, columns, filter_columns をビュー冒頭にまとめる
-2. 全カラムを列挙、主要5〜8列を default_visible、ソート対象に `sortable: true`
+2. 全カラムを列挙、主要5〜8列を default_visible（`sortable: true` は現行版では使用しない）
 3. filter_columns に `TableFilterInput` を定義、`render_table_filters` で描画
 4. Turbo Frame でリスト部を囲む
 5. `table_preferences_table_tag` で描画し、横長一覧は `scroll_wrapper: true` とフォーカス可能なwrapperを指定
 6. th / td に `data-rails-table-preferences-column-key` を付与
-7. th にはラベルのみ。実データの並び替えまで公開contractへ接続済みの場合だけ `sortable: true` を付ける
+7. th にはラベルのみ。`sortable: true` は RTP upstream が server-side sort navigation を公開するまで付けない
 8. `ColumnSettingsComponent` を件数と同じList meta領域へUtilityとして配置し、直接editorや画面固有dialogを描画しない
 9. editor rowに日本語列名が表示され、table/editorの幅・順序が双方向同期することをbrowserで操作確認
 10. 操作列は実操作数に合わせ、icon-only buttonへBootstrap Icons、`aria-label`、`title`を付ける
 11. 2ページ以上の場合だけtable後方にページネーションを表示し、CSV等のエクスポートは独立して配置する
 12. 1440pxで主要列と操作列が切れず、横スクロールwrapperへkeyboard focusできることを確認する
-13. コントローラーで `respond_to` + ソート + エクスポート
+13. コントローラーで `respond_to` + 固定order + エクスポート
 
 ---
 

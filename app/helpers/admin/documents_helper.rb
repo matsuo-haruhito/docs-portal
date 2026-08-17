@@ -3,8 +3,8 @@
 module Admin::DocumentsHelper
   def document_table_columns
     [
-      table_preferences_column(:project, label: "案件", pinned: true, sortable: true),
-      table_preferences_column(:title, label: "文書名", overflow: :ellipsis, sortable: true),
+      table_preferences_column(:project, label: "案件", pinned: true),
+      table_preferences_column(:title, label: "文書名", overflow: :ellipsis),
       table_preferences_column(:slug, label: "URL識別子", default_visible: false, overflow: :ellipsis),
       table_preferences_column(:category, label: "カテゴリ", default_width: 85),
       table_preferences_column(:document_kind, label: "種別", default_visible: false, default_width: 80),

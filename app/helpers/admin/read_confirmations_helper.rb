@@ -3,7 +3,7 @@
 module Admin::ReadConfirmationsHelper
   def read_confirmation_table_columns
     [
-      table_preferences_column(:confirmed_at, label: "確認日時", default_width: 150, pinned: true, sortable: true),
+      table_preferences_column(:confirmed_at, label: "確認日時", default_width: 150, pinned: true),
       table_preferences_column(:document, label: "文書", pinned: true, overflow: :ellipsis),
       table_preferences_column(:user, label: "確認者", overflow: :ellipsis),
       table_preferences_column(:company, label: "会社", overflow: :ellipsis),

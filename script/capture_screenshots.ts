@@ -206,8 +206,16 @@ async function waitForApp(page: Page): Promise<void> {
 }
 
 async function waitForAuditReady(page: Page): Promise<void> {
-  await page.waitForLoadState("networkidle", { timeout: 30000 })
-  await page.evaluate(async () => document.fonts.ready)
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 15000 })
+  } catch (_e) {
+    // networkidle タイムアウトは致命的ではない — 長時間接続や遅延フォントで発生し得る
+  }
+  try {
+    await page.evaluate(async () => document.fonts.ready)
+  } catch (_e) {
+    // フォント読み込みタイムアウト — 撮影を続行
+  }
   try {
     await page.waitForFunction(`(() => {
     const isVisible = (element) => {
@@ -229,16 +237,20 @@ async function waitForAuditReady(page: Page): Promise<void> {
   })()`, { timeout: 15000 })
   } catch (_e) {
     // Stimulus controller 接続タイムアウト — Turbo/busy が解消されていれば続行
-    await page.waitForFunction(`(() => {
-    const isVisible = (element) => {
-      const rect = element.getBoundingClientRect();
-      const style = window.getComputedStyle(element);
-      return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
-    };
-    const pendingTurboFrames = [...document.querySelectorAll("turbo-frame[busy], turbo-frame[aria-busy='true']")].filter(isVisible);
-    const busyElements = [...document.querySelectorAll("[aria-busy='true']")].filter(isVisible);
-    return pendingTurboFrames.length === 0 && busyElements.length === 0;
-  })()`, { timeout: 10000 })
+    try {
+      await page.waitForFunction(`(() => {
+      const isVisible = (element) => {
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+      };
+      const pendingTurboFrames = [...document.querySelectorAll("turbo-frame[busy], turbo-frame[aria-busy='true']")].filter(isVisible);
+      const busyElements = [...document.querySelectorAll("[aria-busy='true']")].filter(isVisible);
+      return pendingTurboFrames.length === 0 && busyElements.length === 0;
+    })()`, { timeout: 10000 })
+    } catch (_fallbackError) {
+      // フォールバックもタイムアウト — 撮影は続行する（表示中のスナップショットで十分）
+    }
   }
   await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
 }

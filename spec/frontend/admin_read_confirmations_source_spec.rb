@@ -20,7 +20,7 @@ RSpec.describe "admin/read_confirmations/index source" do
   end
 
   it "uses shared list components while preserving filters, selected restore, and empty states" do
-    expect(helper_source).to include("table_preferences_column(:confirmed_at, label: \"確認日時\", default_width: 150, pinned: true, sortable: true)")
+    expect(helper_source).to include("table_preferences_column(:confirmed_at, label: \"確認日時\", default_width: 150, pinned: true)")
     expect(helper_source).to include("table_preferences_column(:document, label: \"文書\", pinned: true, overflow: :ellipsis)")
     expect(helper_source).to include("table_preferences_column(:user, label: \"確認者\", overflow: :ellipsis)")
     expect(helper_source).to include("table_preferences_column(:company, label: \"会社\", overflow: :ellipsis)")

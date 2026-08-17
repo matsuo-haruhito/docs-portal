@@ -41,12 +41,9 @@ gem "slim", "~> 5.2", ">= 5.2.1"
 gem "pundit"
 gem "rparam", git: "https://github.com/kmdtmyk/rparam", ref: "3a4e94706999ff794b15aaebba0ee4eb25be38d3"
 gem "rtypes", git: "https://github.com/kmdtmyk/rtypes", ref: "b4a177a933261019825a3a5bfd727ad8e493ae45"
-gem "tree_view", git: "https://github.com/barnet-co-jp/tree_view-rails.git",
-                 tag: "v1.0.0"
-gem "rails_fields_kit", git: "https://github.com/barnet-co-jp/rails_fields_kit.git",
-                        tag: "v1.0.0"
-gem "rails_table_preferences", git: "https://github.com/barnet-co-jp/rails_table_preferences.git",
-                               tag: "v1.0.0"
+gem "tree_view", git: "https://github.com/barnet-co-jp/tree_view-rails.git", tag: "v1.0.1"
+gem "rails_fields_kit", git: "https://github.com/barnet-co-jp/rails_fields_kit.git", tag: "v1.0.0"
+gem "rails_table_preferences", git: "https://github.com/barnet-co-jp/rails_table_preferences.git", tag: "v1.0.0"
 
 group :development, :test do
   gem "brakeman", require: false

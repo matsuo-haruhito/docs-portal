@@ -31,7 +31,7 @@ module Admin::AccessLogsHelper
 
   def access_log_table_columns
     [
-      table_preferences_column(:accessed_at, label: "日時", default_width: 130, pinned: true, sortable: true),
+      table_preferences_column(:accessed_at, label: "日時", default_width: 130, pinned: true),
       table_preferences_column(:action_type, label: "操作", default_width: 100),
       table_preferences_column(:target, label: "対象", overflow: :ellipsis),
       table_preferences_column(:user, label: "ユーザー", overflow: :ellipsis),

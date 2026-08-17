@@ -356,12 +356,8 @@ RSpec.describe "Admin document sets", type: :request do
     columns = table_preference_columns_for(table_preference_table)
     expect(columns.map { |column| column["key"] }).to eq(%w[project name set_type visibility_policy documents_count actions])
     expect(columns.select { |column| column["pinned"] }.map { |column| column["key"] }).to eq(%w[project actions])
-    expect(columns.find { |column| column["key"] == "set_type" }).to include(
-      "filter" => include("type" => "select", "param" => "set_type")
-    )
-    expect(columns.find { |column| column["key"] == "visibility_policy" }).to include(
-      "filter" => include("type" => "select", "param" => "visibility_policy")
-    )
+    expect(columns.find { |column| column["key"] == "set_type" }).to include("label" => "種別")
+    expect(columns.find { |column| column["key"] == "visibility_policy" }).to include("label" => "公開範囲")
   end
 
   it "keeps empty filtered results outside table preference surfaces" do

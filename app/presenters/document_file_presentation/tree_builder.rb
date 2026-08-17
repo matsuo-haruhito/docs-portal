@@ -1,58 +1,40 @@
+# frozen_string_literal: true
+
 module DocumentFilePresentation
+  # PathTreeBuilder を使って document_file のツリーを構築する。
+  # view partial は item.directory? / item.file? / item.document_file / item.label を使う。
   class TreeBuilder
-    Node = Data.define(:id, :parent_node_id, :label, :document_file, :directory) do
-      def directory?
-        directory
-      end
-
-      def file?
-        !directory?
-      end
-    end
-
     def initialize(files:)
       @files = Array(files)
     end
 
     def call
-      directory_nodes = {}
-      nodes = []
+      return [] if files.empty?
 
-      files.sort_by { [path_for(_1), _1.sort_order, _1.file_name.to_s] }.each do |file|
-        parts = path_for(file).split("/")
-        parent_node_id = nil
+      builder.nodes
+    end
 
-        parts[0...-1].each_with_index do |segment, index|
-          path = parts.first(index + 1).join("/")
-          node = directory_nodes[path] ||= Node.new(
-            id: "dir:#{path}",
-            parent_node_id: parent_node_id,
-            label: segment,
-            document_file: nil,
-            directory: true
-          )
-          nodes << node unless nodes.include?(node)
-          parent_node_id = node.id
-        end
-
-        nodes << Node.new(
-          id: "file:#{file.public_id}",
-          parent_node_id: parent_node_id,
-          label: parts.last,
-          document_file: file,
-          directory: false
-        )
-      end
-
-      nodes
+    def tree
+      builder.tree
     end
 
     private
 
     attr_reader :files
 
-    def path_for(file)
-      file.tree_path
+    def builder
+      @builder ||= TreeView::PathTreeBuilder.new(
+        records: sorted_files,
+        path_resolver: ->(file) { file.tree_path },
+        label_resolver: ->(file) { File.basename(file.tree_path) },
+        id_resolver: ->(file) { "file:#{file.public_id}" },
+        folder_key_prefix: "dir",
+        sort: { folders_first: true }
+      )
+    end
+
+    def sorted_files
+      files.sort_by { |file| [file.tree_path, file.sort_order, file.file_name.to_s] }
     end
   end
 end

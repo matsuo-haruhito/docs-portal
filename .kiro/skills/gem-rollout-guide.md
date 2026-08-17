@@ -24,7 +24,7 @@ rtp / rfk / tree_view を未対応画面に展開する際の AI 向け実装ガ
 1. **カラム定義**: モデルの全項目を `columns` 配列に網羅し、主要5〜8列を `default_visible: true` にする
 2. **table_key 命名**: `"{resource_name}.index"` をデフォルトにする
 3. **Slim テンプレート**: `table_preferences_editor` + `table_preferences_table_tag` の統一パターンに従う（詳細は `rtp-usage.md` skill 参照）
-4. **ソート連動**: sortable カラムには controller 側で `order_by` scope を連動させる
+4. **ソート**: `sortable: true` は現行版では使用しない（controller 側で固定 `.order(...)` を指定する）
 5. **フィルタ**: rfk `TableFilterInput` + `render_table_filters` で構成する
 6. **Turbo Frame**: フィルタ送信で部分更新（`turbo_frame_tag` で囲む）
 7. **CSV/Excel エクスポート**: rtp の表示設定を反映した出力を `respond_to` で切り替える
@@ -36,7 +36,7 @@ rtp / rfk / tree_view を未対応画面に展開する際の AI 向け実装ガ
 - `vite build` が通ること
 - table preference 保存がユーザー単位で期待どおり動くこと
 - editor の列ON/OFF → テーブル列表示が連動すること
-- ソートヘッダークリック → サーバーサイドソートが連動すること
+- ソートヘッダーはクリック不可（`sortable: true` 非使用のためindicator表示なし）
 - filter 適用 → Turbo Frame 内の部分更新が正常なこと
 - empty state（0件時）が適切に表示されること
 - 保存済み設定の復元（ログイン後に設定が維持される）
@@ -67,14 +67,16 @@ rtp / rfk / tree_view を未対応画面に展開する際の AI 向け実装ガ
 
 ## tree_view 展開チェックリスト
 
-ツリー表示を新しい画面に適用する際の手順:
+ツリー表示を新しい画面に適用する際の手順（詳細は `tree-view-usage.md` skill 参照）:
 
-1. **モデル設計**: `parent_id` 方式の self-referential 関連を使う
+1. **構築パターン選択**: path-based なら `PathTreeBuilder`、異種ルートなら `GraphAdapter`
 2. **Helper / Partial**: `tree_view` の render helper を使い、自前のネスト表示を実装しない
 3. **Turbo Frame 連携**: 展開/折りたたみは Turbo Frame と組み合わせて部分読み込みにする
-4. **CSS**: `stylesheet_link_tag "tree_view"` でレイアウトに読み込む
-5. **展開状態保存**: user ごとの server-side preference による展開/折りたたみ保存
+4. **CSS**: gem baseline `tree_view.css` + host override `docs_portal_tree_view.css` を読み込む
+5. **展開状態保存**: `TreeViewStateOwner` concern で user ごとに永続化
 6. **current cue**: 現在位置の badge / `aria-current` による視覚的な強調
+7. **sorter 明示**: `sort: { folders_first: true }` またはカスタム sorter を指定する
+8. **key 互換性**: 既存画面移行時は `folder_key_resolver` で永続化済み key を維持
 
 ### 確認観点
 
