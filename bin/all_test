@@ -4,63 +4,232 @@ set -u
 APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RESULTS_DIR="$APP_ROOT/tmp/all_test"
 PREV_DIR="$APP_ROOT/tmp/all_test.prev"
-
-# 成功・失敗問わず最終実行結果を all_test に置く
-# 実行中は .running、完了後は current → prev → current へローテーション
 WORK_DIR="$APP_ROOT/tmp/all_test.running"
+METRICS_DIR="$WORK_DIR/.metrics"
+ALL_TEST_PARALLEL="${ALL_TEST_PARALLEL:-1}"
+
 rm -rf "$WORK_DIR"
-mkdir -p "$WORK_DIR"
+mkdir -p "$WORK_DIR" "$METRICS_DIR"
+
+RUN_STARTED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
+RUN_STARTED_EPOCH="$(date +%s)"
 
 timestamp() {
   date +"%H:%M:%S"
 }
 
-format_elapsed() {
+format_duration() {
   local seconds="$1"
+  local hours minutes remainder
+
   if [ "$seconds" -lt 0 ]; then seconds=0; fi
-  local minutes=$((seconds / 60))
-  local remainder=$((seconds % 60))
-  printf '%02d:%02d' "$minutes" "$remainder"
+  hours=$((seconds / 3600))
+  minutes=$(((seconds % 3600) / 60))
+  remainder=$((seconds % 60))
+
+  if [ "$hours" -gt 0 ]; then
+    printf '%dh%02dm%02ds' "$hours" "$minutes" "$remainder"
+  elif [ "$minutes" -gt 0 ]; then
+    printf '%dm%02ds' "$minutes" "$remainder"
+  else
+    printf '%ds' "$remainder"
+  fi
+}
+
+format_diff() {
+  local seconds="$1"
+  local sign="+"
+
+  if [ "$seconds" -lt 0 ]; then
+    sign="-"
+    seconds=$((-seconds))
+  elif [ "$seconds" -eq 0 ]; then
+    printf '0s'
+    return
+  fi
+
+  printf '%s%s' "$sign" "$(format_duration "$seconds")"
 }
 
 run_step() {
-  local name="$1"
-  local command="$2"
-  local log_name="$3"
+  local id="$1"
+  local name="$2"
+  local command="$3"
+  local log_name="$4"
   local log_path="$WORK_DIR/$log_name"
+  local start_epoch end_epoch elapsed exitstatus status started_at finished_at
 
+  started_at="$(date '+%Y-%m-%d %H:%M:%S')"
+  start_epoch="$(date +%s)"
   printf '\n== %s ==\n' "$name"
   printf '[%s] %s started\n' "$(timestamp)" "$name"
-
-  local start_epoch end_epoch elapsed exitstatus
-  start_epoch="$(date +%s)"
 
   if (
     set -o pipefail
     bash -lc "$command" 2>&1 | tee "$log_path"
   ); then
     exitstatus=0
+    status="PASS"
   else
     exitstatus=$?
+    status="FAIL"
   fi
 
+  finished_at="$(date '+%Y-%m-%d %H:%M:%S')"
   end_epoch="$(date +%s)"
   elapsed=$((end_epoch - start_epoch))
-  printf '[%s] %s finished in %s (exit %s)\n' "$(timestamp)" "$name" "$(format_elapsed "$elapsed")" "$exitstatus"
 
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$id" "$name" "$started_at" "$finished_at" "$start_epoch" "$end_epoch" "$elapsed" "$status" "$log_name" \
+    >"$METRICS_DIR/$id.tsv"
+
+  printf '[%s] %s finished in %s (exit %s)\n' "$(timestamp)" "$name" "$(format_duration "$elapsed")" "$exitstatus"
   return "$exitstatus"
 }
 
-step_is_prerequisite() {
-  local step_name="$1"
-  case "$step_name" in
-    "Docker services"|"Prepare test DB"|"Seed DB"|"Start app for screenshots"|"Build screenshots image")
-      return 0
+run_prerequisite_step() {
+  local id="$1"
+  local name="$2"
+  local command="$3"
+  local log_name="$4"
+
+  if run_step "$id" "$name" "$command" "$log_name"; then
+    return 0
+  fi
+
+  printf '[%s] Stopping because prerequisite step failed: %s\n' "$(timestamp)" "$name" >&2
+  return 1
+}
+
+run_static_checks() {
+  run_step "04" "RuboCop" "docker compose run --rm -T app bash -c 'bundle exec rubocop --parallel'" "rubocop.log"
+  run_step "05" "Brakeman" "docker compose run --rm -T app bash -c 'bundle exec brakeman --quiet --no-pager --no-exit-on-warn'" "brakeman.log"
+  run_step "06" "TypeScript" "docker compose run --rm -T app bash -c 'npx tsc --noEmit'" "tsc.log"
+  run_step "07" "Screenshot audit tests" "docker compose run --rm -T app bash -c 'npx vitest run spec/frontend/screenshot_audit.test.ts'" "screenshot-audit-unit.log"
+}
+
+count_for_step() {
+  local id="$1"
+  local log_name="$2"
+  local log_path="$WORK_DIR/$log_name"
+  local value=""
+
+  case "$id" in
+    "04")
+      value="$(grep -Eo '[0-9]+ files? inspected' "$log_path" 2>/dev/null | tail -n 1 || true)"
       ;;
-    *)
-      return 1
+    "07")
+      value="$(grep -Eo '[0-9]+ passed' "$log_path" 2>/dev/null | tail -n 1 || true)"
+      ;;
+    "08")
+      value="$(grep -Eo '[0-9]+ examples?' "$log_path" 2>/dev/null | tail -n 1 || true)"
+      ;;
+    "09")
+      value="$(grep -Eo '[0-9]+ modules transformed' "$log_path" 2>/dev/null | tail -n 1 || true)"
+      ;;
+    "13")
+      if [ -d "$WORK_DIR/screenshots" ]; then
+        value="$(find "$WORK_DIR/screenshots" -type f -name '*.png' | wc -l | tr -d ' ') images"
+      fi
+      ;;
+    "17")
+      value="$(grep -Eo '[0-9]+ (passed|failed|skipped|flaky)' "$log_path" 2>/dev/null | tail -n 4 | awk 'BEGIN { sep = "" } { printf "%s%s", sep, $0; sep = ", " }' || true)"
       ;;
   esac
+
+  if [ -n "$value" ]; then
+    printf '%s' "$value"
+  else
+    printf '-'
+  fi
+}
+
+write_metrics_table() {
+  local metrics_file="$WORK_DIR/step_metrics.tsv"
+  local raw id name started_at finished_at start_epoch end_epoch elapsed status log_name count
+
+  printf 'id\tstep\tstarted_at\tfinished_at\tstarted_epoch\tfinished_epoch\telapsed_seconds\tresult\tlog\tcount\n' >"$metrics_file"
+
+  for raw in "$METRICS_DIR"/*.tsv; do
+    [ -f "$raw" ] || continue
+    IFS=$'\t' read -r id name started_at finished_at start_epoch end_epoch elapsed status log_name <"$raw"
+    count="$(count_for_step "$id" "$log_name")"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+      "$id" "$name" "$started_at" "$finished_at" "$start_epoch" "$end_epoch" "$elapsed" "$status" "$log_name" "$count" \
+      >>"$metrics_file"
+  done
+}
+
+previous_elapsed_for() {
+  local id="$1"
+  local previous_file="$RESULTS_DIR/step_metrics.tsv"
+
+  [ -f "$previous_file" ] || return 0
+  awk -F '\t' -v id="$id" '$1 == id { print $7; exit }' "$previous_file"
+}
+
+write_summary() {
+  local summary_file="$WORK_DIR/summary.txt"
+  local metrics_file="$WORK_DIR/step_metrics.tsv"
+  local run_finished_at run_finished_epoch run_elapsed result parallel_label
+  local id name started_at finished_at start_epoch end_epoch elapsed status log_name count
+  local start_time end_time elapsed_text previous previous_text diff_text
+
+  run_finished_at="$(date '+%Y-%m-%d %H:%M:%S')"
+  run_finished_epoch="$(date +%s)"
+  run_elapsed=$((run_finished_epoch - RUN_STARTED_EPOCH))
+
+  if awk -F '\t' 'NR > 1 && $8 == "FAIL" { found = 1 } END { exit found ? 0 : 1 }' "$metrics_file"; then
+    result="FAIL"
+  else
+    result="PASS"
+  fi
+
+  if [ "$ALL_TEST_PARALLEL" = "0" ]; then
+    parallel_label="disabled"
+  else
+    parallel_label="enabled (RSpec + static checks)"
+  fi
+
+  {
+    printf 'all_test summary\n'
+    printf 'Started:  %s\n' "$RUN_STARTED_AT"
+    printf 'Finished: %s\n' "$run_finished_at"
+    printf 'Elapsed:  %s\n' "$(format_duration "$run_elapsed")"
+    printf 'Result:   %s\n' "$result"
+    printf 'Parallel: %s\n' "$parallel_label"
+    printf '\n'
+    printf '%-3s %-27s %-8s %-8s %-9s %-18s %-6s %-9s %-9s\n' \
+      '#' 'Step' 'Start' 'End' 'Elapsed' 'Count' 'Result' 'Previous' 'Diff'
+    printf '%s\n' '-------------------------------------------------------------------------------------------------------------'
+
+    while IFS=$'\t' read -r id name started_at finished_at start_epoch end_epoch elapsed status log_name count; do
+      [ "$id" = "id" ] && continue
+      start_time="${started_at##* }"
+      end_time="${finished_at##* }"
+      elapsed_text="$(format_duration "$elapsed")"
+      previous="$(previous_elapsed_for "$id")"
+      if [ -n "$previous" ]; then
+        previous_text="$(format_duration "$previous")"
+        diff_text="$(format_diff $((elapsed - previous)))"
+      else
+        previous_text="-"
+        diff_text="-"
+      fi
+      printf '%-3s %-27s %-8s %-8s %-9s %-18s %-6s %-9s %-9s\n' \
+        "$id" "$name" "$start_time" "$end_time" "$elapsed_text" "$count" "$status" "$previous_text" "$diff_text"
+    done <"$metrics_file"
+
+    printf '%s\n' '-------------------------------------------------------------------------------------------------------------'
+    printf 'TOTAL: %s\n' "$(format_duration "$run_elapsed")"
+
+    if [ "$result" = "FAIL" ]; then
+      printf '\nFailed steps:\n'
+      awk -F '\t' 'NR > 1 && $8 == "FAIL" { printf " - %s\n", $2 }' "$metrics_file"
+    fi
+  } >"$summary_file"
+
+  cat "$summary_file"
 }
 
 remove_results_directory() {
@@ -78,57 +247,57 @@ remove_results_directory() {
   rm -rf "$directory"
 }
 
-steps=(
-  "Docker services|docker compose up -d --build db kroki docusaurus|docker-services.log"
-  "Prepare test DB|docker compose run --rm -T -e RAILS_ENV=test app bash -c 'bundle exec rails db:test:prepare'|db-prepare.log"
-  "Seed DB|docker compose run --rm -T app bash -c 'bundle exec rails db:prepare && bundle exec rails db:seed'|db-seed.log"
-  "RuboCop|docker compose run --rm -T app bash -c 'bundle exec rubocop --parallel'|rubocop.log"
-  "Brakeman|docker compose run --rm -T app bash -c 'bundle exec brakeman --quiet --no-pager --no-exit-on-warn'|brakeman.log"
-  "TypeScript|docker compose run --rm -T app bash -c 'npx tsc --noEmit'|tsc.log"
-  "Screenshot audit tests|docker compose run --rm -T app bash -c 'npx vitest run spec/frontend/screenshot_audit.test.ts'|screenshot-audit-unit.log"
-  "Vite build|docker compose run --rm -T app bash -c 'npx vite build'|vite-build.log"
-  "RSpec|docker compose run --rm -T -e RAILS_ENV=test app bash -c 'bundle exec rspec'|rspec.log"
-  "Start app for screenshots|docker compose up -d app && sleep 5 && docker compose exec -T app ruby bin/wait_for_app|start-app.log"
-  "Build screenshots image|docker compose build screenshots|build-screenshots-image.log"
-  "Reset screenshot app log|docker compose exec -T app bash -c ': > log/development.log; echo screenshots-app-log-reset-ok'|screenshots-app-reset.log"
-  "Screenshots|docker compose --profile tools run --rm -e SCREENSHOT_DIR=/workspace/tmp/all_test.running/screenshots -e HOST_UID=$(id -u) -e HOST_GID=$(id -g) screenshots bash -c 'npm run screenshots; status=\$?; chown -R \"\$HOST_UID:\$HOST_GID\" \"\$SCREENSHOT_DIR\" || exit \$?; exit \"\$status\"'|screenshots.log"
-  "Screen guide|docker compose --profile tools run --rm -e SCREENSHOT_DIR=/workspace/tmp/all_test.running/screenshots -e SCREEN_GUIDE_OUTPUT=/workspace/tmp/all_test.running/screen_guide.md screenshots tsx script/generate_screen_docs.ts|screen-guide.log"
-  "Collect screenshot app log|docker compose exec -T app bash -c 'cat log/development.log'|screenshots-app.log"
-  "App log 500 check|$APP_ROOT/bin/check_screenshot_errors $APP_ROOT/tmp/all_test.running/screenshots-app.log|app-500-check.log"
-  "Playwright smoke|docker compose --profile tools run --rm -e APP_HOST=web -e APP_SERVER_PORT=3000 -e PLAYWRIGHT_OUTPUT_DIR=/workspace/tmp/all_test.running/playwright screenshots npx playwright test|playwright.log"
-)
+continue_run=1
 
-failures=()
-for step in "${steps[@]}"; do
-  name="${step%%|*}"
-  remainder="${step#*|}"
-  command="${remainder%|*}"
-  log_name="${remainder##*|}"
-  if ! run_step "$name" "$command" "$log_name"; then
-    failures+=("$name")
-    if step_is_prerequisite "$name"; then
-      printf '[%s] Stopping because prerequisite step failed: %s\n' "$(timestamp)" "$name" >&2
-      break
-    fi
-  fi
-done
-
-# サマリー生成
-if [ "${#failures[@]}" -eq 0 ]; then
-  printf '\nAll tests passed.\n'
-  printf 'All tests passed.\n' >"$WORK_DIR/summary.txt"
-else
-  printf '\nFailed steps:\n' >&2
-  {
-    printf 'Failed steps:\n'
-    for name in "${failures[@]}"; do
-      printf ' - %s\n' "$name"
-      printf ' - %s\n' "$name" >&2
-    done
-  } >"$WORK_DIR/summary.txt"
+run_prerequisite_step "01" "Docker services" "docker compose up -d --build db kroki docusaurus" "docker-services.log" || continue_run=0
+if [ "$continue_run" -eq 1 ]; then
+  run_prerequisite_step "02" "Prepare test DB" "docker compose run --rm -T -e RAILS_ENV=test app bash -c 'bundle exec rails db:test:prepare'" "db-prepare.log" || continue_run=0
+fi
+if [ "$continue_run" -eq 1 ]; then
+  run_prerequisite_step "03" "Seed DB" "docker compose run --rm -T app bash -c 'bundle exec rails db:prepare && bundle exec rails db:seed'" "db-seed.log" || continue_run=0
 fi
 
-# 成功・失敗問わず running → current へローテーション（前回結果は prev に1世代保持）
+if [ "$continue_run" -eq 1 ]; then
+  if [ "$ALL_TEST_PARALLEL" = "0" ]; then
+    run_static_checks
+    run_step "08" "RSpec" "docker compose run --rm -T -e RAILS_ENV=test app bash -c 'bundle exec rspec'" "rspec.log"
+  else
+    printf '\nRunning RSpec and static checks in parallel. Set ALL_TEST_PARALLEL=0 to disable.\n'
+    run_static_checks &
+    static_pid=$!
+    run_step "08" "RSpec" "docker compose run --rm -T -e RAILS_ENV=test app bash -c 'bundle exec rspec'" "rspec.log" &
+    rspec_pid=$!
+    wait "$static_pid" || true
+    wait "$rspec_pid" || true
+  fi
+
+  run_step "09" "Vite build" "docker compose run --rm -T app bash -c 'npx vite build'" "vite-build.log"
+  run_prerequisite_step "10" "Start app for screenshots" "docker compose up -d app && sleep 5 && docker compose exec -T app ruby bin/wait_for_app" "start-app.log" || continue_run=0
+fi
+
+if [ "$continue_run" -eq 1 ]; then
+  run_prerequisite_step "11" "Build screenshots image" "docker compose build screenshots" "build-screenshots-image.log" || continue_run=0
+fi
+
+if [ "$continue_run" -eq 1 ]; then
+  run_step "12" "Reset screenshot app log" "docker compose exec -T app bash -c ': > log/development.log; echo screenshots-app-log-reset-ok'" "screenshots-app-reset.log"
+  run_step "13" "Screenshots" "docker compose --profile tools run --rm -e SCREENSHOT_DIR=/workspace/tmp/all_test.running/screenshots -e HOST_UID=$(id -u) -e HOST_GID=$(id -g) screenshots bash -c 'npm run screenshots; status=\$?; chown -R \"\$HOST_UID:\$HOST_GID\" \"\$SCREENSHOT_DIR\" || exit \$?; exit \"\$status\"'" "screenshots.log"
+  run_step "14" "Screen guide" "docker compose --profile tools run --rm -e SCREENSHOT_DIR=/workspace/tmp/all_test.running/screenshots -e SCREEN_GUIDE_OUTPUT=/workspace/tmp/all_test.running/screen_guide.md screenshots tsx script/generate_screen_docs.ts" "screen-guide.log"
+  run_step "15" "Collect screenshot app log" "docker compose exec -T app bash -c 'cat log/development.log'" "screenshots-app.log"
+  run_step "16" "App log 500 check" "$APP_ROOT/bin/check_screenshot_errors $APP_ROOT/tmp/all_test.running/screenshots-app.log" "app-500-check.log"
+  run_step "17" "Playwright smoke" "docker compose --profile tools run --rm -e APP_HOST=web -e APP_SERVER_PORT=3000 -e PLAYWRIGHT_OUTPUT_DIR=/workspace/tmp/all_test.running/playwright screenshots npx playwright test" "playwright.log"
+fi
+
+write_metrics_table
+write_summary
+rm -rf "$METRICS_DIR"
+
+if awk -F '\t' 'NR > 1 && $8 == "FAIL" { found = 1 } END { exit found ? 0 : 1 }' "$WORK_DIR/step_metrics.tsv"; then
+  exitstatus=1
+else
+  exitstatus=0
+fi
+
 if ! remove_results_directory "$PREV_DIR"; then
   printf '[%s] Failed to remove previous test results: %s\n' "$(timestamp)" "$PREV_DIR" >&2
   exit 1
@@ -142,8 +311,7 @@ if ! mv "$WORK_DIR" "$RESULTS_DIR"; then
   exit 1
 fi
 
-# docs への publish は成功時のみ
-if [ "${#failures[@]}" -eq 0 ]; then
+if [ "$exitstatus" -eq 0 ]; then
   if [ -d "$RESULTS_DIR/screenshots" ]; then
     SCREENSHOTS_NEXT="$APP_ROOT/docs/screenshots.next"
     rm -rf "$SCREENSHOTS_NEXT"
@@ -156,7 +324,6 @@ if [ "${#failures[@]}" -eq 0 ]; then
     cp "$RESULTS_DIR/screen_guide.md" "$GUIDE_NEXT"
     mv "$GUIDE_NEXT" "$APP_ROOT/docs/screen_guide.md"
   fi
-  exit 0
 fi
 
-exit 1
+exit "$exitstatus"
