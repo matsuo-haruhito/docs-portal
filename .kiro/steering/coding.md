@@ -300,7 +300,7 @@ app/frontend/
 - すべてのindex（一覧）画面にrtpを適用する
 - table_key は `"{resource_name}.index"` をデフォルトにする
 - `th` と `td` に `data-rails-table-preferences-column-key` を必ず付与する
-- sortable カラムにはサーバーサイドソートを連動させる
+- sortable カラムにはサーバーサイドソートを連動させる（現行RTP v1.0.0ではserver-side sort未提供のため `sortable: true` は指定しない）
 - エクスポート（CSV）時はrtpの表示設定を反映する
 
 ---
@@ -313,6 +313,8 @@ app/frontend/
 
 - ツリー構造のデータ表示には必ず tree_view-rails を使う（自前のネスト表示を実装しない）
 - path-based ツリーには `PathTreeBuilder`、異種ルートには `GraphAdapter` を使う
+- `GraphAdapter` には可能な限り `parent_resolver:` を渡し、host側で祖先探索を重複実装しない
+- `Tree` には `sorter:` を明示し、入力配列の事前sortだけに依存しない
 - 展開/折りたたみはTurbo Frameと組み合わせて部分読み込みにする
 - CSSは gem baseline `tree_view.css` + host override `docs_portal_tree_view.css` を読み込む
 - 具体的な実装パターンは `tree_view実装ガイド` skill を参照

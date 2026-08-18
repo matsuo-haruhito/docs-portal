@@ -68,10 +68,32 @@ adapter = TreeView::GraphAdapter.new(
     else []
     end
   },
-  node_key_resolver: ->(node) { node_key(node) }
+  node_key_resolver: ->(node) { node_key(node) },
+  parent_resolver: ->(node) {
+    case node
+    when Document
+      directory = document_tree_source_directory(node).to_s
+      directory.present? ? document_tree_folder_node_for(node.project, directory) : node.project
+    when DocumentTreeFolderNode
+      parent_path = File.dirname(node.path)
+      (parent_path == "." || parent_path.blank?) ? node.project : document_tree_folder_node_for(node.project, parent_path)
+    when Project then nil
+    end
+  }
 )
 
-tree = TreeView::Tree.new(adapter:)
+tree = TreeView::Tree.new(
+  adapter:,
+  sorter: ->(items, _tree) {
+    items.sort_by do |item|
+      case item
+      when DocumentTreeFolderNode then [0, item.label.to_s]
+      when Document then [1, document_tree_document_label(item)]
+      else [2, item.to_s]
+      end
+    end
+  }
+)
 ```
 
 ### 選択基準まとめ

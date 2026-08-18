@@ -57,7 +57,8 @@ RSpec.describe "Bounded history lists", type: :request do
         notification_event: event,
         event_type: "document_updated",
         status: :failed,
-        error_message: "bounded failure #{index.to_s.rjust(2, "0")}"
+        error_message: "bounded failure #{index.to_s.rjust(2, "0")}",
+        created_at: (51 - index).seconds.ago
       )
     end
     succeeded_delivery = create(

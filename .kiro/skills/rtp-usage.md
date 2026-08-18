@@ -50,9 +50,8 @@ application.register("rails-table-preferences", RailsTablePreferencesController)
 
 - controllerは1回だけregisterする
 - gem内部pathへ依存せずpackage-root public exportを使う
-- biz-opsの旧gem向けcontrollerを丸ごと移植せず、現行gemに不足するtarget guardと逆同期だけを追加する
-- editor rootにはpreset targetがあるため、preset取得・保存を通常どおり実行する
-- table rootにはpreset targetがないため、`refreshPresetOptionsOnConnect`をskipし、`aria-busy`、DnD、resize handleを利用可能な状態に保つ
+- gem側でpreset target不在時のguardは実装済みのため、host controllerにtarget guard overrideを追加しない
+- host controllerに残す責務はdocs-portal固有のUXのみ: table/editor間の列幅・列順双方向同期、placeholder追加
 
 ---
 

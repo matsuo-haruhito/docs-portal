@@ -34,10 +34,44 @@ module DocumentsHelper
           []
         end
       end,
-      node_key_resolver: ->(node) { node_key(node) }
+      node_key_resolver: ->(node) { node_key(node) },
+      parent_resolver: lambda do |node|
+        case node
+        when Document
+          directory = document_tree_source_directory(node).to_s
+          if directory.present?
+            document_tree_folder_node_for(node.project, directory)
+          else
+            node.project
+          end
+        when DocumentTreeFolderNode
+          parent_path = File.dirname(node.path)
+          if parent_path == "." || parent_path.blank?
+            node.project
+          else
+            document_tree_folder_node_for(node.project, parent_path)
+          end
+        when Project
+          nil
+        end
+      end
     )
 
-    tree = TreeView::Tree.new(adapter:)
+    tree = TreeView::Tree.new(
+      adapter:,
+      sorter: ->(items, _tree) {
+        items.sort_by do |item|
+          case item
+          when DocumentTreeFolderNode
+            [0, item.label.to_s]
+          when Document
+            [1, document_tree_document_label(item)]
+          else
+            [2, item.to_s]
+          end
+        end
+      }
+    )
     toolbar_project = current_project || current_document&.project
     ui_config = TreeView::UiConfigBuilder.new(
       context: self,

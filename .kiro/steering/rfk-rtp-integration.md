@@ -56,6 +56,8 @@ rfk / rtp の使い方に変更があった場合（実装パターンの追加�
 - 展開/折りたたみは Turbo Frame と組み合わせて部分読み込みにする
 - CSSは gem baseline `tree_view.css` + host override `docs_portal_tree_view.css` を読み込む
 - path-based ツリーには `PathTreeBuilder`、異種ルートには `GraphAdapter` を使う
+- `GraphAdapter` には `parent_resolver:` を渡し、host側で祖先探索を重複実装しない
+- `Tree` には `sorter:` を明示し、入力配列の事前sortだけに依存しない
 - 具体的な実装パターンは `tree_view実装ガイド` skill を参照
 
 ---
@@ -64,8 +66,9 @@ rfk / rtp の使い方に変更があった場合（実装パターンの追加�
 
 | フィルタ種類 | 配置場所 | 実装 | 適用場面 |
 |-------------|---------|------|---------|
-| フィルタカード | テーブル上部 | rfk `TableFilterInput` + `render_table_filters` | 複合条件検索、rfk ウィジェットが必要な場面 |
-| ヘッダーフィルタ | 列ヘッダーの▾ボタン | gem ネイティブ filter metadata | カラム単位の即時フィルタ（text/select） |
+| フィルタカード | テーブル上部 | rfk `TableFilterInput` + `render_table_filters` または `rfk_select` + `form_with` | 複合条件検索、rfk ウィジェットが必要な場面 |
+
+RTP の `filter:` metadata（列ヘッダーの▾ボタン）は使用しない。docs-portal の RTP controller には filter state → GET query への反映処理がなく、操作しても検索結果が変わらないため。検索の正本は既存の GET 検索フォームとする。
 
 ---
 
