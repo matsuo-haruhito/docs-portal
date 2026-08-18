@@ -3,7 +3,7 @@ import { createHash } from "node:crypto"
 import fs from "node:fs/promises"
 import path from "node:path"
 import { promisify } from "node:util"
-import { chromium, type ConsoleMessage, type Page, type Response } from "playwright"
+import { chromium, type Browser, type BrowserContext, type ConsoleMessage, type Page, type Response } from "playwright"
 import {
   detectSecretPatterns,
   groupDuplicateImageHashes,
@@ -25,12 +25,17 @@ const APP_HOST = process.env.APP_HOST ?? "app"
 const APP_PORT = process.env.APP_SERVER_PORT ?? process.env.APP_PORT ?? process.env.PORT ?? "3000"
 const BASE_URL = process.env.APP_BASE_URL ?? `http://${APP_HOST}:${APP_PORT}`
 const OUT_DIR = path.resolve(process.env.SCREENSHOT_DIR ?? path.join(process.cwd(), "tmp", "screenshots"))
+const TIMINGS_OUTPUT = path.resolve(process.env.SCREENSHOT_TIMINGS_OUTPUT ?? path.join(path.dirname(OUT_DIR), "capture-timings.json"))
 const ADMIN_EMAIL = process.env.SCREENSHOT_EMAIL ?? "admin@example.com"
 const ADMIN_PASSWORD = process.env.SCREENSHOT_PASSWORD ?? "password123!"
 const ROUTES_FILE = process.env.ROUTES_FILE ?? path.join(process.cwd(), "config", "routes.rb")
 const LOCALE = process.env.SCREENSHOT_LOCALE ?? "ja-JP"
 const TIMEZONE = process.env.SCREENSHOT_TIMEZONE ?? "Asia/Tokyo"
 const DEBUG_SCREENSHOTS = process.env.DEBUG_SCREENSHOTS === "1"
+const SCREENSHOT_CONCURRENCY = Math.min(
+  8,
+  Math.max(1, Number.parseInt(process.env.SCREENSHOT_CONCURRENCY ?? "4", 10) || 4),
+)
 
 // docs-portal では admin namespace 配下のリソースだけを自動発見対象にする
 const AUTO_DISCOVER_NAMESPACE = "admin"
@@ -77,6 +82,27 @@ interface CaptureMetadata {
   outputName: string
   sha256: string
 }
+
+interface CaptureTiming {
+  scenarioId: string
+  outputName: string
+  elapsedMs: number
+  status: "captured" | "skipped" | "failed"
+}
+
+interface CaptureBatch {
+  manifests: ScreenshotScenario[]
+  metadata: CaptureMetadata[]
+  coverage: CoverageEntry[]
+}
+
+interface CaptureTask {
+  label: string
+  fallbackScenario?: ScreenshotScenario
+  run: (page: Page, audit: BrowserAudit, batch: CaptureBatch) => Promise<void>
+}
+
+const captureTimings: CaptureTiming[] = []
 
 class BrowserAudit {
   private httpErrors: string[] = []
@@ -164,6 +190,14 @@ function coverageFor(
     reason,
     resumeCondition,
   }
+}
+
+function emptyCaptureBatch(): CaptureBatch {
+  return { manifests: [], metadata: [], coverage: [] }
+}
+
+function canCaptureInParallel(scenario: ScreenshotScenario): boolean {
+  return scenario.httpMethod === "GET" && scenario.actions.length === 0
 }
 
 async function templateExists(resource: ResourceNode, action: string): Promise<boolean> {
@@ -285,65 +319,83 @@ async function navigateAndCapture(
   scenario: ScreenshotScenario,
   sourceRevision: string,
 ): Promise<CaptureMetadata> {
-  const validationErrors = validateScenarioManifest([scenario])
-  if (validationErrors.length > 0) throw new Error(validationErrors.join("\n"))
-  if (scenario.execution !== "capture") throw new Error(`${scenario.id} is deferred and cannot be captured`)
-  await page.setViewportSize({ width: scenario.viewport.width, height: scenario.viewport.height })
-  audit.reset()
-  const response = await page.goto(new URL(scenario.url, BASE_URL).toString(), { waitUntil: "domcontentloaded" })
-  if (!response) throw new Error(`${scenario.id} navigation returned no HTTP response`)
-  if (response.status() >= 400) throw new Error(`${scenario.id} navigation failed with HTTP ${response.status()}`)
-  await waitForAuditReady(page)
-  await performScenarioActions(page, scenario)
-  await waitForAuditReady(page)
-  try {
-    await assertExpectedPage(page, scenario)
-  } catch (e) {
-    if (e instanceof SkippedRedirectError) {
-      return skipMetadata(scenario, sourceRevision, page.url())
-    }
-    throw e
-  }
-  audit.assertClean(scenario.id)
+  const startedAt = Date.now()
+  let timingStatus: CaptureTiming["status"] = "failed"
 
-  const filePath = path.join(OUT_DIR, `${scenario.outputName}.png`)
-  await page.screenshot({ path: filePath, fullPage: false })
-  const sha256 = createHash("sha256").update(await fs.readFile(filePath)).digest("hex")
-  console.log(`saved ${path.relative(process.cwd(), filePath)} (${scenario.id})`)
-  return {
-    scenarioId: scenario.id,
-    screenName: scenario.screenName,
-    userStory: scenario.userStory,
-    httpMethod: scenario.httpMethod,
-    prerequisites: scenario.prerequisites,
-    actions: scenario.actions,
-    stateKind: scenario.stateKind,
-    sourceRevision,
-    capturedAt: new Date().toISOString(),
-    locale: LOCALE,
-    timezone: TIMEZONE,
-    viewport: scenario.viewport,
-    role: scenario.role,
-    requestedUrl: scenario.url,
-    finalUrl: page.url(),
-    outputName: scenario.outputName,
-    sha256,
+  try {
+    const validationErrors = validateScenarioManifest([scenario])
+    if (validationErrors.length > 0) throw new Error(validationErrors.join("\n"))
+    if (scenario.execution !== "capture") throw new Error(`${scenario.id} is deferred and cannot be captured`)
+    await page.setViewportSize({ width: scenario.viewport.width, height: scenario.viewport.height })
+    audit.reset()
+    const response = await page.goto(new URL(scenario.url, BASE_URL).toString(), { waitUntil: "domcontentloaded" })
+    if (!response) throw new Error(`${scenario.id} navigation returned no HTTP response`)
+    if (response.status() >= 400) throw new Error(`${scenario.id} navigation failed with HTTP ${response.status()}`)
+    await waitForAuditReady(page)
+    if (scenario.actions.length > 0) {
+      await performScenarioActions(page, scenario)
+      await waitForAuditReady(page)
+    }
+    try {
+      await assertExpectedPage(page, scenario)
+    } catch (e) {
+      if (e instanceof SkippedRedirectError) {
+        timingStatus = "skipped"
+        return skipMetadata(scenario, sourceRevision, page.url())
+      }
+      throw e
+    }
+    audit.assertClean(scenario.id)
+
+    const filePath = path.join(OUT_DIR, `${scenario.outputName}.png`)
+    await page.screenshot({ path: filePath, fullPage: false })
+    const sha256 = createHash("sha256").update(await fs.readFile(filePath)).digest("hex")
+    console.log(`saved ${path.relative(process.cwd(), filePath)} (${scenario.id})`)
+    timingStatus = "captured"
+    return {
+      scenarioId: scenario.id,
+      screenName: scenario.screenName,
+      userStory: scenario.userStory,
+      httpMethod: scenario.httpMethod,
+      prerequisites: scenario.prerequisites,
+      actions: scenario.actions,
+      stateKind: scenario.stateKind,
+      sourceRevision,
+      capturedAt: new Date().toISOString(),
+      locale: LOCALE,
+      timezone: TIMEZONE,
+      viewport: scenario.viewport,
+      role: scenario.role,
+      requestedUrl: scenario.url,
+      finalUrl: page.url(),
+      outputName: scenario.outputName,
+      sha256,
+    }
+  } finally {
+    const elapsedMs = Date.now() - startedAt
+    captureTimings.push({ scenarioId: scenario.id, outputName: scenario.outputName, elapsedMs, status: timingStatus })
+    console.log(`[capture:${timingStatus}] ${(elapsedMs / 1000).toFixed(1)}s ${scenario.id}`)
   }
 }
 
-async function login(page: Page, audit: BrowserAudit, sourceRevision: string): Promise<CaptureMetadata[]> {
+async function login(
+  page: Page,
+  audit: BrowserAudit,
+  sourceRevision: string,
+  captureGuestScenarios = true,
+): Promise<CaptureMetadata[]> {
   await waitForApp(page)
   const metadata: CaptureMetadata[] = []
 
-  // ゲストシナリオ（ログイン画面等）を先に撮影
-  const guestScenarios = explicitScreenshotScenarios.filter(
-    (scenario) => scenario.role === "guest" && scenario.execution === "capture",
-  )
-  for (const scenario of guestScenarios) {
-    metadata.push(await navigateAndCapture(page, audit, scenario, sourceRevision))
+  if (captureGuestScenarios) {
+    const guestScenarios = explicitScreenshotScenarios.filter(
+      (scenario) => scenario.role === "guest" && scenario.execution === "capture",
+    )
+    for (const scenario of guestScenarios) {
+      metadata.push(await navigateAndCapture(page, audit, scenario, sourceRevision))
+    }
   }
 
-  // ログイン実行
   audit.reset()
   await page.goto(new URL("/session/new", BASE_URL).toString(), { waitUntil: "domcontentloaded" })
   await waitForAuditReady(page)
@@ -479,6 +531,87 @@ async function getSourceRevision(): Promise<string> {
   }
 }
 
+async function createBrowserPage(browser: Browser): Promise<{ context: BrowserContext; page: Page; audit: BrowserAudit }> {
+  const context = await browser.newContext({
+    viewport: desktopViewport,
+    deviceScaleFactor: 1,
+    locale: LOCALE,
+    timezoneId: TIMEZONE,
+  })
+  const page = await context.newPage()
+  page.setDefaultNavigationTimeout(60000)
+  page.setDefaultTimeout(30000)
+  return { context, page, audit: new BrowserAudit(page) }
+}
+
+async function runCaptureTasks(
+  browser: Browser,
+  sourceRevision: string,
+  tasks: CaptureTask[],
+): Promise<{ batches: CaptureBatch[]; errors: Error[] }> {
+  if (tasks.length === 0) return { batches: [], errors: [] }
+
+  const workerCount = Math.min(SCREENSHOT_CONCURRENCY, tasks.length)
+  const batches: Array<CaptureBatch | undefined> = new Array(tasks.length)
+  const errors: Error[] = []
+  let nextTaskIndex = 0
+
+  console.log(`screenshot capture: ${tasks.length} task(s), ${workerCount} worker(s)`)
+
+  await Promise.all(Array.from({ length: workerCount }, async (_, workerIndex) => {
+    const { context, page, audit } = await createBrowserPage(browser)
+    try {
+      try {
+        await login(page, audit, sourceRevision, false)
+      } catch (error: unknown) {
+        errors.push(new Error(`screenshot worker ${workerIndex + 1} login failed: ${error instanceof Error ? error.message : String(error)}`))
+        return
+      }
+
+      while (true) {
+        const taskIndex = nextTaskIndex
+        nextTaskIndex += 1
+        if (taskIndex >= tasks.length) break
+
+        const task = tasks[taskIndex]
+        const batch = emptyCaptureBatch()
+        try {
+          if (DEBUG_SCREENSHOTS) console.log(`worker ${workerIndex + 1}: ${task.label}`)
+          await task.run(page, audit, batch)
+        } catch (error: unknown) {
+          const failedScenario = [...batch.manifests].reverse().find(
+            (scenario) => scenario.execution === "capture" && !batch.coverage.some((entry) => entry.scenarioId === scenario.id),
+          ) ?? task.fallbackScenario
+          if (failedScenario && !batch.coverage.some((entry) => entry.scenarioId === failedScenario.id)) {
+            batch.coverage.push(coverageFor(
+              failedScenario,
+              "failed",
+              error instanceof Error ? error.message : String(error),
+              "失敗原因を修正して同じsource revisionで再実行する",
+            ))
+          }
+          errors.push(new Error(`${task.label}: ${error instanceof Error ? error.message : String(error)}`))
+        } finally {
+          batches[taskIndex] = batch
+        }
+      }
+    } finally {
+      await context.close()
+    }
+  }))
+
+  return { batches: batches.filter((batch): batch is CaptureBatch => Boolean(batch)), errors }
+}
+
+function printCaptureTimingSummary(): void {
+  const slowest = [...captureTimings].sort((a, b) => b.elapsedMs - a.elapsedMs).slice(0, 10)
+  if (slowest.length === 0) return
+  console.log("\nSlowest screenshots:")
+  for (const timing of slowest) {
+    console.log(`  ${(timing.elapsedMs / 1000).toFixed(1).padStart(6)}s  ${timing.status.padEnd(8)}  ${timing.scenarioId}`)
+  }
+}
+
 async function writeAuditArtifacts(
   manifests: ScreenshotScenario[],
   metadata: CaptureMetadata[],
@@ -501,12 +634,14 @@ async function writeAuditArtifacts(
 
   const digests: ImageDigest[] = metadata.map((entry) => ({ outputName: entry.outputName, sha256: entry.sha256 }))
   const duplicateGroups = groupDuplicateImageHashes(digests)
+  const timingReport = [...captureTimings].sort((a, b) => b.elapsedMs - a.elapsedMs)
 
   await Promise.all([
     fs.writeFile(path.join(OUT_DIR, "scenario-manifest.json"), `${JSON.stringify(manifests, null, 2)}\n`),
     fs.writeFile(path.join(OUT_DIR, "coverage-ledger.json"), `${JSON.stringify(coverage, null, 2)}\n`),
     fs.writeFile(path.join(OUT_DIR, "metadata.json"), `${JSON.stringify(metadata, null, 2)}\n`),
     fs.writeFile(path.join(OUT_DIR, "duplicate-image-report.json"), `${JSON.stringify({ suspectedDuplicates: duplicateGroups }, null, 2)}\n`),
+    fs.writeFile(TIMINGS_OUTPUT, `${JSON.stringify({ concurrency: SCREENSHOT_CONCURRENCY, screenshots: timingReport }, null, 2)}\n`),
   ])
 
   if (duplicateGroups.length > 0) console.warn(`duplicate image hashes suspected: ${duplicateGroups.length} group(s)`)
@@ -544,15 +679,11 @@ async function main(): Promise<void> {
     ))
 
   const browser = await chromium.launch({ headless: true })
-  const context = await browser.newContext({ viewport: desktopViewport, deviceScaleFactor: 1, locale: LOCALE, timezoneId: TIMEZONE })
-  const page = await context.newPage()
-  page.setDefaultNavigationTimeout(60000)
-  page.setDefaultTimeout(30000)
-  const audit = new BrowserAudit(page)
+  const coordinator = await createBrowserPage(browser)
   let captureError: unknown
 
   try {
-    const guestMetadata = await login(page, audit, revision)
+    const guestMetadata = await login(coordinator.page, coordinator.audit, revision)
     metadata.push(...guestMetadata)
     for (const entry of guestMetadata) {
       const scenario = manifests.find((candidate) => candidate.id === entry.scenarioId)
@@ -561,24 +692,49 @@ async function main(): Promise<void> {
         : coverageFor(scenario, "skipped", `リダイレクト検出: ${entry.finalUrl}`, "リダイレクト先を修正するか、スクリプト側で正しいURLを使用する"))
     }
 
-    // admin 明示シナリオを撮影
     const adminScenarios = explicitScreenshotScenarios.filter(
       (scenario) => scenario.role === "admin" && scenario.execution === "capture",
     )
-    for (const scenario of adminScenarios) {
-      const result = await navigateAndCapture(page, audit, scenario, revision)
+    const sequentialAdminScenarios = adminScenarios.filter((scenario) => !canCaptureInParallel(scenario))
+    const parallelAdminScenarios = adminScenarios.filter(canCaptureInParallel)
+
+    for (const scenario of sequentialAdminScenarios) {
+      const result = await navigateAndCapture(coordinator.page, coordinator.audit, scenario, revision)
       metadata.push(result)
       coverage.push(result.sha256
         ? coverageFor(scenario, "captured")
         : coverageFor(scenario, "skipped", `リダイレクト検出: ${result.finalUrl}`, "リダイレクト先を修正するか、スクリプト側で正しいURLを使用する"))
     }
 
-    // routes.rb から自動発見したリソースを撮影
     const explicitOutputNames = new Set(explicitScreenshotScenarios.map((s) => s.outputName))
-    for (const resource of resources) {
-      if (DEBUG_SCREENSHOTS) console.log(`auto-discover: ${resource.key} (${resource.viewActions.join(", ")})`)
-      await captureResource(page, audit, resource, revision, manifests, metadata, coverage, explicitOutputNames)
+    const tasks: CaptureTask[] = [
+      ...parallelAdminScenarios.map((scenario): CaptureTask => ({
+        label: scenario.id,
+        fallbackScenario: scenario,
+        run: async (page, audit, batch) => {
+          const result = await navigateAndCapture(page, audit, scenario, revision)
+          batch.metadata.push(result)
+          batch.coverage.push(result.sha256
+            ? coverageFor(scenario, "captured")
+            : coverageFor(scenario, "skipped", `リダイレクト検出: ${result.finalUrl}`, "リダイレクト先を修正するか、スクリプト側で正しいURLを使用する"))
+        },
+      })),
+      ...resources.map((resource): CaptureTask => ({
+        label: `resource:${resource.key}`,
+        run: async (page, audit, batch) => {
+          if (DEBUG_SCREENSHOTS) console.log(`auto-discover: ${resource.key} (${resource.viewActions.join(", ")})`)
+          await captureResource(page, audit, resource, revision, batch.manifests, batch.metadata, batch.coverage, explicitOutputNames)
+        },
+      })),
+    ]
+
+    const poolResult = await runCaptureTasks(browser, revision, tasks)
+    for (const batch of poolResult.batches) {
+      manifests.push(...batch.manifests)
+      metadata.push(...batch.metadata)
+      coverage.push(...batch.coverage)
     }
+    if (poolResult.errors.length > 0) throw poolResult.errors[0]
   } catch (error: unknown) {
     captureError = error
     const failedScenario = manifests.find(
@@ -598,7 +754,8 @@ async function main(): Promise<void> {
     } catch (error: unknown) {
       captureError ??= error
     }
-    await context.close()
+    printCaptureTimingSummary()
+    await coordinator.context.close()
     await browser.close()
   }
 
