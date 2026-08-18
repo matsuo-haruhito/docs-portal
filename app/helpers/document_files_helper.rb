@@ -1,9 +1,10 @@
 module DocumentFilesHelper
   def document_file_tree_render_state(files:, row_partial:, node_prefix:)
-    nodes = DocumentFilePresentation::TreeBuilder.new(files: files).call
+    tree_builder = DocumentFilePresentation::TreeBuilder.new(files: files)
+    nodes = tree_builder.call
     return if nodes.empty?
 
-    tree = TreeView::Tree.new(records: nodes, parent_id_method: :parent_node_id)
+    tree = tree_builder.tree
     ui_config = TreeView::UiConfigBuilder.new(context: self, node_prefix:).build_static
 
     TreeView::RenderState.new(

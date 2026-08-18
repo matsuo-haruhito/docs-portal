@@ -25,22 +25,6 @@ module LinkToHelper
     link_to(label, url, **options)
   end
 
-  def sort_link_to(name, label = nil, **options)
-    label ||= name.to_s.humanize
-    current_sort = params[:sort].to_s
-
-    indicator =
-      if current_sort == name.to_s
-        " \u25b2"
-      elsif current_sort == "-#{name}"
-        " \u25bc"
-      else
-        ""
-      end
-
-    link_to("#{label}#{indicator}".html_safe, sort_url(name), options)
-  end
-
   def link_to_document_file(file, **options)
     return if file.blank?
 

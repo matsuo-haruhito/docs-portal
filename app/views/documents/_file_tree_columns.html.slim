@@ -1,8 +1,8 @@
 td
-  - if item.directory?
+  - if item.folder_node?
     strong = item.label
   - else
-    - file = item.document_file
+    - file = item.record
     - if file.downloadable_by?(current_user)
       = link_to item.label, document_file_path(file)
       = link_to document_file_path(file, disposition: "download"), class: "tree-download-button", title: "このファイルをダウンロード", data: { turbo: false }, aria: { label: "このファイルをダウンロード" } do
@@ -12,12 +12,12 @@ td
     - else
       = item.label
 td
-  - if item.file?
-    = item.document_file.effective_content_type
+  - if item.record_node?
+    = item.record.effective_content_type
   - else
     span.muted -
 td
-  - if item.file?
-    = item.document_file.effective_content_type.start_with?("text/markdown") ? "元Markdown・生ファイル" : "添付"
+  - if item.record_node?
+    = item.record.effective_content_type.start_with?("text/markdown") ? "元Markdown・生ファイル" : "添付"
   - else
     span.muted -

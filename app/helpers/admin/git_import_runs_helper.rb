@@ -9,7 +9,7 @@ module Admin::GitImportRunsHelper
 
   def git_import_run_table_columns
     [
-      table_preferences_column(:created_at, label: "実行日時", default_width: 180, pinned: true, sortable: true),
+      table_preferences_column(:created_at, label: "実行日時", default_width: 180, pinned: true),
       table_preferences_column(:project, label: "案件", default_width: 220, overflow: :ellipsis),
       table_preferences_column(:repository, label: "リポジトリ", default_width: 220, overflow: :ellipsis),
       table_preferences_column(:branch_path, label: "ブランチ/パス", default_width: 220, overflow: :ellipsis),

@@ -77,7 +77,6 @@ RSpec.describe "Related gem wiring source" do
       vite_source = read_source("vite.config.ts")
 
       expect(vite_source).to include('{ find: /^rails_table_preferences$/, replacement: gemJavaScriptPath("rails_table_preferences", "rails_table_preferences/index.js") }')
-      expect(vite_source).to include('{ find: /^rails_table_preferences\\/controller$/, replacement: gemJavaScriptPath("rails_table_preferences", "rails_table_preferences/controller.js") }')
       expect(vite_source).to include('{ find: /^rails_fields_kit$/, replacement: gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/index.js") }')
       expect(vite_source).to include('{ find: /^rails_fields_kit\\/tom_select_controller$/, replacement: gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/tom_select_controller.js") }')
     end
@@ -97,6 +96,7 @@ RSpec.describe "Related gem wiring source" do
       layout_source = read_source("app/views/layouts/application.html.slim")
 
       expect(layout_source).to include('= stylesheet_link_tag "tree_view", media: "all"')
+      expect(layout_source).to include('= stylesheet_link_tag "docs_portal_tree_view", media: "all"')
       expect(layout_source).to include('= stylesheet_link_tag "rails_table_preferences", media: "all"')
       expect(layout_source).to include("= vite_client_tag")
       expect(layout_source).to include('= vite_typescript_tag "application"')

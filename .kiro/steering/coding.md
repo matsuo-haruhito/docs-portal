@@ -307,13 +307,15 @@ app/frontend/
 
 ## tree_view-rails
 
-親子関係・階層構造の表示には tree_view-rails を活用する。
+親子関係・階層構造の表示には tree_view-rails (v1.0.1) を活用する。
 
 ### ルール
 
 - ツリー構造のデータ表示には必ず tree_view-rails を使う（自前のネスト表示を実装しない）
+- path-based ツリーには `PathTreeBuilder`、異種ルートには `GraphAdapter` を使う
 - 展開/折りたたみはTurbo Frameと組み合わせて部分読み込みにする
-- CSSは `stylesheet_link_tag "tree_view"` でレイアウトに読み込む
+- CSSは gem baseline `tree_view.css` + host override `docs_portal_tree_view.css` を読み込む
+- 具体的な実装パターンは `tree_view実装ガイド` skill を参照
 
 ---
 

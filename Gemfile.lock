@@ -16,10 +16,10 @@ GIT
 
 GIT
   remote: https://github.com/barnet-co-jp/tree_view-rails.git
-  revision: b1d09abec0b119fcdfe6333ee5cd4707bdc16183
-  tag: v1.0.0
+  revision: ae7da045edcd5847faee48d876884d3e845e4fbe
+  tag: v1.0.1
   specs:
-    tree_view (1.0.0)
+    tree_view (1.0.1)
       railties (>= 7.0)
 
 GIT

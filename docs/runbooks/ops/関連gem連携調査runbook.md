@@ -64,7 +64,7 @@
 ### 5. package-root import / direct entrypoint の使い分け
 
 - `docs-portal` の current `app/frontend/entrypoints/application.ts` は `import { RailsTablePreferencesController } from "rails_table_preferences"` と `import { TomSelectController } from "rails_fields_kit"` を使っています。current main の host-app default は、このように upstream README / public API が stable export として案内している package root を先に使う形です。
-- `vite.config.ts` では package root (`rails_table_preferences`, `rails_fields_kit`) と documented direct entrypoint (`rails_table_preferences/controller`, `rails_fields_kit/tom_select_controller`) の両方を alias しています。これは current app が direct entrypoint を常用しているという意味ではなく、upstream docs の Vite 例や copied-controller migration をそのまま検証できるようにするための compatibility lane として残しています。
+- `vite.config.ts` では package root (`rails_table_preferences`, `rails_fields_kit`) と documented direct entrypoint (`rails_fields_kit/tom_select_controller`) を alias しています。`rails_table_preferences/controller` の direct alias は package root で十分なため削除しました。
 - direct entrypoint は「package root で欲しい export がまだ公開されていない」「upstream docs がその path を正規の integration path として案内している」「copied controller / custom boot path からの移行途中で current issue scope がそこに閉じている」といった場合だけ選びます。host app 固有の convenience のために undocumented path や gem 内部ファイルへ飛び込むのは避けます。
 - `tree_view` は current `docs-portal` では helper / partial integration が先で、`app/frontend/entrypoints/application.ts` から直接 controller import をしていません。JavaScript hook が必要になったら、`tree_view/index.js` を public entrypoint として扱い、`TreeViewEventNames`、`TreeViewControllerIdentifiers`、`registerTreeViewControllers(application)` のような documented package-root export から読み始めます。event 名や controller identifier を raw string で写経したり、`app/javascript/tree_view/*` 配下の内部 file path に依存したりしません。
 - `rails_table_preferences` は upstream `docs/javascript_entrypoints.md` が `rails_table_preferences/controller` も `rails_table_preferences` package root も両方案内していますが、current `docs-portal` の representative import は package-root named export です。screen issue で controller 登録の説明を書くときは、まず current `application.js` と同じ package-root import を基準にし、direct path は fallback / migration note としてだけ扱います。
@@ -317,7 +317,7 @@
 - `app/frontend/entrypoints/application.ts`
   - `rails-table-preferences` controller の登録を確認する
 - `vite.config.ts`
-  - `rails_table_preferences` / `rails_table_preferences/controller` の alias を確認する
+  - `rails_table_preferences` package root alias を確認する（`/controller` direct alias は削除済み）
 - `app/views/layouts/application.html.slim`
   - `stylesheet_link_tag "rails_table_preferences"` を確認する
 - `app/helpers/admin/document_sets_helper.rb`

@@ -21,7 +21,7 @@ module Admin::AccessRequestsHelper
 
   def admin_access_request_table_columns
     [
-      table_preferences_column(:created_at, label: "申請日時", default_width: 160, pinned: true, sortable: true),
+      table_preferences_column(:created_at, label: "申請日時", default_width: 160, pinned: true),
       table_preferences_column(:processed_at, label: "処理日時", default_width: 180),
       table_preferences_column(:requester, label: "申請者", default_width: 260, pinned: true, overflow: :ellipsis),
       table_preferences_column(:target, label: "対象", default_width: 280, pinned: true, overflow: :ellipsis),

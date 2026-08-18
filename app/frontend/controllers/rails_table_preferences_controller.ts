@@ -21,12 +21,6 @@ export default class extends BaseController {
   private dialogElement: HTMLDialogElement | null = null
   private readonly syncFromTableOnOpen = () => this.syncFromPairedTable()
 
-  get visiblePresetOptionCount(): number {
-    if (!this.hasPresetSelectTarget) return 0
-
-    return this.presetSelectTarget.querySelectorAll("option").length
-  }
-
   connect(): void {
     super.connect()
 
@@ -41,12 +35,6 @@ export default class extends BaseController {
     this.dialogElement?.removeEventListener("column-settings-dialog:opened", this.syncFromTableOnOpen)
     this.dialogElement = null
     super.disconnect()
-  }
-
-  async refreshPresetOptionsOnConnect(): Promise<void> {
-    if (!this.hasPresetSelectTarget) return
-
-    await super.refreshPresetOptionsOnConnect()
   }
 
   renderEditor(): void {

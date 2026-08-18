@@ -49,7 +49,7 @@ RSpec.describe "accessible_documents/index source" do
   it "uses keyword-aware defaults and keeps list controls together" do
     expect(helper_source).to include("def accessible_document_table_columns(keyword_search: false)")
     expect(helper_source).to include('table_preferences_column(:match_reason, label: "ヒット理由", default_visible: keyword_search, overflow: :ellipsis)')
-    expect(helper_source).to include('table_preferences_column(:updated_at, label: "最終更新", default_visible: true, default_width: 130, sortable: true, overflow: :ellipsis)')
+    expect(helper_source).to include('table_preferences_column(:updated_at, label: "最終更新", default_visible: true, default_width: 130, overflow: :ellipsis)')
     expect(view_source).to include(".list-meta")
     expect(view_source).to include(".list-meta__tools")
     expect(view_source).to include("nav.pagination.list-meta__pagination")

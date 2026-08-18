@@ -38,7 +38,7 @@ rfk / rtp の使い方に変更があった場合（実装パターンの追加�
 
 - テーブル描画: `table_preferences_table_tag`
 - 列設定: `table_preferences_editor`
-- ソート: カラム定義に `sortable: true`（rtp Stimulus controller がヘッダークリックを処理）
+- ソート: 現行RTP v1.0.0ではserver-side sort未提供のため `sortable: true` は指定しない
 - フィルタ: rfk `TableFilterInput` + `render_table_filters`
 - Turbo Frame: フィルタ送信で部分更新
 
@@ -54,8 +54,9 @@ rfk / rtp の使い方に変更があった場合（実装パターンの追加�
 
 - 自前のネスト表示を実装しない
 - 展開/折りたたみは Turbo Frame と組み合わせて部分読み込みにする
-- CSSは `stylesheet_link_tag "tree_view"` でレイアウトに読み込む
-- ツリー表示が必要なモデルは `parent_id` 方式のself-referential関連を使う
+- CSSは gem baseline `tree_view.css` + host override `docs_portal_tree_view.css` を読み込む
+- path-based ツリーには `PathTreeBuilder`、異種ルートには `GraphAdapter` を使う
+- 具体的な実装パターンは `tree_view実装ガイド` skill を参照
 
 ---
 

@@ -10,7 +10,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:27:00.033Z",
+    "capturedAt": "2026-08-17T11:13:58.901Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -36,7 +36,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:27:05.096Z",
+    "capturedAt": "2026-08-17T11:14:02.294Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -48,7 +48,7 @@
     "requestedUrl": "/admin",
     "finalUrl": "http://web:3000/admin",
     "outputName": "admin-dashboard",
-    "sha256": "5d83a732232fa10f0500246fbdbd1182d410c18f6be82dea7d55f093e1e6ae22"
+    "sha256": "9fdfe52adf3e9f7b4e5dd7e1bdb79819d9e722fe338e805fd53107f0a00f06ef"
   },
   {
     "scenarioId": "admin-documents.index.admin.desktop",
@@ -62,7 +62,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:27:07.339Z",
+    "capturedAt": "2026-08-17T11:16:04.334Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -74,7 +74,7 @@
     "requestedUrl": "/admin/documents",
     "finalUrl": "http://web:3000/admin/documents",
     "outputName": "admin-documents-index",
-    "sha256": "2d980a8f1cf58de79d7dc83ed6dfa0f905c7b11b2b2ead82623a38bf26c635b0"
+    "sha256": "f9cbb5060474cdc89322158220dee1b591fed5dab50bdca76c0ce3de72900531"
   },
   {
     "scenarioId": "admin-projects.index.admin.desktop",
@@ -88,7 +88,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:27:08.757Z",
+    "capturedAt": "2026-08-17T11:18:05.887Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -100,7 +100,7 @@
     "requestedUrl": "/admin/projects",
     "finalUrl": "http://web:3000/admin/projects",
     "outputName": "admin-projects-index",
-    "sha256": "2239e3495817753c444f884b854ec0c445d3a2c5a311e6dbf05184ec5c690120"
+    "sha256": "c0358db524f79b36a4efa01afaa6617b36e1d1c7104241f272fe24d624d9c3bb"
   },
   {
     "scenarioId": "admin-document-permissions.index.admin.desktop",
@@ -114,7 +114,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:05.274Z",
+    "capturedAt": "2026-08-17T11:20:07.594Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -140,7 +140,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:06.555Z",
+    "capturedAt": "2026-08-17T11:22:09.366Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -152,7 +152,7 @@
     "requestedUrl": "/admin/document_sets",
     "finalUrl": "http://web:3000/admin/document_sets",
     "outputName": "admin-document-sets-index",
-    "sha256": "32ae108b58bbb9ddf2e839d4203b196c58dbb2bbf3f8a601341a963d1caf1bbd"
+    "sha256": "b68a9b5d9268e83970156384fb07090adb67d7f80603069fe9a91e323a9c237a"
   },
   {
     "scenarioId": "admin-git-import-sources.index.admin.desktop",
@@ -166,7 +166,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:07.041Z",
+    "capturedAt": "2026-08-17T11:24:11.258Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -178,7 +178,7 @@
     "requestedUrl": "/admin/git_import_sources",
     "finalUrl": "http://web:3000/admin/git_import_sources",
     "outputName": "admin-git-import-sources-index",
-    "sha256": "51ae4699da949f9dc6896b854f4642dc2ab23ca8e6b91114e09d3f600cb3f0eb"
+    "sha256": "db769fe164dbe9b61e442ae0b8ed262a2c577625bfde6b2f2d78dfd1200a2bb2"
   },
   {
     "scenarioId": "admin-external-folder-sync-sources.index.admin.desktop",
@@ -192,7 +192,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:08.190Z",
+    "capturedAt": "2026-08-17T11:26:13.005Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -204,7 +204,7 @@
     "requestedUrl": "/admin/external_folder_sync_sources",
     "finalUrl": "http://web:3000/admin/external_folder_sync_sources",
     "outputName": "admin-external-folder-sync-sources-index",
-    "sha256": "cc1a8698cd91146a2e1e13d5c78928655ed2b6e6452335a8b103ea9917a179f2"
+    "sha256": "0574e42a6f39983348d6bf7e20363653d38269e23f33eac87433560381e85b36"
   },
   {
     "scenarioId": "admin-webhook-endpoints.index.admin.desktop",
@@ -218,7 +218,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:09.355Z",
+    "capturedAt": "2026-08-17T11:28:14.931Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -244,7 +244,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:10.552Z",
+    "capturedAt": "2026-08-17T11:30:16.995Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -270,7 +270,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:11.641Z",
+    "capturedAt": "2026-08-17T11:32:19.036Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -282,7 +282,7 @@
     "requestedUrl": "/admin/webhook_deliveries",
     "finalUrl": "http://web:3000/admin/webhook_deliveries",
     "outputName": "admin-webhook-deliveries-index",
-    "sha256": "5a0b3a751117f4f3871b8057c2b57c4cf17d805f4159b1c138deb522c7b45e4c"
+    "sha256": "7c902b02143dbbaaf5559187c7caaeec1b22023b14c1c480ca7a55357125e165"
   },
   {
     "scenarioId": "admin-generated-file-events.index.admin.desktop",
@@ -296,7 +296,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:12.728Z",
+    "capturedAt": "2026-08-17T11:34:20.809Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -322,7 +322,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:13.769Z",
+    "capturedAt": "2026-08-17T11:36:22.594Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -348,7 +348,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:14.898Z",
+    "capturedAt": "2026-08-17T11:38:24.538Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -360,7 +360,7 @@
     "requestedUrl": "/admin/access_logs",
     "finalUrl": "http://web:3000/admin/access_logs",
     "outputName": "admin-access-logs-index",
-    "sha256": "340a47e27f78bee96696a9bd393ef309d11a4d96d932b66d1f9c6394b2c637f9"
+    "sha256": "b7828f29982cfd125d5757769b129954131dc522aac1269e7c8cb064d437a069"
   },
   {
     "scenarioId": "admin-diagnostics.index.admin.desktop",
@@ -373,7 +373,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:19.702Z",
+    "capturedAt": "2026-08-17T11:38:28.200Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -385,7 +385,7 @@
     "requestedUrl": "/admin/diagnostics",
     "finalUrl": "http://web:3000/admin/diagnostics",
     "outputName": "admin-diagnostics-index",
-    "sha256": "23cfd1f8921d93542c7a6492eff46dd77aa9ceb3903cdc61c16c9d6a6de819b7"
+    "sha256": "7af4e684bcd8c0fadeefe7ad118cb1e98f3d2cf990bd728e3505172928ae2a4e"
   },
   {
     "scenarioId": "admin-missing-document-files.show.admin.desktop",
@@ -399,7 +399,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:21.424Z",
+    "capturedAt": "2026-08-17T11:38:29.618Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -411,7 +411,7 @@
     "requestedUrl": "/admin/missing_document_files",
     "finalUrl": "http://web:3000/admin/missing_document_files",
     "outputName": "admin-missing-document-files-show",
-    "sha256": "7bf5b0d8710f58d43c8f5e5176780f5a0582a4d140cca860a61ff72aa91a7f84"
+    "sha256": "b8293325488d690233f557295710e839946fb6f23f2cb741ac2c255da39dad7d"
   },
   {
     "scenarioId": "admin-companies.index.admin.desktop",
@@ -425,7 +425,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:22.656Z",
+    "capturedAt": "2026-08-17T11:40:31.238Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -451,7 +451,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:24.913Z",
+    "capturedAt": "2026-08-17T11:41:33.244Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -477,7 +477,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:26.082Z",
+    "capturedAt": "2026-08-17T11:43:34.896Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -503,7 +503,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:28.018Z",
+    "capturedAt": "2026-08-17T11:44:36.992Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -529,7 +529,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:29.874Z",
+    "capturedAt": "2026-08-17T11:45:39.208Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -555,7 +555,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:31.567Z",
+    "capturedAt": "2026-08-17T11:46:41.336Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -581,7 +581,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:32.569Z",
+    "capturedAt": "2026-08-17T11:48:43.009Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -593,7 +593,7 @@
     "requestedUrl": "/admin/consent_terms",
     "finalUrl": "http://web:3000/admin/consent_terms",
     "outputName": "admin-consent-terms-index",
-    "sha256": "eb1f1b722ed4dd4fa3c3bd022279344ee8efb6e91c11c06b0cb7939cbeee61a9"
+    "sha256": "6fb612eea1e5a765e975bd4446086c29b4ff3938a86ec2a3b2367364ff7b8b29"
   },
   {
     "scenarioId": "admin-consent-terms.edit.admin.desktop",
@@ -607,7 +607,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:34.246Z",
+    "capturedAt": "2026-08-17T11:49:45.391Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -633,7 +633,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:35.363Z",
+    "capturedAt": "2026-08-17T11:51:47.359Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -659,7 +659,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:35.007Z",
+    "capturedAt": "2026-08-17T11:52:49.171Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -685,7 +685,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:36.882Z",
+    "capturedAt": "2026-08-17T11:53:50.920Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -711,7 +711,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:38.091Z",
+    "capturedAt": "2026-08-17T11:55:52.563Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -723,7 +723,7 @@
     "requestedUrl": "/admin/git_import_runs",
     "finalUrl": "http://web:3000/admin/git_import_runs",
     "outputName": "admin-git-import-runs-index",
-    "sha256": "159c6d8ff19ab080e041d3077a3ee29c6e7bb22d32eefbb00a180b01647f70b5"
+    "sha256": "5a3e12a10970f28491e37b0f268db664e0ffc6dacbe5aee319f508493bdef217"
   },
   {
     "scenarioId": "admin-generated-file-events.show.admin.desktop",
@@ -737,7 +737,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:39.831Z",
+    "capturedAt": "2026-08-17T11:56:54.517Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -763,7 +763,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:41.455Z",
+    "capturedAt": "2026-08-17T11:57:56.431Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -789,7 +789,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:42.341Z",
+    "capturedAt": "2026-08-17T11:57:57.311Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -815,7 +815,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:43.274Z",
+    "capturedAt": "2026-08-17T11:57:58.128Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -841,7 +841,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:44.972Z",
+    "capturedAt": "2026-08-17T11:57:59.570Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -867,7 +867,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:46.108Z",
+    "capturedAt": "2026-08-17T11:58:00.508Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -893,7 +893,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:47.917Z",
+    "capturedAt": "2026-08-17T11:58:02.040Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -919,7 +919,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:48.950Z",
+    "capturedAt": "2026-08-17T12:00:03.354Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -931,7 +931,7 @@
     "requestedUrl": "/admin/recurring_job_schedules",
     "finalUrl": "http://web:3000/admin/recurring_job_schedules",
     "outputName": "admin-recurring-job-schedules-index",
-    "sha256": "3e91ec7cec09af2b975ad2214d894912db6b4b4913c930b46bbbc179a6b7d583"
+    "sha256": "037bf6ecdae90dfb7257a1c1b7c7fdd593a036af51ea81646c43c31510bf511e"
   },
   {
     "scenarioId": "admin-recurring-job-schedules.show.admin.desktop",
@@ -945,7 +945,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:50.761Z",
+    "capturedAt": "2026-08-17T12:01:05.267Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -957,7 +957,7 @@
     "requestedUrl": "/admin/recurring_job_schedules/rjs_ydXA5QnbfybZMkRh",
     "finalUrl": "http://web:3000/admin/recurring_job_schedules/rjs_ydXA5QnbfybZMkRh",
     "outputName": "admin-recurring-job-schedules-show",
-    "sha256": "423dd094bee0e2a90359a30b098419fe6d66137ecbc4ad8413af86f2abf2eb7d"
+    "sha256": "49861dcebb2ae0fa2edb8101b95ada9001e8464b683b4d43a87978cfdb03da97"
   },
   {
     "scenarioId": "admin-external-folder-sync-sources.show.admin.desktop",
@@ -971,7 +971,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:52.973Z",
+    "capturedAt": "2026-08-17T12:02:07.370Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -997,7 +997,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:53.920Z",
+    "capturedAt": "2026-08-17T12:02:08.212Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1009,7 +1009,7 @@
     "requestedUrl": "/admin/external_folder_sync_sources/efss_screenshot_001/edit",
     "finalUrl": "http://web:3000/admin/external_folder_sync_sources/efss_screenshot_001/edit",
     "outputName": "admin-external-folder-sync-sources-edit",
-    "sha256": "31c5b52896a68038b45b65e47c602d897fa0f8d0266e3461655ef7deea12a471"
+    "sha256": "4a64573b92aa5c1617ac114ee62af68ead176eb073bc9cc1c9dab1a330033926"
   },
   {
     "scenarioId": "admin-documents.edit.admin.desktop",
@@ -1023,7 +1023,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:55.826Z",
+    "capturedAt": "2026-08-17T12:03:10.225Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1049,7 +1049,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:56.983Z",
+    "capturedAt": "2026-08-17T12:03:11.330Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1075,7 +1075,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:28:58.878Z",
+    "capturedAt": "2026-08-17T12:04:13.225Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1101,7 +1101,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:29:00.000Z",
+    "capturedAt": "2026-08-17T12:04:14.162Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1127,7 +1127,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:29:01.702Z",
+    "capturedAt": "2026-08-17T12:04:15.646Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1153,7 +1153,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:29:31.606Z",
+    "capturedAt": "2026-08-17T12:05:17.430Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1179,7 +1179,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:29:31.824Z",
+    "capturedAt": "2026-08-17T12:06:19.160Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1205,7 +1205,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:29:33.752Z",
+    "capturedAt": "2026-08-17T12:07:20.867Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1231,7 +1231,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:29:34.772Z",
+    "capturedAt": "2026-08-17T12:09:22.323Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1257,7 +1257,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:29:36.587Z",
+    "capturedAt": "2026-08-17T12:10:24.347Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1283,7 +1283,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:29:37.497Z",
+    "capturedAt": "2026-08-17T12:10:25.286Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {
@@ -1309,7 +1309,7 @@
     "actions": [],
     "stateKind": "default",
     "sourceRevision": "unknown",
-    "capturedAt": "2026-08-16T19:29:38.486Z",
+    "capturedAt": "2026-08-17T12:10:26.116Z",
     "locale": "ja-JP",
     "timezone": "Asia/Tokyo",
     "viewport": {

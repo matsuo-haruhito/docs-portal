@@ -4,7 +4,7 @@ module Admin::ProjectsHelper
   def project_table_columns
     [
       table_preferences_column(:code, label: "案件コード", default_width: 150, overflow: :ellipsis, pinned: true),
-      table_preferences_column(:name, label: "案件名", sortable: true),
+      table_preferences_column(:name, label: "案件名"),
       table_preferences_column(:company, label: "会社", overflow: :ellipsis),
       table_preferences_column(:description, label: "説明", default_visible: false, overflow: :ellipsis),
       table_preferences_column(:status, label: "状態", default_width: 80),
