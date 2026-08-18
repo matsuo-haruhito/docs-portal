@@ -258,7 +258,7 @@ async function waitForAuditReady(page: Page): Promise<void> {
       return rect.width > 0 && rect.height > 0 && rect.bottom >= 0 && rect.top <= window.innerHeight && style.display !== "none" && style.visibility !== "hidden";
     };
     const pendingTurboFrames = [...document.querySelectorAll("turbo-frame[busy], turbo-frame[aria-busy='true'], turbo-frame[src]:not([complete])")].filter(isVisible);
-    const busyElements = [...document.querySelectorAll("[aria-busy='true']")].filter(isVisible);
+    const busyElements = [...document.querySelectorAll("[aria-busy='true']")].filter(isVisible).filter((element) => !(element.getAttribute("data-controller") || "").includes("rails-table-preferences"));
     const loadingElements = [...document.querySelectorAll(".spinner-border, .spinner-grow")].filter(isVisible);
     const stimulus = window.Stimulus;
     const controllerElements = [...document.querySelectorAll("[data-controller]")].filter(isVisible);
@@ -279,7 +279,7 @@ async function waitForAuditReady(page: Page): Promise<void> {
         return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
       };
       const pendingTurboFrames = [...document.querySelectorAll("turbo-frame[busy], turbo-frame[aria-busy='true']")].filter(isVisible);
-      const busyElements = [...document.querySelectorAll("[aria-busy='true']")].filter(isVisible);
+      const busyElements = [...document.querySelectorAll("[aria-busy='true']")].filter(isVisible).filter((element) => !(element.getAttribute("data-controller") || "").includes("rails-table-preferences"));
       return pendingTurboFrames.length === 0 && busyElements.length === 0;
     })()`, { timeout: 10000 })
     } catch (_fallbackError) {
