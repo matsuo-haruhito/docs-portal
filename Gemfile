@@ -11,7 +11,7 @@ gem "doorkeeper", "5.9.3"
 gem "image_processing", "~> 2.0"
 gem "importmap-rails"
 gem "kamal", require: false
-gem "mcp", "1.0.0"
+gem "mcp", "1.2.0"
 gem "msgpack", ">= 1.8.2"
 gem "pg", "~> 1.6", ">= 1.6.3"
 gem "propshaft"
