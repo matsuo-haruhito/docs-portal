@@ -161,7 +161,7 @@ GEM
       irb (~> 1.10)
       reline (>= 0.3.8)
     diff-lcs (1.6.2)
-    doorkeeper (5.9.3)
+    doorkeeper (5.9.6)
       railties (>= 5)
     dotenv (3.2.0)
     drb (2.2.3)
@@ -540,7 +540,7 @@ DEPENDENCIES
   database_consistency
   debug
   diff-lcs (~> 1.6)
-  doorkeeper (= 5.9.3)
+  doorkeeper (= 5.9.6)
   enum_help
   factory_bot_rails (~> 6.5, >= 6.5.1)
   gretel

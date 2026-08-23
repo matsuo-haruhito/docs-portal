@@ -7,7 +7,7 @@ gem "bootsnap", require: false
 gem "crass", ">= 1.0.7"
 gem "csv"
 gem "diff-lcs", "~> 1.6"
-gem "doorkeeper", "5.9.3"
+gem "doorkeeper", "5.9.6"
 gem "image_processing", "~> 2.0"
 gem "importmap-rails"
 gem "kamal", require: false
