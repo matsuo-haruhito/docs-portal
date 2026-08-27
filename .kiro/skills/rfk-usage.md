@@ -1,273 +1,164 @@
 ---
 name: "rfk実装ガイド"
-description: "rails_fields_kit (rfk) を使ったフォームフィールドの具体的な実装パターン。select/combobox/multi_select/tags/enum_selectの書き方、search_optionsとの連携。"
+description: "docs-portalの権限付き文書ポータル用途に合わせてrails_fields_kit (RFK) をどう使うかを定める。管理画面、検索filter、権限付きremote select、RTP連携の実装規範。"
 ---
-# rfk (rails_fields_kit) 実装ガイド
+# RFK（rails_fields_kit）実装ガイド
 
-## Stimulus 登録
+このskillはRFKのAPI一覧ではない。
+**docs-portalという権限付き文書ポータルで、RFKをどの入力・検索に使うか**を決める規範である。
 
-```typescript
-// app/frontend/controllers/index.ts
-import { TomSelectController as RailsFieldsKitTomSelectController } from "rails_fields_kit"
-application.register("rails-fields-kit--tom-select", RailsFieldsKitTomSelectController)
-```
+## 0. 基本方針
 
----
+**実装方針はRFK最新版を前提にする。**
+現行Gemfile.lockが古い場合でも、古いrevisionの制約へ合わせてdocs-portal固有workaroundを増やさない。
+最新版に必要機能があればRFKを更新し、最新版にも不足があればRFK本体を改善する。
 
-## ヘルパー一覧と選択基準
+Gemfile.lockは「今の環境でそのAPIが使えるか」の確認材料であり、このskillの目標仕様ではない。
 
-| 場面 | ヘルパー | 判断基準 |
-|------|---------|---------|
-| マスタ参照（単一、選択肢少数） | `rfk_select` | collection を直接渡せる程度（~10件） |
-| マスタ参照（単一、API検索） | `rfk_combobox` | 選択肢が多い or インクリメンタルサーチが必要 |
-| enum 属性 | `rfk_enum_select` | ActiveRecord enum を日本語ラベルで表示 |
-| 複数選択（既存マスタ） | `rfk_multi_select` | N対N紐づけ、タグ的な既存値の複数選択 |
-| タグ入力（新規作成可） | `rfk_tags` | ユーザーが自由にタグを追加できる |
-| フリーワード検索 | `rfk_search_field` | 検索フォームのキーワード入力 |
-| 金額入力 | `rfk_money_field` | 通貨prefix + decimal inputmode |
-| 割合入力 | `rfk_percent_field` | % suffix + decimal inputmode |
+## 1. docs-portalでRFKに担当させる範囲
 
----
+docs-portalは、案件ごとの社外秘文書の公開、版管理、閲覧制御、添付配布、import / preview / build / 外部連携を扱うポータルである。
 
-## 典型パターン
+RFKの主担当:
 
-### rfk_search_field（フリーワード検索）
+1. **管理画面の関連master選択**
+   - 案件、会社、ユーザー、文書等
+   - 件数が多い場合はremote `rfk_combobox`
+2. **管理一覧のfilter**
+   - category / document_kind / visibility / source_authority等の固定候補は `rfk_select` / `rfk_enum_select`
+   - 案件やユーザー等のremote master検索でIDとfree textを分けたい場合は `rfk_lookup`
+   - plain keywordは `rfk_search_field`
+3. **RTP / filter toolbarでの統一UI**
+   - 通常フォームと同じsubmit contractを維持する
 
-```erb
-<%= form.rfk_search_field :query,
-  value: params[:query],
-  placeholder: "キーワードで検索",
-  wrapper: false,
-  html: { class: "search-input", aria: { label: "キーワードで検索" } } %>
-```
+### RFKに担当させないもの
 
-既存のフォームレイアウト内で入力要素だけを描画する場合は `wrapper: false` を指定し、入力要素の class / data / aria 属性は `html:` に渡す。
+- ProjectMembership / DocumentPermissionによる可視範囲
+- 社外ユーザーへの情報露出判定
+- source authorityや公開可否の業務判断
+- Git/Graph/Webhook/import/buildの実行ロジック
+- remote searchの認可scopeそのもの
 
-### FilterToolbarComponent（検索入力の内容別幅）
+RFKは入力・選択UIまで。権限判定や情報露出制御をfield helperへ持ち込まない。
 
-一覧検索ではformと検索paramsを呼び出し側に残し、`FilterToolbarComponent`のfield slotで入力の用途幅だけを指定する。
+## 2. Helper選択
 
-```slim
-= form_with url: admin_records_path, method: :get, local: true do |form|
-  = render FilterToolbarComponent.new(label: "レコード検索") do |toolbar|
-    - toolbar.with_field(size: :query) do
-      = form.rfk_search_field :q, value: params[:q], wrapper: false
-    - toolbar.with_field(size: :enum) do
-      = form.rfk_select :status, collection: status_options, selected: params[:status], allow_clear: true
-    - toolbar.with_action do
-      = form.submit "検索", class: "button"
-```
+| 用途 | 第一候補 |
+|---|---|
+| 少数の固定候補 | `rfk_select` |
+| Rails enum | `rfk_enum_select` |
+| 案件・会社・ユーザー等のID選択 | `rfk_combobox` |
+| ID選択 + free-text fallback検索 | `rfk_lookup` |
+| plain keyword | `rfk_search_field` |
+| text値＋候補 | `rfk_autocomplete` |
+| 複数関連 | `rfk_multi_select` |
+| user-created tag | `rfk_tags` |
 
-`size`は次を使う。
+**見た目ではなくsubmit contractで選ぶ。**
 
-| size | 用途 |
-| --- | --- |
-| `:query` | キーワード検索 |
-| `:remote` | API検索combobox |
-| `:enum` | 状態・種別等の固定選択 |
-| `:date` | 日付 |
-| `:short` | HTTP status・件数・短いcode |
-| `:wide` | 長いpath・error断片 |
+## 3. Remote master選択
 
-- rfk入力自体の`width: 100%`はfield wrapper内だけに適用する
-- formのURL、hidden parameter、selected value、認可、検索条件生成はComponentへ移さない
-- 検索buttonはaction slotへ置き、入力fieldと同じ幅へ引き伸ばさない
+案件等をIDで保存するフォームでは `rfk_combobox` を使う。
 
-### rfk_select（検索フィルタ用）
+編集画面でassociationを既に持っているなら、**server-rendered selectedを標準**とする。
+実際に文書編集ではこの形を使う。
 
 ```slim
-= f.rfk_select :status,
-  collection: Status::OPTIONS.map { |s| [s.label, s.value] },
-  include_blank: "すべて",
-  selected: params[:status],
-  allow_clear: true
+= form.rfk_combobox :project_id,
+  url: project_search_admin_documents_path(format: :json),
+  selected: { value: document.project.id, text: admin_document_project_option_label(document.project) }
 ```
 
-**ルール: 検索フィルタの `rfk_select` には必ず `allow_clear: true` を付ける。**
-
-### rfk_select（フォーム入力用）
-
-```slim
-= f.rfk_select :project_id,
-  collection: Project.order(:name),
-  collection_value_method: :id,
-  collection_label_method: :name,
-  include_blank: "選択してください"
-```
-
-### rfk_combobox（フォーム入力用、ID選択）
-
-```slim
-= f.rfk_combobox :user_id,
-  url: search_options_path("users"),
-  selected_url: search_options_path("users"),
-  selected: record.user_id,
-  value_field: "value",
-  label_field: "label",
-  query_param: "q",
-  selected_param: "id",
-  placeholder: "担当者を検索",
-  include_blank: "選択してください",
-  min_length: 0,
-  preload: true
-```
-
-### rfk_combobox（検索フィルタ用、テキスト部分一致）
-
-マスタ件数が多い対象（顧客・担当者等）の検索フィルタはこのパターンを使う。
-
-```slim
-= f.rfk_combobox :customer,
-  url: search_options_path("customers"),
-  selected_url: search_options_path("customers"),
-  selected: params[:customer],
-  value_field: "label",
-  label_field: "label",
-  query_param: "q",
-  selected_param: "label",
-  placeholder: "顧客を検索",
-  include_blank: "すべて",
-  min_length: 0,
-  preload: true,
-  allow_clear: true,
-  free_text: true
-```
-
-特徴:
-- `value_field: "label"` — 選択時にテキスト名が値になる
-- `free_text: true` — 候補から選ばなくても入力テキストがそのまま送信される
-- `allow_clear: true` — × ボタンでクリア可能
-
-### rfk_enum_select
-
-```slim
-= f.rfk_enum_select :status, include_blank: "選択してください"
-```
-
-### rfk_multi_select
-
-```slim
-= f.rfk_multi_select :tag_ids,
-  collection: Tag.active.ordered,
-  collection_value_method: :id,
-  collection_label_method: :name,
-  selected: f.object.tag_ids,
-  placeholder: "タグを選択",
-  plugins: ["remove_button"]
-```
-
-### rfk_tags（新規作成可）
-
-```slim
-= f.rfk_tags :tag_list,
-  url: search_options_path("tags"),
-  value_field: "value",
-  label_field: "label",
-  query_param: "q",
-  create: true,
-  placeholder: "タグを入力"
-```
-
-### rfk_money_field / rfk_percent_field
-
-```slim
-= f.rfk_money_field :unit_price, currency: "¥"
-= f.rfk_percent_field :tax_rate
-```
-
----
-
-## search_options エンドポイント
-
-rfk の combobox / multi_select は `/search_options/:resource` へJSONリクエストを送る。
-
-```
-GET /search_options/users?q=松尾
-→ [{ "value": 1, "label": "松尾春人" }, ...]
-
-GET /search_options/users?id=1
-→ [{ "value": 1, "label": "松尾春人" }]  (selected_url用)
-```
-
-新しいマスタを追加する場合は SearchOptionsController に `when "リソース名"` を追加する。
-
----
-
-## 検索フィルタでの rfk（TableFilterInput）
-
-一覧画面のフィルタは `RailsFieldsKit::TableFilterInput` で宣言する:
+helperでselected hashを作ってもよい。
 
 ```ruby
-filter_columns = [
-  { key: "_q",
-    filter: RailsFieldsKit::TableFilterInput.search_field(:q, placeholder: "キーワード"),
-    filter_html: { label: "キーワード", col_class: "col-lg-3 col-md-6" } },
-  { key: "_status",
-    filter: RailsFieldsKit::TableFilterInput.select(:status, collection: [...], include_blank: "すべて"),
-    filter_html: { label: "状態" } },
-]
+def admin_document_project_selected_option(project)
+  return nil if project.blank?
+  { value: project.id, text: admin_document_project_option_label(project) }
+end
 ```
 
-ビューでは `render_table_filters(f, filter_columns)` で一括描画する。
+`selected_url:` は**IDしか手元にない場合のlabel hydration**に限定する。
+既にproject/associationを読み込んでいるのに表示label取得だけのrequestを増やさない。
 
----
+RFK helper内部でProject/User等を検索しない。
 
-## 依存フィルタ（rfk-dependent-filter）
+## 4. 権限付きsearch endpoint
 
-親フィールドの値に応じて子フィールドのURLと選択肢を更新する。rfk helperが生成する入力要素へdata属性を渡すときは、top-levelの`data:`ではなく`html: { data: ... }`を使う:
+docs-portalではremote option APIの認可が特に重要である。
+候補一覧そのものが情報露出になるため、次を必須とする。
 
-```slim
-div data-controller="rfk-dependent-filter"
-  = f.rfk_combobox :project_id,
-    url: search_options_path("projects"),
-    html: { data: { rfk_dependent_filter_target: "source", action: "rails-fields-kit--tom-select:change->rfk-dependent-filter#refresh" } }
-  = f.rfk_combobox :document_id,
-    url: search_options_path("documents"),
-    html: { data: { rfk_dependent_filter_target: "field" } }
-```
+- current user / role / membershipに基づくscope
+- 選択済みID取得でも権限外recordを返さない
+- 社外ユーザーにinternal metadata、raw path、provider情報等を表示labelへ混ぜない
+- query長・最大件数を制限
+- LIKEはsanitize + bind parameter
+- 任意resource名を無制限にconstantizeしない
 
-- rfkの`rails-fields-kit--tom-select:change`イベントを使い、アプリ側でTom Selectを再初期化しない。
-- URLは`data-rails-fields-kit--tom-select-url-value`を更新する。rfk controllerは候補取得時に現在値を読む。
-- 親値が変わった子フィールドは、`element.tomselect.clear(true)`と`clearOptions()`で選択値・旧候補を破棄する。
-- 候補取得不可でも入力を継続する必要があるフィールドには`free_text: true`を指定する。
+`selected_url:` だけ認可を緩めることは禁止。
 
----
+## 5. 一覧filter
 
-## フォーム入力 vs 検索フィルタの使い分け
+固定enum/状態filterは `rfk_select` / `rfk_enum_select` を使い、解除可能にする。
 
-| ヘルパー | 用途 | allow_clear |
-|---------|------|-------------|
-| `rfk_combobox` フォーム入力 | ID選択 | 任意 |
-| `rfk_combobox` 検索フィルタ | テキスト部分一致 | **必須** |
-| `rfk_select` フォーム入力 | 固定選択肢 | 任意 |
-| `rfk_select` 検索フィルタ | 固定選択肢で絞り込み | **必須** |
+案件・会社・ユーザー等で、候補選択時はID完全一致、候補を選ばない文字列では部分一致したい場合は `rfk_lookup` を使う。
 
----
+objectless GET formでも、lookup textとlookup IDを明示的に復元できることを**RFK最新版の標準contract**とする。
+host appでhidden fieldやTom Select内部を直接操作して補修しない。
 
-## CSS: Tom Select の改行防止
+free-text filterはblur後も保持し、再focus後に文字単位で再編集できるUXを標準とする。
 
-Tom Select のデフォルト CSS では `.ts-control` が `flex-wrap: wrap` のため、combobox で値を選択すると input が次の行に折り返される。
+## 6. Static select / selected安全性
 
-`app/frontend/entrypoints/tom_select_overrides.css` で以下を上書きしている:
+static collectionではremote/staticの違いを呼び出し側が毎回意識せず自然に表示できることをRFK最新版へ期待する。
 
-- `.ts-wrapper.single .ts-control` — `flex-wrap: nowrap` + `overflow: hidden`
-- `.ts-wrapper .ts-control > .item` — `white-space: nowrap` + `text-overflow: ellipsis`
-- `.ts-wrapper.has-items .ts-control > input` — `min-width: 1px` で折り返し防止
-- `.ts-wrapper.single.has-items .ts-control > input` — `width: 0` + `flex: 0 0 0px` で完全に縮小
+collection外の `selected:` が渡ってもfield初期化全体を壊さず安全にfallbackすることもRFK側の責務とする。
+古いbookmarkやURL編集のために全画面へ同じvalidation boilerplateを量産しない。
 
-このファイルは `application.ts` で `tom-select.css` の直後に import される。新しい rfk フィールドを追加する際、追加の CSS は不要（自動で適用される）。
+## 7. 依存field
 
-### カスタマイズが必要な場合
+単純な親子remote query paramは最新版RFKの `depends_on:` / `clear_on_dependency_change:` を優先する。
+既存 `rfk_dependent_filter_controller` は、RFK公式機能で代替できる範囲から段階的に削る。
 
-- テーブルセル内などコンパクト表示が必要な場合は `.ts-control` の `min-height` / `padding` / `font-size` をスコープ付きで調整する
-- モーダルやフローティングパネル内で使う場合は `body > .ts-dropdown` の `z-index` を上げる
+権限制御や業務副作用までgeneric dependencyへ押し込まない。
 
----
+## 8. FilterToolbar / RTP
 
-## NGパターン
+- form URL、hidden params、認可、検索条件生成は呼び出し側に残す
+- toolbar componentはlayout責務だけ持つ
+- remote comboboxは `:remote`、keywordは `:query`、enumは `:enum` 等、用途幅を使う
+- 狭いtable headerへrich remote widgetを無理に埋め込まない
+- RTP metadataでも通常formと同じhelper選択ルールを使う
 
-- `f.select` / `f.collection_select` を使う → rfk ヘルパーに置き換える
-- ネイティブの `<select multiple>` を使う → `rfk_multi_select` に置き換える
-- `enum_options_for` + `f.select` の組み合わせ → `rfk_enum_select` に置き換える
-- TomSelect を直接 JS で初期化する → rfk の Stimulus コントローラー経由で使う
-- 検索フィルタの rfk に `allow_clear: true` を付けない → 条件解除できない
+## 9. Layout / CSS
+
+- modal/overflow clippingはRFK公式 `dropdown_parent` 等を優先
+- Tom Selectを直接初期化しない
+- field属性は `html:`、wrapperは `wrapper_html:`
+- global `.ts-*` overrideは最小限
+- portal全体のアクセシビリティ、keyboard操作、focus復帰を壊さない
+
+## 10. NGパターン
+
+- 権限外recordをremote option APIが返す
+- selected preloadだけ認可を緩める
+- associationを既に持つのに初期label取得requestを追加する
+- RFK helper内部でdomain modelを検索する
+- old RFK revisionの制約をdocs-portal固有JSで固定化する
+- lookup初期値・blur・refocusを独自controllerで補修する
+- static/remote mappingやcollection外selected対策を全画面へコピペする
+- simple dependencyに新しいbridge controllerを増やす
+- UI convenienceのためにinternal metadataをoption labelへ露出する
+
+## 11. Checklist
+
+- [ ] RFK最新版を目標仕様として使った
+- [ ] helperをsubmit contractで選んだ
+- [ ] association/labelを既に持つならserver-rendered selectedを使った
+- [ ] `selected_url:` が本当に必要か確認した
+- [ ] remote endpointへ利用者権限scopeを適用した
+- [ ] selected ID取得でも権限外recordを返していない
+- [ ] option labelへ不要なinternal metadataを混ぜていない
+- [ ] lookup初期値・blur・refocusをRFK標準機能で扱った
+- [ ] simple dependencyはRFK公式機能を優先した
+- [ ] FilterToolbar/RTPへ業務・認可責務を移していない
